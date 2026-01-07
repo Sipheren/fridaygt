@@ -1,0 +1,165 @@
+{
+  "upgradeCategories": {
+    "engine": {
+      "name": "Engine",
+      "parts": [
+        { "id": "air-filter-sports", "name": "Sports Air Filter", "tier": "sports" },
+        { "id": "air-filter-racing", "name": "Racing Air Filter", "tier": "racing" },
+        { "id": "ecu-sports", "name": "Sports ECU", "tier": "sports" },
+        { "id": "ecu-racing", "name": "Racing ECU", "tier": "racing" },
+        { "id": "intake-tuning-sports", "name": "Sports Intake Tuning", "tier": "club-sports" },
+        { "id": "intake-tuning-racing", "name": "Racing Intake Tuning", "tier": "racing" },
+        { "id": "throttle-controller-sports", "name": "Sports Throttle Controller", "tier": "sports" },
+        { "id": "throttle-controller-racing", "name": "Racing Throttle Controller", "tier": "racing" },
+        { "id": "engine-tuning-stage-1", "name": "Engine Tuning Stage 1", "tier": "club-sports" },
+        { "id": "engine-tuning-stage-2", "name": "Engine Tuning Stage 2", "tier": "semi-racing" },
+        { "id": "engine-tuning-stage-3", "name": "Engine Tuning Stage 3", "tier": "racing" },
+        { "id": "engine-tuning-stage-4", "name": "Engine Tuning Stage 4", "tier": "racing" },
+        { "id": "engine-tuning-stage-5", "name": "Engine Tuning Stage 5", "tier": "extreme" },
+        { "id": "stroke-up-s", "name": "Stroke Up (S)", "tier": "racing" },
+        { "id": "stroke-up-m", "name": "Stroke Up (M)", "tier": "racing" },
+        { "id": "stroke-up-l", "name": "Stroke Up (L)", "tier": "extreme" },
+        { "id": "bore-up-s", "name": "Bore Up (S)", "tier": "racing" },
+        { "id": "bore-up-m", "name": "Bore Up (M)", "tier": "racing" },
+        { "id": "bore-up-l", "name": "Bore Up (L)", "tier": "extreme" },
+        { "id": "port-polishing", "name": "Port Polishing", "tier": "racing" },
+        { "id": "engine-balancing", "name": "Engine Balancing", "tier": "racing" },
+        { "id": "high-lift-camshaft", "name": "High-Lift Camshaft", "tier": "racing" },
+        { "id": "high-compression-piston", "name": "High-Compression Piston", "tier": "racing" }
+      ]
+    },
+    "turbo": {
+      "name": "Turbo & Supercharger",
+      "parts": [
+        { "id": "turbo-low", "name": "Turbocharger - Low RPM", "tier": "semi-racing" },
+        { "id": "turbo-medium", "name": "Turbocharger - Medium RPM", "tier": "semi-racing" },
+        { "id": "turbo-high", "name": "Turbocharger - High RPM", "tier": "racing" },
+        { "id": "turbo-ultra-high", "name": "Turbocharger - Ultra High RPM", "tier": "extreme" },
+        { "id": "supercharger-low", "name": "Supercharger - Low RPM", "tier": "semi-racing" },
+        { "id": "supercharger-medium", "name": "Supercharger - Medium RPM", "tier": "semi-racing" },
+        { "id": "supercharger-high", "name": "Supercharger - High RPM", "tier": "racing" },
+        { "id": "supercharger-ultra-high", "name": "Supercharger - Ultra High RPM", "tier": "extreme" }
+      ]
+    },
+    "exhaust": {
+      "name": "Exhaust",
+      "parts": [
+        { "id": "muffler-sports", "name": "Sports Muffler", "tier": "sports" },
+        { "id": "muffler-semi-racing", "name": "Semi-Racing Muffler", "tier": "semi-racing" },
+        { "id": "muffler-racing", "name": "Racing Muffler", "tier": "racing" },
+        { "id": "manifold-sports", "name": "Sports Manifold", "tier": "club-sports" },
+        { "id": "manifold-racing", "name": "Racing Manifold", "tier": "racing" },
+        { "id": "catalytic-sports", "name": "Sports Catalytic Converter", "tier": "sports" },
+        { "id": "catalytic-racing", "name": "Racing Catalytic Converter", "tier": "racing" }
+      ]
+    },
+    "transmission": {
+      "name": "Transmission",
+      "parts": [
+        { "id": "clutch-sports", "name": "Sports Clutch", "tier": "sports" },
+        { "id": "clutch-semi-racing", "name": "Semi-Racing Clutch", "tier": "semi-racing" },
+        { "id": "clutch-racing", "name": "Racing Clutch", "tier": "racing" },
+        { "id": "clutch-carbon", "name": "Carbon Clutch", "tier": "extreme" },
+        { "id": "propeller-shaft-sports", "name": "Sports Propeller Shaft", "tier": "sports" },
+        { "id": "propeller-shaft-racing", "name": "Racing Propeller Shaft", "tier": "racing" },
+        { "id": "propeller-shaft-carbon", "name": "Carbon Propeller Shaft", "tier": "extreme" },
+        { "id": "transmission-5-speed", "name": "5-Speed Racing Transmission", "tier": "semi-racing" },
+        { "id": "transmission-6-speed", "name": "6-Speed Racing Transmission", "tier": "semi-racing" },
+        { "id": "transmission-7-speed", "name": "7-Speed Racing Transmission", "tier": "racing" },
+        { "id": "transmission-8-speed", "name": "8-Speed Racing Transmission", "tier": "racing" },
+        { "id": "transmission-custom", "name": "Fully Customizable Racing Transmission", "tier": "racing" }
+      ]
+    },
+    "suspension": {
+      "name": "Suspension",
+      "parts": [
+        { "id": "suspension-sports-soft", "name": "Sports Suspension (Soft)", "tier": "sports" },
+        { "id": "suspension-sports-medium", "name": "Sports Suspension (Medium)", "tier": "sports" },
+        { "id": "suspension-sports-hard", "name": "Sports Suspension (Hard)", "tier": "club-sports" },
+        { "id": "suspension-height-adjustable", "name": "Height-Adjustable Sports Suspension", "tier": "semi-racing" },
+        { "id": "suspension-racing-soft", "name": "Racing Suspension (Soft)", "tier": "racing" },
+        { "id": "suspension-racing-medium", "name": "Racing Suspension (Medium)", "tier": "racing" },
+        { "id": "suspension-racing-hard", "name": "Racing Suspension (Hard)", "tier": "racing" },
+        { "id": "suspension-custom", "name": "Fully Customizable Racing Suspension", "tier": "racing" }
+      ]
+    },
+    "brakes": {
+      "name": "Brakes",
+      "parts": [
+        { "id": "brake-pads-sports", "name": "Sports Brake Pads", "tier": "sports" },
+        { "id": "brake-pads-racing", "name": "Racing Brake Pads", "tier": "racing" },
+        { "id": "brake-calipers-sports", "name": "Sports Brake Calipers", "tier": "club-sports" },
+        { "id": "brake-calipers-racing", "name": "Racing Brake Calipers", "tier": "racing" },
+        { "id": "brake-calipers-carbon-ceramic", "name": "Carbon Ceramic Brake Calipers", "tier": "extreme" }
+      ]
+    },
+    "drivetrain": {
+      "name": "Drivetrain & Differential",
+      "parts": [
+        { "id": "lsd-custom", "name": "Customizable LSD", "tier": "semi-racing" },
+        { "id": "lsd-full-custom", "name": "Fully Customizable LSD", "tier": "racing" },
+        { "id": "torque-vectoring", "name": "Active Torque Vectoring Differential", "tier": "extreme" },
+        { "id": "center-differential-custom", "name": "Customizable Center Differential (AWD)", "tier": "racing" }
+      ]
+    },
+    "weight": {
+      "name": "Weight Reduction",
+      "parts": [
+        { "id": "weight-reduction-stage-1", "name": "Weight Reduction Stage 1", "tier": "sports" },
+        { "id": "weight-reduction-stage-2", "name": "Weight Reduction Stage 2", "tier": "club-sports" },
+        { "id": "weight-reduction-stage-3", "name": "Weight Reduction Stage 3", "tier": "semi-racing" },
+        { "id": "weight-reduction-stage-4", "name": "Weight Reduction Stage 4", "tier": "racing" },
+        { "id": "weight-reduction-stage-5", "name": "Weight Reduction Stage 5", "tier": "extreme" },
+        { "id": "carbon-hood", "name": "Carbon Hood", "tier": "racing" },
+        { "id": "carbon-roof", "name": "Carbon Roof", "tier": "racing" },
+        { "id": "carbon-body-kit", "name": "Carbon Body Kit", "tier": "extreme" },
+        { "id": "window-weight-reduction", "name": "Window Weight Reduction", "tier": "racing" }
+      ]
+    },
+    "body": {
+      "name": "Body & Rigidity",
+      "parts": [
+        { "id": "body-rigidity-improvement", "name": "Body Rigidity Improvement", "tier": "semi-racing" },
+        { "id": "roll-cage", "name": "Roll Cage", "tier": "racing" },
+        { "id": "widebody", "name": "Wide Body Kit", "tier": "extreme" }
+      ]
+    },
+    "tires": {
+      "name": "Tires",
+      "parts": [
+        { "id": "tires-comfort-soft", "name": "Comfort Soft Tires", "tier": "sports" },
+        { "id": "tires-comfort-medium", "name": "Comfort Medium Tires", "tier": "sports" },
+        { "id": "tires-comfort-hard", "name": "Comfort Hard Tires", "tier": "sports" },
+        { "id": "tires-sports-soft", "name": "Sports Soft Tires", "tier": "club-sports" },
+        { "id": "tires-sports-medium", "name": "Sports Medium Tires", "tier": "club-sports" },
+        { "id": "tires-sports-hard", "name": "Sports Hard Tires", "tier": "club-sports" },
+        { "id": "tires-racing-soft", "name": "Racing Soft Tires", "tier": "racing" },
+        { "id": "tires-racing-medium", "name": "Racing Medium Tires", "tier": "racing" },
+        { "id": "tires-racing-hard", "name": "Racing Hard Tires", "tier": "racing" },
+        { "id": "tires-intermediate", "name": "Intermediate Tires", "tier": "extreme" },
+        { "id": "tires-wet", "name": "Full Wet Tires", "tier": "extreme" },
+        { "id": "tires-dirt", "name": "Dirt Tires", "tier": "racing" },
+        { "id": "tires-snow", "name": "Snow Tires", "tier": "extreme" }
+      ]
+    },
+    "aero": {
+      "name": "Aerodynamics",
+      "parts": [
+        { "id": "front-splitter", "name": "Front Splitter", "tier": "racing" },
+        { "id": "rear-wing-adjustable", "name": "Adjustable Rear Wing", "tier": "racing" },
+        { "id": "rear-wing-fixed", "name": "Fixed Rear Wing", "tier": "club-sports" },
+        { "id": "flat-floor", "name": "Flat Floor", "tier": "racing" },
+        { "id": "undertray", "name": "Racing Undertray", "tier": "racing" }
+      ]
+    },
+    "other": {
+      "name": "Other",
+      "parts": [
+        { "id": "nitrous-system", "name": "Nitrous Oxide System", "tier": "extreme" },
+        { "id": "ballast", "name": "Ballast", "tier": "racing" },
+        { "id": "power-restrictor", "name": "Power Restrictor", "tier": "racing" },
+        { "id": "wide-wheels", "name": "Wide Offset Wheels", "tier": "racing" }
+      ]
+    }
+  }
+}

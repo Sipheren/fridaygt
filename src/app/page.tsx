@@ -1,65 +1,174 @@
-import Image from "next/image";
+import { auth } from "@/lib/auth"
+import { redirect } from "next/navigation"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
+import { Clock, Car, Map, ListChecks } from "lucide-react"
+import { createClient } from "@/lib/supabase/server"
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth()
+
+  if (!session) {
+    redirect('/auth/signin')
+  }
+
+  const userRole = (session.user as any)?.role
+  const supabase = await createClient()
+
+  // Fetch user's lap time count
+  let lapTimeCount = 0
+  if (session?.user?.email) {
+    const { data: userData } = await supabase
+      .from('User')
+      .select('id')
+      .eq('email', session.user.email)
+      .single()
+
+    if (userData) {
+      const { count } = await supabase
+        .from('LapTime')
+        .select('*', { count: 'exact', head: true })
+        .eq('userId', userData.id)
+
+      lapTimeCount = count || 0
+    }
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="space-y-8 max-w-[1400px] mx-auto">
+      {/* Welcome Section */}
+      <div>
+        <h1 className="text-4xl font-bold mb-2 tracking-tight">FRIDAYGT</h1>
+        <p className="text-muted-foreground font-mono text-sm">
+          GT7 LAP TIME TRACKER / FRIDAY NIGHT RUN MANAGEMENT
+        </p>
+      </div>
+
+      {/* Status Card */}
+      {userRole === 'PENDING' && (
+        <Card className="border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20">
+          <CardHeader>
+            <CardTitle className="text-yellow-900 dark:text-yellow-100">Account Pending</CardTitle>
+            <CardDescription className="text-yellow-800 dark:text-yellow-200">
+              Your account is awaiting admin approval. You'll receive an email once approved.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
+      {/* Quick Stats */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-l-4 border-l-primary bg-card/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Tracks</CardTitle>
+            <Map className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold tabular-nums">118</div>
+            <p className="text-xs text-muted-foreground mt-1 font-mono">ALL GT7 CIRCUITS</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-accent bg-card/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Cars</CardTitle>
+            <Car className="h-5 w-5 text-accent" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold tabular-nums">552</div>
+            <p className="text-xs text-muted-foreground mt-1 font-mono">COMPLETE ROSTER</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-secondary bg-card/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Lap Times</CardTitle>
+            <Clock className="h-5 w-5 text-secondary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold tabular-nums">{lapTimeCount}</div>
+            <p className="text-xs text-muted-foreground mt-1 font-mono">RECORDED LAPS</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-chart-4 bg-card/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Run Lists</CardTitle>
+            <ListChecks className="h-5 w-5 text-chart-4" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold tabular-nums">0</div>
+            <p className="text-xs text-muted-foreground mt-1 font-mono">ACTIVE SESSIONS</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Link href="/tracks" className="group">
+          <Card className="h-full gt-card-shine transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/20 border-l-4 border-l-primary bg-card/50 backdrop-blur">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-primary/15 border border-primary/20">
+                  <Map className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg mb-1 uppercase tracking-tight group-hover:text-primary transition-colors">Tracks</h3>
+                  <p className="text-xs text-muted-foreground font-mono">BROWSE CIRCUITS</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/cars" className="group">
+          <Card className="h-full gt-card-shine transition-all hover:border-accent hover:shadow-lg hover:shadow-accent/20 border-l-4 border-l-accent bg-card/50 backdrop-blur">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-accent/15 border border-accent/20">
+                  <Car className="h-6 w-6 text-accent" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg mb-1 uppercase tracking-tight group-hover:text-accent transition-colors">Cars</h3>
+                  <p className="text-xs text-muted-foreground font-mono">VEHICLE DATABASE</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/lap-times" className="group">
+          <Card className="h-full gt-card-shine transition-all hover:border-secondary hover:shadow-lg hover:shadow-secondary/20 border-l-4 border-l-secondary bg-card/50 backdrop-blur">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-secondary/15 border border-secondary/20">
+                  <Clock className="h-6 w-6 text-secondary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg mb-1 uppercase tracking-tight group-hover:text-secondary transition-colors">Times</h3>
+                  <p className="text-xs text-muted-foreground font-mono">LAP RECORDS</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/run-lists" className="group">
+          <Card className="h-full gt-card-shine transition-all hover:border-chart-4 hover:shadow-lg hover:shadow-chart-4/20 border-l-4 border-l-chart-4 bg-card/50 backdrop-blur">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-chart-4/15 border border-chart-4/20">
+                  <ListChecks className="h-6 w-6 text-chart-4" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg mb-1 uppercase tracking-tight group-hover:text-chart-4 transition-colors">Sessions</h3>
+                  <p className="text-xs text-muted-foreground font-mono">RUN MANAGEMENT</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
     </div>
-  );
+  )
 }

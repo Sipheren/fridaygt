@@ -1,0 +1,473 @@
+{
+  "tuningCategories": {
+    "power": {
+      "name": "Power & Torque",
+      "settings": [
+        {
+          "id": "power-restrictor",
+          "name": "Power Restrictor",
+          "type": "slider",
+          "unit": "%",
+          "min": 70,
+          "max": 100,
+          "default": 100,
+          "step": 1,
+          "description": "Limits engine power output"
+        },
+        {
+          "id": "ecu-output",
+          "name": "ECU Output Adjustment",
+          "type": "slider",
+          "unit": "%",
+          "min": 70,
+          "max": 100,
+          "default": 100,
+          "step": 1,
+          "description": "Electronic control unit power adjustment"
+        },
+        {
+          "id": "nitrous-duration",
+          "name": "Nitrous Duration",
+          "type": "slider",
+          "unit": "sec",
+          "min": 1,
+          "max": 20,
+          "default": 5,
+          "step": 1,
+          "description": "Duration of nitrous oxide burst"
+        }
+      ]
+    },
+    "suspension": {
+      "name": "Suspension",
+      "settings": [
+        {
+          "id": "ride-height-front",
+          "name": "Ride Height (Front)",
+          "type": "slider",
+          "unit": "mm",
+          "min": -50,
+          "max": 50,
+          "default": 0,
+          "step": 1,
+          "description": "Front suspension ride height adjustment"
+        },
+        {
+          "id": "ride-height-rear",
+          "name": "Ride Height (Rear)",
+          "type": "slider",
+          "unit": "mm",
+          "min": -50,
+          "max": 50,
+          "default": 0,
+          "step": 1,
+          "description": "Rear suspension ride height adjustment"
+        },
+        {
+          "id": "spring-rate-front",
+          "name": "Natural Frequency (Front)",
+          "type": "slider",
+          "unit": "Hz",
+          "min": 1.0,
+          "max": 5.0,
+          "default": 2.5,
+          "step": 0.01,
+          "description": "Front spring stiffness"
+        },
+        {
+          "id": "spring-rate-rear",
+          "name": "Natural Frequency (Rear)",
+          "type": "slider",
+          "unit": "Hz",
+          "min": 1.0,
+          "max": 5.0,
+          "default": 2.5,
+          "step": 0.01,
+          "description": "Rear spring stiffness"
+        },
+        {
+          "id": "damper-compression-front",
+          "name": "Compression Damping (Front)",
+          "type": "slider",
+          "unit": "",
+          "min": 1,
+          "max": 10,
+          "default": 5,
+          "step": 1,
+          "description": "Front shock absorber compression damping"
+        },
+        {
+          "id": "damper-compression-rear",
+          "name": "Compression Damping (Rear)",
+          "type": "slider",
+          "unit": "",
+          "min": 1,
+          "max": 10,
+          "default": 5,
+          "step": 1,
+          "description": "Rear shock absorber compression damping"
+        },
+        {
+          "id": "damper-extension-front",
+          "name": "Extension Damping (Front)",
+          "type": "slider",
+          "unit": "",
+          "min": 1,
+          "max": 10,
+          "default": 5,
+          "step": 1,
+          "description": "Front shock absorber extension damping"
+        },
+        {
+          "id": "damper-extension-rear",
+          "name": "Extension Damping (Rear)",
+          "type": "slider",
+          "unit": "",
+          "min": 1,
+          "max": 10,
+          "default": 5,
+          "step": 1,
+          "description": "Rear shock absorber extension damping"
+        },
+        {
+          "id": "anti-roll-bar-front",
+          "name": "Anti-Roll Bar (Front)",
+          "type": "slider",
+          "unit": "",
+          "min": 1,
+          "max": 10,
+          "default": 5,
+          "step": 1,
+          "description": "Front anti-roll bar stiffness"
+        },
+        {
+          "id": "anti-roll-bar-rear",
+          "name": "Anti-Roll Bar (Rear)",
+          "type": "slider",
+          "unit": "",
+          "min": 1,
+          "max": 10,
+          "default": 5,
+          "step": 1,
+          "description": "Rear anti-roll bar stiffness"
+        },
+        {
+          "id": "camber-front",
+          "name": "Camber Angle (Front)",
+          "type": "slider",
+          "unit": "°",
+          "min": -5.0,
+          "max": 0.0,
+          "default": -1.0,
+          "step": 0.1,
+          "description": "Front wheel camber angle"
+        },
+        {
+          "id": "camber-rear",
+          "name": "Camber Angle (Rear)",
+          "type": "slider",
+          "unit": "°",
+          "min": -5.0,
+          "max": 0.0,
+          "default": -1.0,
+          "step": 0.1,
+          "description": "Rear wheel camber angle"
+        },
+        {
+          "id": "toe-front",
+          "name": "Toe Angle (Front)",
+          "type": "slider",
+          "unit": "°",
+          "min": -1.0,
+          "max": 1.0,
+          "default": 0.0,
+          "step": 0.05,
+          "description": "Front wheel toe angle"
+        },
+        {
+          "id": "toe-rear",
+          "name": "Toe Angle (Rear)",
+          "type": "slider",
+          "unit": "°",
+          "min": -1.0,
+          "max": 1.0,
+          "default": 0.0,
+          "step": 0.05,
+          "description": "Rear wheel toe angle"
+        }
+      ]
+    },
+    "lsd": {
+      "name": "Limited Slip Differential",
+      "settings": [
+        {
+          "id": "lsd-initial-torque-front",
+          "name": "Initial Torque (Front)",
+          "type": "slider",
+          "unit": "kgfm",
+          "min": 5,
+          "max": 60,
+          "default": 10,
+          "step": 1,
+          "description": "Front LSD preload torque"
+        },
+        {
+          "id": "lsd-acceleration-front",
+          "name": "Acceleration Sensitivity (Front)",
+          "type": "slider",
+          "unit": "",
+          "min": 5,
+          "max": 60,
+          "default": 30,
+          "step": 1,
+          "description": "Front LSD locking under acceleration"
+        },
+        {
+          "id": "lsd-deceleration-front",
+          "name": "Braking Sensitivity (Front)",
+          "type": "slider",
+          "unit": "",
+          "min": 5,
+          "max": 60,
+          "default": 20,
+          "step": 1,
+          "description": "Front LSD locking under braking"
+        },
+        {
+          "id": "lsd-initial-torque-rear",
+          "name": "Initial Torque (Rear)",
+          "type": "slider",
+          "unit": "kgfm",
+          "min": 5,
+          "max": 60,
+          "default": 10,
+          "step": 1,
+          "description": "Rear LSD preload torque"
+        },
+        {
+          "id": "lsd-acceleration-rear",
+          "name": "Acceleration Sensitivity (Rear)",
+          "type": "slider",
+          "unit": "",
+          "min": 5,
+          "max": 60,
+          "default": 40,
+          "step": 1,
+          "description": "Rear LSD locking under acceleration"
+        },
+        {
+          "id": "lsd-deceleration-rear",
+          "name": "Braking Sensitivity (Rear)",
+          "type": "slider",
+          "unit": "",
+          "min": 5,
+          "max": 60,
+          "default": 30,
+          "step": 1,
+          "description": "Rear LSD locking under braking"
+        }
+      ]
+    },
+    "transmission": {
+      "name": "Transmission & Gearing",
+      "settings": [
+        {
+          "id": "final-gear",
+          "name": "Final Gear Ratio",
+          "type": "slider",
+          "unit": "",
+          "min": 2.000,
+          "max": 5.000,
+          "default": 3.500,
+          "step": 0.001,
+          "description": "Final drive gear ratio"
+        },
+        {
+          "id": "top-speed",
+          "name": "Top Speed",
+          "type": "slider",
+          "unit": "km/h",
+          "min": 100,
+          "max": 400,
+          "default": 250,
+          "step": 1,
+          "description": "Maximum speed adjustment (affects all gear ratios)"
+        },
+        {
+          "id": "gear-1",
+          "name": "1st Gear",
+          "type": "slider",
+          "unit": "",
+          "min": 1.500,
+          "max": 6.000,
+          "default": 3.500,
+          "step": 0.001,
+          "description": "1st gear ratio"
+        },
+        {
+          "id": "gear-2",
+          "name": "2nd Gear",
+          "type": "slider",
+          "unit": "",
+          "min": 1.000,
+          "max": 4.000,
+          "default": 2.500,
+          "step": 0.001,
+          "description": "2nd gear ratio"
+        },
+        {
+          "id": "gear-3",
+          "name": "3rd Gear",
+          "type": "slider",
+          "unit": "",
+          "min": 0.800,
+          "max": 3.000,
+          "default": 2.000,
+          "step": 0.001,
+          "description": "3rd gear ratio"
+        },
+        {
+          "id": "gear-4",
+          "name": "4th Gear",
+          "type": "slider",
+          "unit": "",
+          "min": 0.600,
+          "max": 2.500,
+          "default": 1.500,
+          "step": 0.001,
+          "description": "4th gear ratio"
+        },
+        {
+          "id": "gear-5",
+          "name": "5th Gear",
+          "type": "slider",
+          "unit": "",
+          "min": 0.500,
+          "max": 2.000,
+          "default": 1.200,
+          "step": 0.001,
+          "description": "5th gear ratio"
+        },
+        {
+          "id": "gear-6",
+          "name": "6th Gear",
+          "type": "slider",
+          "unit": "",
+          "min": 0.400,
+          "max": 1.800,
+          "default": 1.000,
+          "step": 0.001,
+          "description": "6th gear ratio"
+        },
+        {
+          "id": "gear-7",
+          "name": "7th Gear",
+          "type": "slider",
+          "unit": "",
+          "min": 0.300,
+          "max": 1.600,
+          "default": 0.850,
+          "step": 0.001,
+          "description": "7th gear ratio"
+        },
+        {
+          "id": "gear-8",
+          "name": "8th Gear",
+          "type": "slider",
+          "unit": "",
+          "min": 0.200,
+          "max": 1.400,
+          "default": 0.700,
+          "step": 0.001,
+          "description": "8th gear ratio"
+        }
+      ]
+    },
+    "downforce": {
+      "name": "Aerodynamics & Downforce",
+      "settings": [
+        {
+          "id": "downforce-front",
+          "name": "Front Downforce",
+          "type": "slider",
+          "unit": "",
+          "min": 0,
+          "max": 500,
+          "default": 100,
+          "step": 5,
+          "description": "Front wing downforce level"
+        },
+        {
+          "id": "downforce-rear",
+          "name": "Rear Downforce",
+          "type": "slider",
+          "unit": "",
+          "min": 0,
+          "max": 500,
+          "default": 150,
+          "step": 5,
+          "description": "Rear wing downforce level"
+        }
+      ]
+    },
+    "brakes": {
+      "name": "Brake Balance",
+      "settings": [
+        {
+          "id": "brake-balance",
+          "name": "Brake Balance Controller",
+          "type": "slider",
+          "unit": "",
+          "min": -5,
+          "max": 5,
+          "default": 0,
+          "step": 1,
+          "description": "Front/rear brake force distribution (-5 = more rear, +5 = more front)"
+        }
+      ]
+    },
+    "ballast": {
+      "name": "Ballast & Weight Distribution",
+      "settings": [
+        {
+          "id": "ballast-weight",
+          "name": "Ballast Weight",
+          "type": "slider",
+          "unit": "kg",
+          "min": 0,
+          "max": 200,
+          "default": 0,
+          "step": 1,
+          "description": "Additional weight to add"
+        },
+        {
+          "id": "ballast-position",
+          "name": "Ballast Position",
+          "type": "slider",
+          "unit": "",
+          "min": -50,
+          "max": 50,
+          "default": 0,
+          "step": 1,
+          "description": "Fore/aft ballast placement (-50 = front, +50 = rear)"
+        }
+      ]
+    },
+    "torque": {
+      "name": "Torque Distribution (AWD)",
+      "settings": [
+        {
+          "id": "torque-distribution",
+          "name": "Front/Rear Torque Distribution",
+          "type": "slider",
+          "unit": "",
+          "min": 0,
+          "max": 100,
+          "default": 50,
+          "step": 1,
+          "description": "Power distribution between front and rear (0 = all front, 100 = all rear)"
+        }
+      ]
+    }
+  }
+}
