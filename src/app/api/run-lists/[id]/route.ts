@@ -19,6 +19,8 @@ export async function GET(
         name,
         description,
         isPublic,
+        isActive,
+        isLive,
         createdAt,
         updatedAt,
         createdBy:User!createdById(id, name, email),
@@ -87,7 +89,7 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { name, description, isPublic } = body
+    const { name, description, isPublic, isActive, isLive } = body
 
     const supabase = createServiceRoleClient()
 
@@ -116,6 +118,23 @@ export async function PATCH(
       )
     }
 
+    // If setting this run list to active, deactivate all other run lists for this user
+    if (isActive === true) {
+      await supabase
+        .from('RunList')
+        .update({ isActive: false })
+        .eq('createdById', userData.id)
+        .neq('id', id)
+    }
+
+    // If setting this run list to live, un-live all other run lists globally
+    if (isLive === true) {
+      await supabase
+        .from('RunList')
+        .update({ isLive: false })
+        .neq('id', id)
+    }
+
     // Update run list
     const updates: any = {
       updatedAt: new Date().toISOString()
@@ -124,6 +143,8 @@ export async function PATCH(
     if (name !== undefined) updates.name = name.trim()
     if (description !== undefined) updates.description = description?.trim() || null
     if (isPublic !== undefined) updates.isPublic = isPublic
+    if (isActive !== undefined) updates.isActive = isActive
+    if (isLive !== undefined) updates.isLive = isLive
 
     const { data: runList, error } = await supabase
       .from('RunList')
@@ -134,6 +155,8 @@ export async function PATCH(
         name,
         description,
         isPublic,
+        isActive,
+        isLive,
         createdAt,
         updatedAt,
         createdBy:User!createdById(id, name, email)

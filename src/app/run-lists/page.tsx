@@ -6,14 +6,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Globe, Lock, User, Calendar, List } from 'lucide-react'
+import { Plus, Search, Globe, Lock, User, Calendar, List, Radio } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 
 interface RunList {
   id: string
   name: string
   description: string | null
   isPublic: boolean
+  isActive: boolean
   createdAt: string
   updatedAt: string
   createdBy: {
@@ -86,6 +89,24 @@ export default function RunListsPage() {
       list.createdBy.name.toLowerCase().includes(query)
     )
     setFilteredRunLists(filtered)
+  }
+
+  const toggleActive = async (id: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch(`/api/run-lists/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !currentStatus }),
+      })
+
+      if (!res.ok) throw new Error('Failed to toggle active status')
+
+      // Refresh the list
+      fetchRunLists()
+    } catch (error) {
+      console.error('Error toggling active status:', error)
+      alert('Failed to update active status')
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -181,10 +202,29 @@ export default function RunListsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2 text-sm text-muted-foreground">
+                  <div className="space-y-3 text-sm text-muted-foreground">
+                    <div
+                      className="flex items-center justify-between gap-2 pb-3 border-b"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Radio className={`h-4 w-4 ${runList.isActive ? 'text-secondary animate-pulse' : ''}`} />
+                        <Label
+                          htmlFor={`active-${runList.id}`}
+                          className={`cursor-pointer ${runList.isActive ? 'text-secondary font-semibold' : ''}`}
+                        >
+                          {runList.isActive ? 'Active Run List' : 'Set as Active'}
+                        </Label>
+                      </div>
+                      <Switch
+                        id={`active-${runList.id}`}
+                        checked={runList.isActive}
+                        onCheckedChange={() => toggleActive(runList.id, runList.isActive)}
+                      />
+                    </div>
                     <div className="flex items-center gap-2">
                       <List className="h-4 w-4" />
-                      <span>{runList.entries?.length || 0} entries</span>
+                      <span>{runList.entries?.length || 0} races</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4" />

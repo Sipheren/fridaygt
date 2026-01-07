@@ -20,7 +20,8 @@ import {
   Wrench,
   Globe,
   Lock,
-  User
+  User,
+  List
 } from 'lucide-react'
 import Link from 'next/link'
 import { LoadingSection } from '@/components/ui/loading'
@@ -106,6 +107,25 @@ interface Build {
   }
 }
 
+interface RunList {
+  id: string
+  name: string
+  description: string | null
+  isPublic: boolean
+  createdAt: string
+  createdBy: {
+    id: string
+    name: string | null
+    email: string
+  }
+  entries: Array<{
+    id: string
+    order: number
+    carId: string | null
+    trackId: string
+  }>
+}
+
 export default function ComboDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -116,6 +136,7 @@ export default function ComboDetailPage() {
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [recentActivity, setRecentActivity] = useState<LapTime[]>([])
   const [builds, setBuilds] = useState<Build[]>([])
+  const [runLists, setRunLists] = useState<RunList[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -137,9 +158,10 @@ export default function ComboDetailPage() {
         setStatistics(data.statistics || null)
         setRecentActivity(data.recentActivity || [])
 
-        // Fetch builds for this combo
+        // Fetch builds and run lists for this combo
         if (data.car && data.track) {
           fetchBuildsForCombo(data.car.id, data.track.id)
+          fetchRunListsForCombo(data.car.id, data.track.id)
         }
       }
     } catch (error) {
@@ -198,6 +220,30 @@ export default function ComboDetailPage() {
       setBuilds(buildsData)
     } catch (error) {
       console.error('Error fetching builds for combo:', error)
+    }
+  }
+
+  const fetchRunListsForCombo = async (carId: string, trackId: string) => {
+    try {
+      // Fetch all public run lists and user's own run lists
+      const response = await fetch('/api/run-lists')
+      const data = await response.json()
+
+      if (!data.runLists) {
+        return
+      }
+
+      // Filter run lists to only those that include this combo
+      const matchingRunLists = data.runLists.filter((runList: RunList) => {
+        return runList.entries.some(entry => {
+          // Match if track matches and (car matches or car is null/open choice)
+          return entry.trackId === trackId && (entry.carId === carId || entry.carId === null)
+        })
+      })
+
+      setRunLists(matchingRunLists)
+    } catch (error) {
+      console.error('Error fetching run lists for combo:', error)
     }
   }
 
@@ -602,16 +648,83 @@ export default function ComboDetailPage() {
         </Card>
       )}
 
-      {/* Placeholder for Future Features */}
+      {/* Run Lists & Builds */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">RUN LISTS</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <List className="h-4 w-4" />
+              RUN LISTS
+            </CardTitle>
+            {runLists.length > 0 && (
+              <CardDescription>
+                {runLists.length} {runLists.length === 1 ? 'list' : 'lists'} featuring this combo
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Run lists featuring this combo will appear here
-            </p>
+            {runLists.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                This combo hasn't been added to any run lists yet
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {runLists.slice(0, 3).map((runList) => (
+                  <Link
+                    key={runList.id}
+                    href={`/run-lists/${runList.id}`}
+                    className="block p-3 border border-border rounded hover:border-primary/50 transition-colors group"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">
+                        {runList.name}
+                      </h4>
+                      <Badge
+                        variant={runList.isPublic ? 'default' : 'outline'}
+                        className="text-xs shrink-0"
+                      >
+                        {runList.isPublic ? (
+                          <>
+                            <Globe className="h-2 w-2 mr-1" />
+                            Public
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="h-2 w-2 mr-1" />
+                            Private
+                          </>
+                        )}
+                      </Badge>
+                    </div>
+                    {runList.description && (
+                      <p className="text-xs text-muted-foreground mb-2 line-clamp-1">
+                        {runList.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        <span>{runList.createdBy.name || runList.createdBy.email.split('@')[0]}</span>
+                      </div>
+                      <span>•</span>
+                      <span>{runList.entries.length} {runList.entries.length === 1 ? 'entry' : 'entries'}</span>
+                      <span>•</span>
+                      <span>{formatDate(runList.createdAt)}</span>
+                    </div>
+                  </Link>
+                ))}
+                {runLists.length > 3 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => router.push('/run-lists')}
+                  >
+                    View All {runLists.length} Lists
+                  </Button>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 

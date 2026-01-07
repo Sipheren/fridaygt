@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
+import Image from "next/image"
 import { Clock, Car, Map, ListChecks } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 
@@ -37,8 +38,16 @@ export default async function Home() {
   return (
     <div className="space-y-8 max-w-[1400px] mx-auto">
       {/* Welcome Section */}
-      <div>
-        <h1 className="text-4xl font-bold mb-2 tracking-tight">FRIDAYGT</h1>
+      <div className="flex flex-col items-start gap-3">
+        <Image
+          src="/logo-fgt.png"
+          alt="FridayGT"
+          width={600}
+          height={196}
+          className="h-16 w-auto"
+          priority
+          unoptimized
+        />
         <p className="text-muted-foreground font-mono text-sm">
           GT7 LAP TIME TRACKER / FRIDAY NIGHT RUN MANAGEMENT
         </p>
