@@ -50,7 +50,7 @@ export function LapTimeForm() {
   // Form state
   const [trackId, setTrackId] = useState('')
   const [carId, setCarId] = useState('')
-  const [buildId, setBuildId] = useState<string>('')
+  const [buildId, setBuildId] = useState<string>('none')
   const [timeInput, setTimeInput] = useState('')
   const [notes, setNotes] = useState('')
   const [conditions, setConditions] = useState('')
@@ -155,7 +155,7 @@ export function LapTimeForm() {
         body: JSON.stringify({
           trackId,
           carId,
-          buildId: buildId || null,
+          buildId: buildId && buildId !== 'none' ? buildId : null,
           timeMs,
           notes: notes || null,
           conditions: conditions && conditions !== 'not-specified' ? conditions : null,
@@ -235,7 +235,7 @@ export function LapTimeForm() {
               <SelectValue placeholder="No build / Stock" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No build / Stock</SelectItem>
+              <SelectItem value="none">No build / Stock</SelectItem>
               {builds.map((build) => (
                 <SelectItem key={build.id} value={build.id}>
                   {build.name}

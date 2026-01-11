@@ -63,7 +63,7 @@ export function LapTimeEditForm({ lapTime }: LapTimeEditFormProps) {
   const [timeInput, setTimeInput] = useState(formatLapTime(lapTime.timeMs))
   const [notes, setNotes] = useState(lapTime.notes || '')
   const [conditions, setConditions] = useState(lapTime.conditions || 'not-specified')
-  const [buildId, setBuildId] = useState<string>(lapTime.buildId || '')
+  const [buildId, setBuildId] = useState<string>(lapTime.buildId || 'none')
 
   // Parse time input once to avoid calling parseLapTime multiple times in render
   const parsedTimeMs = parseLapTime(timeInput)
@@ -108,7 +108,7 @@ export function LapTimeEditForm({ lapTime }: LapTimeEditFormProps) {
           timeMs: parsedTimeMs,
           notes: notes || null,
           conditions: conditions && conditions !== 'not-specified' ? conditions : null,
-          buildId: buildId || null,
+          buildId: buildId && buildId !== 'none' ? buildId : null,
         }),
       })
 
@@ -184,7 +184,7 @@ export function LapTimeEditForm({ lapTime }: LapTimeEditFormProps) {
               <SelectValue placeholder="No build / Stock" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No build / Stock</SelectItem>
+              <SelectItem value="none">No build / Stock</SelectItem>
               {builds.map((build) => (
                 <SelectItem key={build.id} value={build.id}>
                   {build.name}
