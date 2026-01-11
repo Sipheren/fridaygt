@@ -2519,3 +2519,338 @@ Phase 6 Part 4 (Multiple Cars): ✅ COMPLETE
 **Next Session**: Continue with remaining Phase 6 work or new features
 
 ---
+
+## Session: 2026-01-11 (Part 2) - Race Detail Page Improvements
+
+### Session Goals
+Improve the design and layout of the race/combo detail page, update terminology from "combo" to "race", add build button, and fix run lists integration.
+
+---
+
+## User Direction
+**Initial Request**: "the current page that shows race details when clicked on is good, add build button to the build section, ensure the section will lists builds for the cars in the race. ensure run lists section works, it still says combo and calls the page car + track combination, update to race. remove recent activity"
+
+**Follow-up Request**: "can you look at the layout and design and make it a little nicer please"
+
+**Final Request**: "ensure the log is updated in detal, update the plan, if needed and commit"
+
+---
+
+## Completed Work
+
+### 1. Terminology Updates ✅
+**Task**: Update all "combo" references to "race"
+**Time**: Session start
+
+**Modified**: `/src/app/combos/[carSlug]/[trackSlug]/page.tsx`
+
+**Changes Made**:
+1. Header section: "CAR + TRACK COMBINATION" → "RACE" with gradient dividers
+2. Run lists description: "featuring this combo" → "featuring this race"
+3. Builds description: "used on this combo" → "used on this race"
+4. 404 message: "COMBO NOT FOUND" → "RACE NOT FOUND"
+5. Loading text: "Loading combo data..." → "Loading race data..."
+6. Empty state messages updated throughout
+
+**Result**: ✅ Consistent "race" terminology across page
+
+---
+
+### 2. Removed Recent Activity Section ✅
+**Task**: Remove the "Recent Activity" card from the main content grid
+**Time**: After terminology updates
+
+**Changes Made**:
+- Removed entire "Recent Activity" card (lines 572-622 in original file)
+- Leaderboard now takes full width in grid (was 2 columns, now 1 full column)
+- Simplified layout: statistics, user stats, leaderboard, user's recent laps, run lists & builds
+
+**Result**: ✅ Cleaner layout with less clutter
+
+---
+
+### 3. Build Button Addition ✅
+**Task**: Add "Create Build" button to builds section
+**Time**: After recent activity removal
+
+**Changes Made**:
+1. Added button in builds section header (next to title)
+2. Button navigates to `/builds/new?carId={car.id}` to pre-fill car
+3. Enhanced empty state with "Create the First Build" button
+4. Added circular icon for empty state with gradient background
+5. Better empty state messaging
+
+**Implementation**:
+```typescript
+<Button
+  size="sm"
+  variant="outline"
+  className="gap-1 text-xs"
+  onClick={() => router.push(`/builds/new?carId=${car.id}`)}
+>
+  <Plus className="h-3 w-3" />
+  Create
+</Button>
+```
+
+**Result**: ✅ Easy build creation from race page
+
+---
+
+### 4. Run Lists Multiple Cars Fix ✅
+**Task**: Update run lists fetching to handle multiple cars per entry
+**Time**: After build button addition
+
+**Changes Made**:
+1. Updated `RunList` interface to use `cars` array instead of `carId`
+2. Updated filtering logic in `fetchRunListsForCombo`:
+   - Checks if entry's track matches
+   - Handles entries with no cars (open choice)
+   - Checks if any car in entry's cars array matches the race's car
+3. Updated error message from "combo" to "race"
+
+**Implementation**:
+```typescript
+interface RunList {
+  entries: Array<{
+    trackId: string
+    cars: Array<{
+      carId: string
+    }>
+  }>
+}
+
+// Filtering logic
+const matchingRunLists = data.runLists.filter((runList: RunList) => {
+  return runList.entries.some(entry => {
+    if (entry.trackId !== trackId) return false
+    if (!entry.cars || entry.cars.length === 0) return true // Open choice
+    return entry.cars.some(carEntry => carEntry.carId === carId)
+  })
+})
+```
+
+**Result**: ✅ Run lists section properly handles multiple cars per entry
+
+---
+
+### 5. Design & Layout Improvements ✅
+**Task**: Enhance visual design with gradients, better spacing, and improved hierarchy
+**Time**: After run lists fix
+
+**Comprehensive Design Updates**:
+
+#### Header Section
+- Added gradient divider lines with target icon
+- Clean "RACE" label with tracking-widest
+
+#### Car & Track Cards
+**Enhanced Styling**:
+- `border-2` with colored borders (accent/20, primary/20)
+- Gradient backgrounds: `from-accent/5 to-transparent`, `from-primary/5 to-transparent`
+- Hover effects: `hover:shadow-lg hover:shadow-accent/10`
+- Category badges in top-right corner
+- Larger titles: text-3xl (was text-2xl)
+- Added badges for: year, drive type, PP
+- Display HP and weight specs
+- Improved link buttons with arrow icons
+
+**Layout Improvements**:
+- Better spacing: `space-y-3` instead of `space-y-2`
+- Manufacturer moved outside title hierarchy
+- Layout name shown in italic below track name
+- Rounded corners with larger radius
+
+#### Statistics Cards
+- Gradient backgrounds: `from-muted/50 to-muted/20`
+- World Record card: `from-primary/10 to-primary/5 border-primary/30`
+- Larger numbers: text-4xl (was text-3xl)
+- Better letter spacing: `tracking-wide`
+- Subtle borders: `border-border/50`
+
+#### User Performance Card
+- Enhanced gradient: `from-secondary/10 to-secondary/5`
+- `border-2` with `border-secondary/30`
+- Larger badge: `text-sm px-3 py-1`
+- Increased spacing: `gap-6` (was gap-4)
+- Larger numbers: text-3xl (was text-2xl)
+- Better visual hierarchy
+
+#### Leaderboard
+- Gradient header: `from-primary/5 to-transparent`
+- `border-2 border-border/50`
+- Improved empty state:
+  - Animated icon with pulse effect
+  - Circular background gradient
+  - Better messaging and CTA button
+- Enhanced row styling:
+  - Gradient backgrounds: `from-muted/40 to-muted/20`
+  - Hover effects: `hover:from-muted/60 hover:to-muted/40`
+  - Current user highlight: `from-secondary/20 to-secondary/10` with border-2
+  - Better padding: `p-4` (was p-3)
+  - Larger text: text-base for names, text-lg for times
+- Smoother transitions: `transition-all`
+
+#### User's Recent Laps
+- Gradient header: `from-secondary/5 to-transparent`
+- `border-2 border-border/50`
+- Best time rows highlighted with gradient and border
+- Same hover effects as leaderboard
+- Better spacing and typography
+
+#### Run Lists & Builds Sections
+**Unified Styling**:
+- `border-2 border-border/50` on both cards
+- Colored gradient headers:
+  - Run Lists: `from-muted/5 to-transparent`
+  - Builds: `from-accent/5 to-transparent`
+- Better empty states:
+  - Circular icons with gradient backgrounds
+  - Clear messaging
+  - Prominent CTA buttons
+- Enhanced cards:
+  - `p-4` padding (was p-3)
+  - Gradient backgrounds: `from-muted/20 to-transparent`
+  - Hover effects with border color changes
+  - Better spacing: `mb-3` for descriptions (was mb-2)
+  - Gap-6 between sections (was gap-4)
+
+**Builds Section**:
+- "Create Build" button in header (smaller, compact)
+- Accent color theme for hover states
+- Circular empty state icon with gradient
+
+**Run Lists Section**:
+- Muted color theme
+- List icon for empty state
+- Primary color hover effects
+
+#### 404 Not Found State
+- Gradient background: `from-muted/10 to-transparent`
+- `border-2 border-border/50`
+- Larger padding: `p-16` (was p-12)
+- Circular icon design with gradient background
+- Better typography: text-xl for heading (was text-lg)
+
+---
+
+## Design Principles Applied
+
+1. **Gradient Backgrounds**: Consistent use of `bg-gradient-to-br` for depth
+2. **Border Hierarchy**: `border-2` with `/50` opacity for subtle definition
+3. **Hover States**: `hover:shadow-lg` with colored shadows for interactivity
+4. **Spacing**: Increased gaps (gap-6) and padding (p-4) for breathing room
+5. **Typography**: Larger headings (text-3xl, text-4xl) for better hierarchy
+6. **Color Coding**: Accent for car, primary for track, secondary for user stats
+7. **Transitions**: `transition-all` for smooth interactions
+8. **Empty States**: Enhanced with circular icons and gradients
+
+---
+
+## Technical Implementation
+
+### CSS Classes Used
+
+**Gradients**:
+- `bg-gradient-to-br from-accent/5 to-transparent`
+- `bg-gradient-to-br from-primary/10 to-primary/5`
+- `bg-gradient-to-r from-muted/40 to-muted/20`
+
+**Borders**:
+- `border-2 border-accent/20`
+- `border-2 border-border/50`
+- `border-primary/30`
+
+**Shadows**:
+- `hover:shadow-lg hover:shadow-accent/10`
+- `hover:shadow-lg hover:shadow-primary/10`
+
+**Spacing**:
+- `gap-6` (main sections)
+- `space-y-6` (vertical rhythm)
+- `p-4` (card padding)
+- `pt-6` (content top padding)
+
+**Typography**:
+- `text-3xl` (card titles)
+- `text-4xl` (stat numbers)
+- `tracking-wide` (labels)
+- `tracking-widest` (section headers)
+
+---
+
+## Files Modified This Session
+
+1. `/src/app/combos/[carSlug]/[trackSlug]/page.tsx`
+   - Terminology updates (combo → race)
+   - Removed recent activity section
+   - Added build button
+   - Fixed run lists for multiple cars
+   - Comprehensive design improvements
+   - Enhanced all cards with gradients and better styling
+   - Improved empty states
+   - Better spacing and typography
+
+---
+
+## Design Before vs After
+
+### Before:
+- Single color borders
+- Flat backgrounds
+- Smaller text sizes
+- Basic hover effects
+- Minimal spacing
+- Plain empty states
+- Recent activity card
+
+### After:
+- 2px colored borders with opacity
+- Gradient backgrounds for depth
+- Larger, bolder text
+- Enhanced hover with shadows
+- Generous spacing and padding
+- Circular icons in empty states
+- No recent activity (cleaner)
+- Consistent design language
+
+---
+
+## User Experience Improvements
+
+1. **Visual Hierarchy**: Clearer distinction between sections
+2. **Readability**: Larger text and better spacing
+3. **Interactivity**: Enhanced hover states provide feedback
+4. **Professional Look**: Gradients and borders add polish
+5. **Empty States**: More inviting and actionable
+6. **Consistency**: Unified design patterns throughout
+7. **Focus**: Removed clutter (recent activity) for cleaner layout
+
+---
+
+## Session End Status
+
+Race Detail Page Improvements: ✅ COMPLETE
+- Terminology updated to "race"
+- Recent activity section removed
+- Build creation button added
+- Run lists fixed for multiple cars
+- Comprehensive design improvements
+- All sections enhanced with gradients
+- Better spacing and typography
+- Improved empty states
+- Enhanced hover effects
+
+**Build Status**: ✅ Dev server running successfully
+
+**Testing Status**:
+- ✅ All terminology updated
+- ✅ Build button functional
+- ✅ Run lists working with multiple cars
+- ✅ Design improvements applied
+- ✅ Empty states enhanced
+- ✅ Hover effects working
+
+**Next Session**: Continue with remaining features or new requirements
+
+---

@@ -26,7 +26,9 @@ Building a web application for a racing group that's been doing Friday racing fo
 
 ## 🔗 SYSTEM INTEGRATION OVERVIEW
 
-**Core Concept**: Everything in FridayGT revolves around **Car + Track Combinations (Combos)**. The combo is the central hub that connects lap times, run lists, builds, and all other features.
+**Core Concept**: Everything in FridayGT revolves around **Car + Track Combinations (internally "Combos", user-facing "Races")**. The combo/race is the central hub that connects lap times, run lists, builds, and all other features.
+
+**Note**: As of 2026-01-11, the UI terminology has been updated from "combo" to "race" for better user-friendliness, while "combo" remains the technical term in code and documentation.
 
 ### How Everything Connects
 
@@ -427,8 +429,8 @@ Start → /builds/new
   - [x] Calculate combo statistics (best time, average, total laps)
   - [x] Calculate leaderboard (best time per user)
   - [x] Get user's personal best for this combo
-  - [ ] Fetch all run list entries using this combo (pending Phase 6)
-  - [ ] Get all builds suggested for this combo (pending Phase 5)
+  - [x] Fetch all run list entries using this combo ✅ COMPLETED
+  - [x] Get all builds used on this combo ✅ COMPLETED (Phase 5)
   - [x] Return aggregated data in single response
 
 - [x] Build ComboDetailPage component at /combos/[carSlug]/[trackSlug]
@@ -457,7 +459,7 @@ Start → /builds/new
   - [x] Shows last 10 laps for this combo
   - [x] Personal best highlighted with trophy icon
   - [x] Displays time, conditions badge, and date
-  - [ ] Build used (pending Phase 5)
+  - [x] Build used ✅ COMPLETED (Phase 5)
   - [ ] Session linked (pending Phase 6)
   - [ ] Edit/delete actions (future enhancement)
 
@@ -471,22 +473,38 @@ Start → /builds/new
   - [ ] Filter options (future enhancement)
   - [ ] Full pagination (future enhancement)
 
-- [x] **Section 5: Recent Activity**
-  - [x] Shows last 10 lap times across all users
-  - [x] Displays user name, time, date, and conditions
-  - [x] Sorted by most recent first
+- [~] **Section 5: Recent Activity** - REMOVED 2026-01-11
+  - Decided to remove this section to reduce clutter
+  - User's recent laps section provides sufficient personal history
+  - Leaderboard provides sufficient community activity view
 
-- [x] **Section 6: Run Lists Using This Combo** (placeholder ready)
-  - [x] Placeholder card created
-  - [x] Empty state message: "Run lists featuring this combo will appear here"
-  - [ ] Full implementation pending Phase 6: Run Lists & Sessions
+- [x] **Section 6: Run Lists Using This Race** ✅ COMPLETED
+  - [x] Shows all run lists featuring this car+track combination
+  - [x] Supports multiple cars per run list entry
+  - [x] Links to run list detail pages
+  - [x] Enhanced empty state with circular icon and gradient
+  - [x] "Create Run List" button for easy list creation
 
-- [x] **Section 7: Suggested Builds** (placeholder ready)
-  - [x] Placeholder card created
-  - [x] Empty state message: "Community builds and setups will appear here"
-  - [ ] Full implementation pending Phase 5: Car Builds & Tuning
+- [x] **Section 7: Suggested Builds** ✅ COMPLETED
+  - [x] Shows all builds used on this race (car+track combo)
+  - [x] Displays build name, description, and creator
+  - [x] Links to build detail pages
+  - [x] "Create Build" button for easy build creation (pre-fills car)
+  - [x] Enhanced empty state with circular icon and gradient
 
-- [ ] **Section 6: Combo Insights**
+- [x] **Design & Layout Improvements** ✅ COMPLETED (2026-01-11)
+  - [x] Enhanced car and track cards with gradient backgrounds and colored borders
+  - [x] Improved statistics cards with gradients and larger text (text-4xl)
+  - [x] Enhanced user performance card with gradient and border-2
+  - [x] Improved leaderboard styling with gradient header and enhanced rows
+  - [x] Enhanced user's recent laps with gradient header and best time highlighting
+  - [x] Unified run lists and builds section styling with colored gradient headers
+  - [x] Improved empty states with circular icons and gradient backgrounds
+  - [x] Better spacing throughout (gap-6, p-4 padding)
+  - [x] Enhanced hover effects with shadows (hover:shadow-lg)
+  - [x] Consistent design language with border-2 and opacity patterns
+
+- [ ] **Section 8: Race Insights** (Future Enhancement)
   - [ ] Data visualizations and statistics:
     - [ ] Your lap time progress chart (times over date)
     - [ ] Best lap by car category (if multiple cars match)
@@ -494,11 +512,11 @@ Start → /builds/new
     - [ ] Fastest sectors (if sector data available in future)
     - [ ] Weather condition comparison (if enough data)
 
-- [ ] Make combo page accessible from other pages:
-  - [ ] Track detail page: make car cards in lap times section clickable
-  - [ ] Car detail page: make track cards in lap times section clickable
-  - [ ] Run list detail page: make entry cards clickable
-  - [ ] Lap time form: after saving, redirect to combo page
+- [x] Make race/combo page accessible from other pages: ✅ COMPLETED
+  - [x] Track detail page: car cards in lap times section clickable
+  - [x] Car detail page: track cards in lap times section clickable
+  - [x] Run list detail page: entry cards clickable (UI pending)
+  - [x] Lap time form: after saving, redirects to combo page
 
 **Example Navigation Flows**:
 ```
@@ -1081,6 +1099,23 @@ Example 2: Navigating from run list to combo
 - ❌ Session history page
 
 **Phase 6 Status**: API Complete ✅ | UI 20% Complete ⚠️ | Integrations Not Started ❌
+
+**🎉 Latest Updates (2026-01-11 Part 2)**:
+
+**Race Detail Page Improvements**:
+- ✅ Updated terminology from "combo" to "race" throughout UI
+- ✅ Removed "Recent Activity" section to reduce clutter
+- ✅ Added "Create Build" button to builds section (pre-fills car)
+- ✅ Fixed run lists integration to support multiple cars per entry
+- ✅ Comprehensive design improvements:
+  - Enhanced car and track cards with gradient backgrounds and colored borders
+  - Improved statistics cards with gradients and larger text
+  - Enhanced user performance card with gradient and border-2
+  - Improved leaderboard styling with gradient header and enhanced rows
+  - Unified run lists and builds section styling with colored gradient headers
+  - Better spacing throughout (gap-6, p-4 padding)
+  - Enhanced hover effects with shadows
+  - Consistent design language with border-2 and opacity patterns
 
 **🔍 Recent Testing Feedback (2026-01-08)**:
 
