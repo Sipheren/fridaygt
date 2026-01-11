@@ -139,6 +139,8 @@ export default function RunListsPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
+              id="run-list-search"
+              name="run-list-search"
               type="text"
               placeholder="Search run lists..."
               value={searchQuery}

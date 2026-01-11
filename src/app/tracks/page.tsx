@@ -133,6 +133,8 @@ export default function TracksPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
+            id="track-search"
+            name="track-search"
             placeholder="Search tracks or locations..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}

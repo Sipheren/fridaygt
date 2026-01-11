@@ -121,6 +121,8 @@ export default function BuildsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
+            id="build-search"
+            name="build-search"
             placeholder="Search builds, cars, or creators..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}

@@ -172,6 +172,8 @@ export default function CarsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
+            id="car-search"
+            name="car-search"
             placeholder="Search cars or manufacturers..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
