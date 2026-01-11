@@ -177,88 +177,90 @@ export default function LapTimesPage() {
             const isPersonalBest = lap.timeMs === personalBest
 
             return (
-              <div
+              <Button
                 key={lap.id}
-                className="border border-border rounded-lg p-4 hover:border-primary/30 transition-colors"
+                variant="ghost"
+                asChild
+                className="w-full h-auto p-4 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-2">
-                    {/* Track & Car */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link
-                        href={`/tracks/${lap.track.slug}`}
-                        className="font-semibold hover:text-primary transition-colors"
+                <Link href={`/lap-times/${lap.id}/edit`}>
+                  <div className="flex items-start justify-between gap-4 w-full">
+                    <div className="flex-1 space-y-2">
+                      {/* Track & Car */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold">
+                          {lap.track.name}
+                          {lap.track.layout && ` - ${lap.track.layout}`}
+                        </span>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-muted-foreground">
+                          {lap.car.manufacturer} {lap.car.name}
+                        </span>
+                      </div>
+
+                      {/* Time */}
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl font-bold text-primary font-mono">
+                          {formatLapTime(lap.timeMs)}
+                        </span>
+                        {lap.sessionType && (
+                          <Badge
+                            variant={lap.sessionType === 'Q' ? 'secondary' : 'default'}
+                            className="font-bold"
+                          >
+                            {lap.sessionType}
+                          </Badge>
+                        )}
+                        {isPersonalBest && (
+                          <Badge variant="default" className="flex items-center gap-1">
+                            <Trophy className="h-3 w-3" />
+                            PB
+                          </Badge>
+                        )}
+                        {lap.conditions && (
+                          <Badge variant="outline">{lap.conditions}</Badge>
+                        )}
+                      </div>
+
+                      {/* Notes & Date */}
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        {lap.notes && <p>{lap.notes}</p>}
+                        <p>
+                          Recorded on {new Date(lap.createdAt).toLocaleDateString()}{' '}
+                          at {new Date(lap.createdAt).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          router.push(`/lap-times/${lap.id}/edit`)
+                        }}
+                        className="hover:bg-primary/10"
                       >
-                        {lap.track.name}
-                        {lap.track.layout && ` - ${lap.track.layout}`}
-                      </Link>
-                      <span className="text-muted-foreground">•</span>
-                      <Link
-                        href={`/cars/${lap.car.slug}`}
-                        className="text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        {lap.car.manufacturer} {lap.car.name}
-                      </Link>
-                    </div>
-
-                    {/* Time */}
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl font-bold text-primary font-mono">
-                        {formatLapTime(lap.timeMs)}
-                      </span>
-                      {lap.sessionType && (
-                        <Badge
-                          variant={lap.sessionType === 'Q' ? 'secondary' : 'default'}
-                          className="font-bold"
-                        >
-                          {lap.sessionType}
-                        </Badge>
-                      )}
-                      {isPersonalBest && (
-                        <Badge variant="default" className="flex items-center gap-1">
-                          <Trophy className="h-3 w-3" />
-                          PB
-                        </Badge>
-                      )}
-                      {lap.conditions && (
-                        <Badge variant="outline">{lap.conditions}</Badge>
-                      )}
-                    </div>
-
-                    {/* Notes & Date */}
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      {lap.notes && <p>{lap.notes}</p>}
-                      <p>
-                        Recorded on {new Date(lap.createdAt).toLocaleDateString()}{' '}
-                        at {new Date(lap.createdAt).toLocaleTimeString()}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      asChild
-                      className="hover:bg-primary/10"
-                    >
-                      <Link href={`/lap-times/${lap.id}/edit`}>
                         <Pencil className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(lap.id)}
-                      disabled={deletingId === lap.id}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          handleDelete(lap.id)
+                        }}
+                        disabled={deletingId === lap.id}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </Link>
+              </Button>
             )
           })}
         </div>
