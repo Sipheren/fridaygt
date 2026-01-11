@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { formatLapTime } from '@/lib/time'
-import { Plus, Trash2, Search, Clock, Trophy, Wrench } from 'lucide-react'
+import { Plus, Search, Clock, Trophy, Wrench } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 
 interface LapTime {
@@ -43,7 +43,6 @@ export default function LapTimesPage() {
   const [filteredLapTimes, setFilteredLapTimes] = useState<LapTime[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // Load lap times
   useEffect(() => {
@@ -80,32 +79,6 @@ export default function LapTimesPage() {
     )
     setFilteredLapTimes(filtered)
   }, [searchQuery, lapTimes])
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this lap time?')) {
-      return
-    }
-
-    setDeletingId(id)
-
-    try {
-      const response = await fetch(`/api/lap-times/${id}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete lap time')
-      }
-
-      // Remove from state
-      setLapTimes((prev) => prev.filter((lap) => lap.id !== id))
-    } catch (error) {
-      console.error('Error deleting lap time:', error)
-      alert('Failed to delete lap time')
-    } finally {
-      setDeletingId(null)
-    }
-  }
 
   // Calculate personal best for each track/car combo
   const getPersonalBest = (trackId: string, carId: string) => {
@@ -244,22 +217,6 @@ export default function LapTimesPage() {
                           at {new Date(lap.createdAt).toLocaleTimeString()}
                         </p>
                       </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          handleDelete(lap.id)
-                        }}
-                        disabled={deletingId === lap.id}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
                 </Link>
