@@ -598,9 +598,7 @@ export default function RunListDetailPage() {
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-2">
-                  {runList.entries
-                    .sort((a, b) => a.order - b.order)
-                    .map((entry, index) => (
+                  {runList.entries.map((entry, index) => (
                       <SortableRaceItem
                         key={entry.id}
                         entry={entry}
