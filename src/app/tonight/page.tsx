@@ -145,21 +145,43 @@ function SortableRaceItem({ entry, index, isCurrent, isCompleted, onClick }: Sor
           <div className="flex items-center gap-2">
             <CarIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             {entry.car ? (
-              <span className={`font-semibold ${isCurrent ? 'text-lg' : 'text-base'}`}>
-                {entry.car.manufacturer} {entry.car.name}
-              </span>
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className={`font-semibold ${isCurrent ? 'text-lg' : 'text-base'}`}>
+                  {entry.car.manufacturer} {entry.car.name}
+                </span>
+                {entry.build ? (
+                  <>
+                    <span className="text-muted-foreground">•</span>
+                    <Link
+                      href={`/builds/${entry.build.id}`}
+                      className="text-sm text-primary hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {entry.build.name}
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-muted-foreground">•</span>
+                    <Button
+                      asChild
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-2 text-xs"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Link href="/builds/new">
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add build
+                      </Link>
+                    </Button>
+                  </>
+                )}
+              </div>
             ) : (
               <span className="text-muted-foreground">Any Car</span>
             )}
           </div>
-
-          {/* Build */}
-          {entry.build && (
-            <div className="flex items-center gap-2">
-              <Wrench className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <span className="text-sm">{entry.build.name}</span>
-            </div>
-          )}
 
           {/* Notes */}
           {entry.notes && (
