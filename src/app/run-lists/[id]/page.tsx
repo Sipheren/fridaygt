@@ -104,12 +104,13 @@ interface Build {
 
 interface SortableRaceItemProps {
   entry: RunList['entries'][0]
+  index: number
   isOwner: boolean
   onRemove: (id: string) => void
   onClick: () => void
 }
 
-function SortableRaceItem({ entry, isOwner, onRemove, onClick }: SortableRaceItemProps) {
+function SortableRaceItem({ entry, index, isOwner, onRemove, onClick }: SortableRaceItemProps) {
   const {
     attributes,
     listeners,
@@ -121,7 +122,7 @@ function SortableRaceItem({ entry, isOwner, onRemove, onClick }: SortableRaceIte
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: transition || 'transform 150ms ease',
     opacity: isDragging ? 0.5 : 1,
   }
 
@@ -143,7 +144,7 @@ function SortableRaceItem({ entry, isOwner, onRemove, onClick }: SortableRaceIte
       <div
         className="font-mono text-lg font-bold text-muted-foreground w-8"
       >
-        {entry.order}
+        {index}
       </div>
       <div className="flex-1 cursor-pointer" onClick={onClick}>
         <div className="font-semibold group-hover:text-primary transition-colors">
@@ -340,20 +341,28 @@ export default function RunListDetailPage() {
     setRunList({ ...runList, entries: newEntries })
 
     try {
-      // Update order on server
-      const res = await fetch(`/api/run-lists/${id}/reorder`, {
+      // Update order on server (don't wait for success, fire and forget)
+      fetch(`/api/run-lists/${id}/reorder`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           entryId: active.id,
           newOrder: newIndex + 1,
         }),
+      }).then(async (res) => {
+        if (!res.ok) {
+          console.error('Failed to reorder races')
+          // Revert on error
+          fetchRunList()
+          alert('Failed to reorder races')
+        }
+        // On success, we keep the optimistic UI - no need to refresh
+      }).catch((error) => {
+        console.error('Error reordering races:', error)
+        // Revert on error
+        fetchRunList()
+        alert('Failed to reorder races')
       })
-
-      if (!res.ok) throw new Error('Failed to reorder races')
-
-      // Refresh to get accurate data from server
-      fetchRunList()
     } catch (error) {
       console.error('Error reordering races:', error)
       // Revert on error
@@ -591,10 +600,11 @@ export default function RunListDetailPage() {
                 <div className="space-y-2">
                   {runList.entries
                     .sort((a, b) => a.order - b.order)
-                    .map((entry) => (
+                    .map((entry, index) => (
                       <SortableRaceItem
                         key={entry.id}
                         entry={entry}
+                        index={index + 1}
                         isOwner={isOwner}
                         onRemove={removeEntry}
                         onClick={() => {
