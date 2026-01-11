@@ -324,7 +324,7 @@ export default function NewRunListPage() {
                 id="entryNotes"
                 value={entryNotes}
                 onChange={(e) => setEntryNotes(e.target.value)}
-                placeholder="Any special notes for this combo..."
+                placeholder="Any special notes for this race..."
               />
             </div>
 

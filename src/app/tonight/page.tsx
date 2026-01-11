@@ -208,7 +208,7 @@ function SortableRaceItem({ entry, index, isCurrent, isCompleted, onClick }: Sor
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Link href={`/combos/${entry.car.slug}/${entry.track.slug}`}>
-                    View Combo
+                    View Race Details
                   </Link>
                 </Button>
               )}

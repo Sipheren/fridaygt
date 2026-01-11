@@ -80,7 +80,7 @@ export default function LapTimesPage() {
     setFilteredLapTimes(filtered)
   }, [searchQuery, lapTimes])
 
-  // Calculate personal best for each track/car combo
+  // Calculate personal best for each track/car race
   const getPersonalBest = (trackId: string, carId: string) => {
     const times = lapTimes.filter(
       (lap) => lap.track.id === trackId && lap.car.id === carId

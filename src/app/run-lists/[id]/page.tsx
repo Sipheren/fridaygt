@@ -579,13 +579,13 @@ export default function RunListDetailPage() {
         <CardHeader>
           <CardTitle>Races ({runList.entries.length})</CardTitle>
           <CardDescription>
-            {isOwner ? 'Drag to reorder • Click to view combo' : 'Race night lineup'}
+            {isOwner ? 'Drag to reorder • Click to view race details' : 'Race night lineup'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {runList.entries.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              No races yet. {isOwner && 'Add your first combo below.'}
+              No races yet. {isOwner && 'Add your first race below.'}
             </p>
           ) : (
             <DndContext
@@ -624,7 +624,7 @@ export default function RunListDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle>Add Race</CardTitle>
-            <CardDescription>Add a new combo to the run list</CardDescription>
+            <CardDescription>Add a new race to the run list</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">

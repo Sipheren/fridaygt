@@ -165,7 +165,7 @@ export default function SessionHistoryPage() {
       <Card>
         <CardHeader>
           <CardTitle>Session Lineup</CardTitle>
-          <CardDescription>All combos from this session</CardDescription>
+          <CardDescription>All races from this session</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -201,7 +201,7 @@ export default function SessionHistoryPage() {
                     {entry.car && (
                       <Button asChild variant="ghost" size="sm">
                         <Link href={`/combos/${entry.car.slug}/${entry.track.slug}`}>
-                          View Combo
+                          View Race Details
                         </Link>
                       </Button>
                     )}
