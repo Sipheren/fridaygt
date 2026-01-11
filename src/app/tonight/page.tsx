@@ -1,15 +1,29 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { LoadingSection } from '@/components/ui/loading'
 import {
-  ChevronLeft,
-  ChevronRight,
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import {
   Plus,
   CheckCircle2,
   Clock,
@@ -17,6 +31,7 @@ import {
   Car as CarIcon,
   Wrench,
   List,
+  GripVertical,
 } from 'lucide-react'
 
 interface RunList {
@@ -56,18 +71,164 @@ interface RunList {
   }>
 }
 
+interface SortableRaceItemProps {
+  entry: RunList['entries'][0]
+  index: number
+  isCurrent: boolean
+  isCompleted: boolean
+  onClick: () => void
+}
+
+function SortableRaceItem({ entry, index, isCurrent, isCompleted, onClick }: SortableRaceItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: entry.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition || 'transform 150ms ease',
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onClick}
+      className={`relative border-2 rounded-xl transition-all cursor-pointer ${
+        isCurrent
+          ? 'border-destructive bg-destructive/5 shadow-lg scale-[1.02]'
+          : isCompleted
+          ? 'border-secondary/50 bg-secondary/5'
+          : 'border-border hover:border-primary/30 bg-card'
+      }`}
+    >
+      {/* Drag Handle */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute left-2 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing touch-none p-2 rounded-lg hover:bg-muted/50"
+      >
+        <GripVertical className="h-5 w-5 text-muted-foreground" />
+      </div>
+
+      {/* Content */}
+      <div className="pl-12 pr-4 py-4">
+        {/* Race Number Badge */}
+        <div className="flex items-start justify-between mb-3">
+          <Badge
+            variant={isCurrent ? 'destructive' : isCompleted ? 'secondary' : 'outline'}
+            className="text-sm px-3 py-1"
+          >
+            {isCurrent ? 'Current Race' : isCompleted ? 'Completed' : `Upcoming • Race ${index}`}
+          </Badge>
+          {isCompleted && <CheckCircle2 className="h-5 w-5 text-secondary" />}
+        </div>
+
+        {/* Track and Car Info */}
+        <div className="space-y-3">
+          {/* Track */}
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <Link
+              href={`/tracks/${entry.track.slug}`}
+              className={`font-bold hover:text-primary transition-colors ${isCurrent ? 'text-xl' : 'text-lg'}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {entry.track.name}
+              {entry.track.layout && ` - ${entry.track.layout}`}
+            </Link>
+          </div>
+
+          {/* Car */}
+          <div className="flex items-center gap-2">
+            <CarIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            {entry.car ? (
+              <Link
+                href={`/cars/${entry.car.slug}`}
+                className={`font-semibold hover:text-primary transition-colors ${isCurrent ? 'text-lg' : 'text-base'}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {entry.car.manufacturer} {entry.car.name}
+              </Link>
+            ) : (
+              <span className="text-muted-foreground">Any Car</span>
+            )}
+          </div>
+
+          {/* Build */}
+          {entry.build && (
+            <div className="flex items-center gap-2">
+              <Wrench className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <Link
+                href={`/builds/${entry.build.id}`}
+                className="text-sm hover:text-primary transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {entry.build.name}
+              </Link>
+            </div>
+          )}
+
+          {/* Notes */}
+          {entry.notes && (
+            <div className="pt-2 border-t border-border/50">
+              <p className="text-sm text-muted-foreground">{entry.notes}</p>
+            </div>
+          )}
+
+          {/* Action Buttons - Only show on current race */}
+          {isCurrent && (
+            <div className="flex gap-2 pt-3">
+              <Button asChild size="sm" className="flex-1">
+                <Link href="/lap-times/new" onClick={(e) => e.stopPropagation()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Lap Time
+                </Link>
+              </Button>
+              {entry.car && (
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Link href={`/combos/${entry.car.slug}/${entry.track.slug}`}>
+                    View Combo
+                  </Link>
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function TonightPage() {
-  const router = useRouter()
   const [runList, setRunList] = useState<RunList | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentRaceIndex, setCurrentRaceIndex] = useState(0)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   useEffect(() => {
     fetchActiveRunList()
   }, [])
 
   useEffect(() => {
-    // Load saved race position from localStorage
     if (runList) {
       const saved = localStorage.getItem(`runlist-${runList.id}-position`)
       if (saved) {
@@ -89,6 +250,46 @@ export default function TonightPage() {
     }
   }
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (!over || active.id === over.id || !runList) {
+      return
+    }
+
+    const oldIndex = runList.entries.findIndex((e) => e.id === active.id)
+    const newIndex = runList.entries.findIndex((e) => e.id === over.id)
+
+    if (oldIndex === -1 || newIndex === -1) return
+
+    // Optimistically update UI
+    const newEntries = arrayMove(runList.entries, oldIndex, newIndex)
+    setRunList({ ...runList, entries: newEntries })
+
+    try {
+      // Update order on server (fire and forget)
+      fetch(`/api/run-lists/${runList.id}/reorder`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entryId: active.id,
+          newOrder: newIndex + 1,
+        }),
+      }).then(async (res) => {
+        if (!res.ok) {
+          console.error('Failed to reorder races')
+          fetchActiveRunList()
+        }
+      }).catch((error) => {
+        console.error('Error reordering races:', error)
+        fetchActiveRunList()
+      })
+    } catch (error) {
+      console.error('Error reordering races:', error)
+      fetchActiveRunList()
+    }
+  }
+
   const goToRace = (index: number) => {
     if (!runList) return
     setCurrentRaceIndex(index)
@@ -101,19 +302,19 @@ export default function TonightPage() {
 
   if (!runList) {
     return (
-      <div className="mx-auto max-w-2xl space-y-6">
-        <Card className="border-dashed">
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Card className="border-dashed max-w-2xl w-full mx-4">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4">
               <Clock className="h-16 w-16 text-muted-foreground" />
             </div>
             <CardTitle className="text-2xl">No Active Run List</CardTitle>
-            <CardDescription>
+            <CardDescription className="text-base">
               Set a run list as active to use it for tonight's racing!
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <Button asChild>
+            <Button asChild size="lg">
               <Link href="/run-lists">
                 <List className="h-4 w-4 mr-2" />
                 View Run Lists
@@ -125,229 +326,85 @@ export default function TonightPage() {
     )
   }
 
-  const currentRace = runList.entries[currentRaceIndex]
   const totalRaces = runList.entries.length
   const progress = {
     total: totalRaces,
     completed: currentRaceIndex,
     remaining: totalRaces - currentRaceIndex,
-    currentPosition: currentRaceIndex + 1,
   }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      {/* Run List Header */}
-      <Card>
+      {/* Run List Header - Nicer Design */}
+      <Card className="border-primary/30 bg-gradient-to-br from-card to-primary/5">
         <CardHeader>
-          <div>
-            <CardTitle className="text-2xl">{runList.name}</CardTitle>
-            <CardDescription>{runList.description}</CardDescription>
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <CardTitle className="text-3xl">{runList.name}</CardTitle>
+              <CardDescription className="text-base">{runList.description}</CardDescription>
+            </div>
+            <Badge variant="destructive" className="text-sm px-3 py-1">
+              Active
+            </Badge>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-6 text-sm">
+          <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-              <span>
-                {progress.currentPosition} of {progress.total}
-              </span>
+              <CheckCircle2 className="h-4 w-4 text-secondary" />
+              <span className="font-medium">{progress.completed} completed</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary" />
+              <span className="font-medium">{progress.remaining} remaining</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <List className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">{progress.total} total</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Progress Bar */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm font-medium">
-              <span>Progress</span>
-              <span>
-                {Math.round((progress.currentPosition / progress.total) * 100)}%
-              </span>
-            </div>
-            <div className="h-2 bg-secondary rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary transition-all duration-500"
-                style={{
-                  width: `${(progress.currentPosition / progress.total) * 100}%`,
-                }}
-              />
-            </div>
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{progress.completed} completed</span>
-              <span>{progress.remaining} remaining</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Current Race */}
-      {currentRace && (
-        <Card className="border-primary/50 bg-primary/5">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl">Current Race</CardTitle>
-              <Badge variant="default" className="text-base">
-                Race {currentRace.order}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Track */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>Track</span>
-                </div>
-                <Link
-                  href={`/tracks/${currentRace.track.slug}`}
-                  className="text-xl font-bold hover:text-primary transition-colors block"
-                >
-                  {currentRace.track.name}
-                </Link>
-                {currentRace.track.layout && (
-                  <p className="text-sm text-muted-foreground">{currentRace.track.layout}</p>
-                )}
-              </div>
-
-              {/* Car */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CarIcon className="h-4 w-4" />
-                  <span>Car</span>
-                </div>
-                {currentRace.car ? (
-                  <Link
-                    href={`/cars/${currentRace.car.slug}`}
-                    className="text-xl font-bold hover:text-primary transition-colors block"
-                  >
-                    {currentRace.car.manufacturer} {currentRace.car.name}
-                  </Link>
-                ) : (
-                  <p className="text-xl font-bold text-muted-foreground">Any Car</p>
-                )}
-              </div>
-            </div>
-
-            {/* Build */}
-            {currentRace.build && (
-              <div className="space-y-2 pt-2 border-t border-border">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Wrench className="h-4 w-4" />
-                  <span>Suggested Build</span>
-                </div>
-                <Link
-                  href={`/builds/${currentRace.build.id}`}
-                  className="text-lg font-semibold hover:text-primary transition-colors block"
-                >
-                  {currentRace.build.name}
-                </Link>
-                {currentRace.build.description && (
-                  <p className="text-sm text-muted-foreground">{currentRace.build.description}</p>
-                )}
-              </div>
-            )}
-
-            {/* Notes */}
-            {currentRace.notes && (
-              <div className="space-y-2 pt-2 border-t border-border">
-                <p className="text-sm font-medium text-muted-foreground">Notes</p>
-                <p className="text-sm">{currentRace.notes}</p>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex gap-2 pt-4">
-              <Button asChild className="flex-1">
-                <Link href="/lap-times/new">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Lap Time
-                </Link>
-              </Button>
-              {currentRace.car && (
-                <Button asChild variant="outline" className="flex-1">
-                  <Link href={`/combos/${currentRace.car.slug}/${currentRace.track.slug}`}>
-                    View Combo
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Navigation */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => goToRace(currentRaceIndex - 1)}
-              disabled={currentRaceIndex <= 0}
-              className="flex-1"
-            >
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => goToRace(currentRaceIndex + 1)}
-              disabled={currentRaceIndex >= runList.entries.length - 1}
-              className="flex-1"
-            >
-              Next
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* All Races */}
+      {/* Races List - Drag to Reorder */}
       <Card>
         <CardHeader>
-          <CardTitle>All Races</CardTitle>
-          <CardDescription>Tap to jump to a race</CardDescription>
+          <CardTitle>Race Schedule</CardTitle>
+          <CardDescription>Drag to reorder • Tap to set as current</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {runList.entries.map((entry, index) => {
-              const isCurrent = index === currentRaceIndex
-              const isCompleted = index < currentRaceIndex
+          {runList.entries.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No races in this run list</p>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={runList.entries.map((e) => e.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {runList.entries.map((entry, index) => {
+                    const isCurrent = index === currentRaceIndex
+                    const isCompleted = index < currentRaceIndex
 
-              return (
-                <div
-                  key={entry.id}
-                  onClick={() => goToRace(index)}
-                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${
-                    isCurrent
-                      ? 'border-primary bg-primary/10'
-                      : isCompleted
-                      ? 'border-secondary/50 bg-secondary/5'
-                      : 'border-border hover:border-primary/30'
-                  }`}
-                >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-background border-2">
-                    {isCompleted ? (
-                      <CheckCircle2 className="h-4 w-4 text-secondary" />
-                    ) : (
-                      <span className="text-sm font-bold">{entry.order}</span>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-semibold">{entry.track.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {entry.car ? `${entry.car.manufacturer} ${entry.car.name}` : 'Any Car'}
-                    </div>
-                  </div>
-                  {isCurrent && (
-                    <Badge variant="default">Current</Badge>
-                  )}
+                    return (
+                      <SortableRaceItem
+                        key={entry.id}
+                        entry={entry}
+                        index={index + 1}
+                        isCurrent={isCurrent}
+                        isCompleted={isCompleted}
+                        onClick={() => goToRace(index)}
+                      />
+                    )
+                  })}
                 </div>
-              )
-            })}
-          </div>
+              </SortableContext>
+            </DndContext>
+          )}
         </CardContent>
       </Card>
     </div>
