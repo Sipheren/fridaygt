@@ -15,6 +15,7 @@ interface LapTime {
   timeMs: number
   notes: string | null
   conditions: string | null
+  sessionType: 'Q' | 'R' | null
   createdAt: string
   track: {
     id: string
@@ -205,6 +206,14 @@ export default function LapTimesPage() {
                       <span className="text-2xl font-bold text-primary font-mono">
                         {formatLapTime(lap.timeMs)}
                       </span>
+                      {lap.sessionType && (
+                        <Badge
+                          variant={lap.sessionType === 'Q' ? 'secondary' : 'default'}
+                          className="font-bold"
+                        >
+                          {lap.sessionType}
+                        </Badge>
+                      )}
                       {isPersonalBest && (
                         <Badge variant="default" className="flex items-center gap-1">
                           <Trophy className="h-3 w-3" />

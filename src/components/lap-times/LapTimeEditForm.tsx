@@ -64,6 +64,7 @@ export function LapTimeEditForm({ lapTime }: LapTimeEditFormProps) {
   const [notes, setNotes] = useState(lapTime.notes || '')
   const [conditions, setConditions] = useState(lapTime.conditions || 'not-specified')
   const [buildId, setBuildId] = useState<string>(lapTime.buildId || 'none')
+  const [sessionType, setSessionType] = useState<'Q' | 'R'>(lapTime.sessionType || 'R')
 
   // Parse time input once to avoid calling parseLapTime multiple times in render
   const parsedTimeMs = parseLapTime(timeInput)
@@ -109,6 +110,7 @@ export function LapTimeEditForm({ lapTime }: LapTimeEditFormProps) {
           notes: notes || null,
           conditions: conditions && conditions !== 'not-specified' ? conditions : null,
           buildId: buildId && buildId !== 'none' ? buildId : null,
+          sessionType,
         }),
       })
 
@@ -239,6 +241,44 @@ export function LapTimeEditForm({ lapTime }: LapTimeEditFormProps) {
             <SelectItem value="Mixed">Mixed Conditions</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Session Type */}
+      <div className="space-y-2">
+        <Label>Session Type *</Label>
+        <div className="flex gap-4">
+          <div className="flex items-center space-x-2">
+            <input
+              type="radio"
+              id="session-r"
+              name="sessionType"
+              value="R"
+              checked={sessionType === 'R'}
+              onChange={() => setSessionType('R')}
+              className="w-4 h-4 text-primary border-primary focus:ring-primary"
+            />
+            <Label htmlFor="session-r" className="font-normal cursor-pointer">
+              <span className="font-bold text-primary">R</span> - Race
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="radio"
+              id="session-q"
+              name="sessionType"
+              value="Q"
+              checked={sessionType === 'Q'}
+              onChange={() => setSessionType('Q')}
+              className="w-4 h-4 text-secondary border-secondary focus:ring-secondary"
+            />
+            <Label htmlFor="session-q" className="font-normal cursor-pointer">
+              <span className="font-bold text-secondary">Q</span> - Qualifying
+            </Label>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Select whether this lap time is from a Race or Qualifying session
+        </p>
       </div>
 
       {/* Notes */}

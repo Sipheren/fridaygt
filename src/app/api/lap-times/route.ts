@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
         timeMs,
         notes,
         conditions,
+        sessionType,
         createdAt,
         updatedAt,
         track:Track(id, name, slug, location, category, layout),
@@ -87,13 +88,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { trackId, carId, buildId, timeMs, notes, conditions } = body
-    console.log('[LAP TIME API] Request:', { trackId, carId, buildId, timeMs })
+    const { trackId, carId, buildId, timeMs, notes, conditions, sessionType } = body
+    console.log('[LAP TIME API] Request:', { trackId, carId, buildId, timeMs, sessionType })
 
     // Validation
     if (!trackId || !carId || !timeMs) {
       return NextResponse.json(
         { error: 'trackId, carId, and timeMs are required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate sessionType if provided
+    if (sessionType && !['Q', 'R'].includes(sessionType)) {
+      return NextResponse.json(
+        { error: 'sessionType must be either Q or R' },
         { status: 400 }
       )
     }
@@ -161,6 +170,7 @@ export async function POST(request: NextRequest) {
         timeMs,
         notes: notes || null,
         conditions: conditions || null,
+        sessionType: sessionType || 'R',
         createdAt: now,
         updatedAt: now,
       })
@@ -169,6 +179,7 @@ export async function POST(request: NextRequest) {
         timeMs,
         notes,
         conditions,
+        sessionType,
         createdAt,
         updatedAt,
         track:Track(id, name, slug, location, category, layout),

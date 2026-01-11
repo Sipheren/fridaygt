@@ -54,6 +54,7 @@ export function LapTimeForm() {
   const [timeInput, setTimeInput] = useState('')
   const [notes, setNotes] = useState('')
   const [conditions, setConditions] = useState('')
+  const [sessionType, setSessionType] = useState<'Q' | 'R'>('R')
 
   // Load tracks and cars
   useEffect(() => {
@@ -159,6 +160,7 @@ export function LapTimeForm() {
           timeMs,
           notes: notes || null,
           conditions: conditions && conditions !== 'not-specified' ? conditions : null,
+          sessionType,
         }),
       })
 
@@ -290,6 +292,44 @@ export function LapTimeForm() {
             <SelectItem value="Mixed">Mixed Conditions</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Session Type */}
+      <div className="space-y-2">
+        <Label>Session Type *</Label>
+        <div className="flex gap-4">
+          <div className="flex items-center space-x-2">
+            <input
+              type="radio"
+              id="session-r"
+              name="sessionType"
+              value="R"
+              checked={sessionType === 'R'}
+              onChange={() => setSessionType('R')}
+              className="w-4 h-4 text-primary border-primary focus:ring-primary"
+            />
+            <Label htmlFor="session-r" className="font-normal cursor-pointer">
+              <span className="font-bold text-primary">R</span> - Race
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="radio"
+              id="session-q"
+              name="sessionType"
+              value="Q"
+              checked={sessionType === 'Q'}
+              onChange={() => setSessionType('Q')}
+              className="w-4 h-4 text-secondary border-secondary focus:ring-secondary"
+            />
+            <Label htmlFor="session-q" className="font-normal cursor-pointer">
+              <span className="font-bold text-secondary">Q</span> - Qualifying
+            </Label>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Select whether this lap time is from a Race or Qualifying session
+        </p>
       </div>
 
       {/* Notes */}

@@ -135,27 +135,19 @@ function SortableRaceItem({ entry, index, isCurrent, isCompleted, onClick }: Sor
           {/* Track */}
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <Link
-              href={`/tracks/${entry.track.slug}`}
-              className={`font-bold hover:text-primary transition-colors ${isCurrent ? 'text-xl' : 'text-lg'}`}
-              onClick={(e) => e.stopPropagation()}
-            >
+            <span className={`font-bold ${isCurrent ? 'text-xl' : 'text-lg'}`}>
               {entry.track.name}
               {entry.track.layout && ` - ${entry.track.layout}`}
-            </Link>
+            </span>
           </div>
 
           {/* Car */}
           <div className="flex items-center gap-2">
             <CarIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             {entry.car ? (
-              <Link
-                href={`/cars/${entry.car.slug}`}
-                className={`font-semibold hover:text-primary transition-colors ${isCurrent ? 'text-lg' : 'text-base'}`}
-                onClick={(e) => e.stopPropagation()}
-              >
+              <span className={`font-semibold ${isCurrent ? 'text-lg' : 'text-base'}`}>
                 {entry.car.manufacturer} {entry.car.name}
-              </Link>
+              </span>
             ) : (
               <span className="text-muted-foreground">Any Car</span>
             )}
@@ -165,13 +157,7 @@ function SortableRaceItem({ entry, index, isCurrent, isCompleted, onClick }: Sor
           {entry.build && (
             <div className="flex items-center gap-2">
               <Wrench className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <Link
-                href={`/builds/${entry.build.id}`}
-                className="text-sm hover:text-primary transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {entry.build.name}
-              </Link>
+              <span className="text-sm">{entry.build.name}</span>
             </div>
           )}
 

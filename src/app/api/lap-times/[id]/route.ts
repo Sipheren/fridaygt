@@ -15,7 +15,7 @@ export async function PATCH(
 
     const { id } = await params
     const body = await request.json()
-    const { timeMs, notes, conditions, buildId } = body
+    const { timeMs, notes, conditions, buildId, sessionType } = body
 
     // Validation
     if (timeMs !== undefined) {
@@ -33,6 +33,14 @@ export async function PATCH(
           { status: 400 }
         )
       }
+    }
+
+    // Validate sessionType if provided
+    if (sessionType !== undefined && !['Q', 'R'].includes(sessionType)) {
+      return NextResponse.json(
+        { error: 'sessionType must be either Q or R' },
+        { status: 400 }
+      )
     }
 
     const supabase = createServiceRoleClient()
@@ -75,6 +83,7 @@ export async function PATCH(
     if (notes !== undefined) updates.notes = notes || null
     if (conditions !== undefined) updates.conditions = conditions || null
     if (buildId !== undefined) updates.buildId = buildId || null
+    if (sessionType !== undefined) updates.sessionType = sessionType
 
     // Update lap time
     const { data: lapTime, error } = await supabase
@@ -86,6 +95,7 @@ export async function PATCH(
         timeMs,
         notes,
         conditions,
+        sessionType,
         createdAt,
         updatedAt,
         track:Track(id, name, slug, location, category, layout),

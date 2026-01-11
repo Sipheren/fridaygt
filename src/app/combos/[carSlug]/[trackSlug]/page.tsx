@@ -65,6 +65,7 @@ interface LapTime {
   timeMs: number
   notes: string | null
   conditions: string | null
+  sessionType: 'Q' | 'R' | null
   createdAt: string
   user: {
     id: string
@@ -596,9 +597,19 @@ export default function ComboDetailPage() {
                       <p className="text-xs text-muted-foreground">{formatDate(lap.createdAt)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-mono font-bold">{formatLapTime(lap.timeMs)}</p>
+                      <div className="flex items-center gap-2 justify-end">
+                        <p className="font-mono font-bold">{formatLapTime(lap.timeMs)}</p>
+                        {lap.sessionType && (
+                          <Badge
+                            variant={lap.sessionType === 'Q' ? 'secondary' : 'default'}
+                            className="text-xs font-bold"
+                          >
+                            {lap.sessionType}
+                          </Badge>
+                        )}
+                      </div>
                       {lap.conditions && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs mt-1">
                           {lap.conditions}
                         </Badge>
                       )}
@@ -629,7 +640,17 @@ export default function ComboDetailPage() {
                       <Trophy className="h-4 w-4 text-secondary" />
                     )}
                     <div>
-                      <p className="font-mono font-bold">{formatLapTime(lap.timeMs)}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono font-bold">{formatLapTime(lap.timeMs)}</p>
+                        {lap.sessionType && (
+                          <Badge
+                            variant={lap.sessionType === 'Q' ? 'secondary' : 'default'}
+                            className="text-xs font-bold"
+                          >
+                            {lap.sessionType}
+                          </Badge>
+                        )}
+                      </div>
                       {lap.notes && <p className="text-xs text-muted-foreground">{lap.notes}</p>}
                     </div>
                   </div>
