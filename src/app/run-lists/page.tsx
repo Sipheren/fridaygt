@@ -92,19 +92,40 @@ export default function RunListsPage() {
   }
 
   const toggleActive = async (id: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus
+
+    // Optimistic update - update UI immediately
+    setRunLists(prev =>
+      prev.map(list =>
+        list.id === id
+          ? { ...list, isActive: newStatus }
+          : list
+      )
+    )
+
     try {
       const res = await fetch(`/api/run-lists/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !currentStatus }),
+        body: JSON.stringify({ isActive: newStatus }),
       })
 
       if (!res.ok) throw new Error('Failed to toggle active status')
 
-      // Refresh the list
+      // If successful, refresh to get server state
       fetchRunLists()
     } catch (error) {
       console.error('Error toggling active status:', error)
+
+      // Revert optimistic update on error
+      setRunLists(prev =>
+        prev.map(list =>
+          list.id === id
+            ? { ...list, isActive: currentStatus }
+            : list
+        )
+      )
+
       alert('Failed to update active status')
     }
   }

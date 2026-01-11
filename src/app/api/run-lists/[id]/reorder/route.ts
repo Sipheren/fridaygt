@@ -77,7 +77,23 @@ export async function PATCH(
     const [movedEntry] = reordered.splice(oldIndex, 1)
     reordered.splice(newOrder - 1, 0, movedEntry)
 
-    // Update all orders in a transaction-like manner
+    // First, set all orders to temporary negative values to avoid unique constraint violations
+    for (let i = 0; i < allEntries.length; i++) {
+      const { error: updateError } = await supabase
+        .from('RunListEntry')
+        .update({ order: -(i + 1) })
+        .eq('id', allEntries[i].id)
+
+      if (updateError) {
+        console.error('Failed to update entry order (temp):', updateError)
+        return NextResponse.json(
+          { error: 'Failed to update entry order' },
+          { status: 500 }
+        )
+      }
+    }
+
+    // Now set the final orders
     for (let i = 0; i < reordered.length; i++) {
       const { error: updateError } = await supabase
         .from('RunListEntry')
@@ -85,7 +101,7 @@ export async function PATCH(
         .eq('id', reordered[i].id)
 
       if (updateError) {
-        console.error('Failed to update entry order:', updateError)
+        console.error('Failed to update entry order (final):', updateError)
         return NextResponse.json(
           { error: 'Failed to update entry order' },
           { status: 500 }

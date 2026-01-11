@@ -65,6 +65,9 @@ export function LapTimeEditForm({ lapTime }: LapTimeEditFormProps) {
   const [conditions, setConditions] = useState(lapTime.conditions || 'not-specified')
   const [buildId, setBuildId] = useState<string>(lapTime.buildId || '')
 
+  // Parse time input once to avoid calling parseLapTime multiple times in render
+  const parsedTimeMs = parseLapTime(timeInput)
+
   // Load builds for this car
   useEffect(() => {
     async function loadBuilds() {
@@ -85,13 +88,12 @@ export function LapTimeEditForm({ lapTime }: LapTimeEditFormProps) {
     e.preventDefault()
     setError(null)
 
-    const timeMs = parseLapTime(timeInput)
-    if (!timeMs) {
+    if (!parsedTimeMs) {
       setError('Invalid time format. Use mm:ss.sss or ss.sss (e.g., 1:23.456)')
       return
     }
 
-    if (!isValidLapTime(timeMs)) {
+    if (!isValidLapTime(parsedTimeMs)) {
       setError('Lap time must be between 10 seconds and 30 minutes')
       return
     }
@@ -103,7 +105,7 @@ export function LapTimeEditForm({ lapTime }: LapTimeEditFormProps) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          timeMs,
+          timeMs: parsedTimeMs,
           notes: notes || null,
           conditions: conditions && conditions !== 'not-specified' ? conditions : null,
           buildId: buildId || null,
@@ -214,9 +216,9 @@ export function LapTimeEditForm({ lapTime }: LapTimeEditFormProps) {
           />
           <p className="text-xs text-muted-foreground">
             Enter time in mm:ss.sss or ss.sss format
-            {timeInput && parseLapTime(timeInput) && (
+            {parsedTimeMs && (
               <span className="text-primary ml-2">
-                = {formatLapTime(parseLapTime(timeInput)!)}
+                = {formatLapTime(parsedTimeMs)}
               </span>
             )}
           </p>
