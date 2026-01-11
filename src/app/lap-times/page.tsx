@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { formatLapTime } from '@/lib/time'
-import { Plus, Trash2, Search, Clock, Trophy, Pencil } from 'lucide-react'
+import { Plus, Trash2, Search, Clock, Trophy, Wrench } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 
 interface LapTime {
@@ -30,6 +30,11 @@ interface LapTime {
     slug: string
     manufacturer: string
   }
+  build: {
+    id: string
+    name: string
+    description: string | null
+  } | null
 }
 
 export default function LapTimesPage() {
@@ -196,6 +201,15 @@ export default function LapTimesPage() {
                         <span className="text-muted-foreground">
                           {lap.car.manufacturer} {lap.car.name}
                         </span>
+                        {lap.build && (
+                          <>
+                            <span className="text-muted-foreground">•</span>
+                            <span className="text-sm text-muted-foreground flex items-center gap-1">
+                              <Wrench className="h-3 w-3" />
+                              {lap.build.name}
+                            </span>
+                          </>
+                        )}
                       </div>
 
                       {/* Time */}
@@ -234,17 +248,6 @@ export default function LapTimesPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          router.push(`/lap-times/${lap.id}/edit`)
-                        }}
-                        className="hover:bg-primary/10"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
