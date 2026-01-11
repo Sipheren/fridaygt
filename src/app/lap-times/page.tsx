@@ -161,7 +161,7 @@ export default function LapTimesPage() {
                 asChild
                 className="w-full h-auto p-4 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors"
               >
-                <Link href={`/lap-times/${lap.id}/edit`}>
+                <Link href={`/combos/${lap.car.slug}/${lap.track.slug}`}>
                   <div className="flex items-start justify-between gap-4 w-full">
                     <div className="flex-1 space-y-2">
                       {/* Track & Car */}

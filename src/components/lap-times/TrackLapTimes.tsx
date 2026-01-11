@@ -211,7 +211,7 @@ export function TrackLapTimes({ trackSlug, trackName }: TrackLapTimesProps) {
                       View Combo
                     </Link>
                   </Button>
-                  <Button asChild size="sm" variant="outline">
+                  <Button asChild size="sm" variant="outline" className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary">
                     <Link href={`/cars/${car.slug}`}>
                       View Car
                     </Link>
@@ -237,7 +237,7 @@ export function TrackLapTimes({ trackSlug, trackName }: TrackLapTimesProps) {
 
       {/* Link to All Lap Times */}
       <div className="pt-4 border-t border-border">
-        <Button asChild variant="outline" className="w-full">
+        <Button asChild variant="outline" className="w-full transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary">
           <Link href="/lap-times">
             <TrendingDown className="h-4 w-4 mr-2" />
             View All Your Lap Times

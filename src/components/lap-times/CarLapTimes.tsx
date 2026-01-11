@@ -135,6 +135,7 @@ export function CarLapTimes({ carSlug, carName }: CarLapTimesProps) {
             onClick={() => router.push('/lap-times')}
             size="sm"
             variant="outline"
+            className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary"
           >
             View All Your Lap Times
           </Button>

@@ -116,6 +116,7 @@ export function CarBuilds({ carId, carName }: CarBuildsProps) {
             onClick={() => router.push('/builds')}
             size="sm"
             variant="outline"
+            className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary"
           >
             View All Builds
           </Button>

@@ -243,6 +243,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
               size="sm"
               onClick={handleClone}
               disabled={cloning}
+              className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary"
             >
               <Copy className="h-4 w-4 mr-2" />
               {cloning ? 'Cloning...' : 'Clone'}
@@ -251,6 +252,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
               variant="outline"
               size="sm"
               onClick={() => router.push(`/builds/${id}/edit`)}
+              className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary"
             >
               <Edit className="h-4 w-4 mr-2" />
               Edit

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
+import { signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -159,13 +160,12 @@ export function Header({ user }: HeaderProps) {
                       <DropdownMenuSeparator />
                     </>
                   )}
-                  <DropdownMenuItem asChild>
-                    <form action="/api/auth/signout" method="POST">
-                      <button type="submit" className="flex w-full items-center">
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Sign Out
-                      </button>
-                    </form>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

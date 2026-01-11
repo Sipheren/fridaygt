@@ -513,23 +513,23 @@ export default function ComboDetailPage() {
         </div>
       )}
 
-      {/* User Stats (if available) */}
-      {userStats && (
-        <Card className="border-2 border-secondary/30 bg-gradient-to-br from-secondary/10 to-secondary/5">
-          <CardHeader>
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Award className="h-5 w-5 text-secondary" />
-                <CardTitle className="text-lg">YOUR PERFORMANCE</CardTitle>
-              </div>
-              {userStats.position && (
-                <Badge className="bg-secondary text-secondary-foreground text-sm px-3 py-1">
-                  #{userStats.position} on Leaderboard
-                </Badge>
-              )}
+      {/* User Performance */}
+      <Card className="border-2 border-secondary/30 bg-gradient-to-br from-secondary/10 to-secondary/5">
+        <CardHeader>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-secondary" />
+              <CardTitle className="text-lg">YOUR PERFORMANCE</CardTitle>
             </div>
-          </CardHeader>
-          <CardContent>
+            {userStats && userStats.position && (
+              <Badge className="bg-secondary text-secondary-foreground text-sm px-3 py-1">
+                #{userStats.position} on Leaderboard
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {userStats ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground font-mono uppercase tracking-wide">Total Laps</p>
@@ -556,11 +556,22 @@ export default function ComboDetailPage() {
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <div className="text-center py-8 space-y-3">
+              <div className="relative w-16 h-16 mx-auto">
+                <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-secondary/5 rounded-full" />
+                <Award className="h-10 w-10 mx-auto text-muted-foreground/40 relative z-10 pt-3" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-muted-foreground">No performance data yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Record a lap time to track your performance!</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Main Content Grid */}
+      {/* Main Content Grid - Leaderboard and Recent Laps */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Leaderboard */}
         <Card className="border-2 border-border/50">
@@ -642,10 +653,8 @@ export default function ComboDetailPage() {
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* User's Recent Laps */}
-      {userStats && userStats.recentLaps.length > 0 && (
+        {/* User's Recent Laps */}
         <Card className="border-2 border-border/50">
           <CardHeader className="bg-gradient-to-r from-secondary/5 to-transparent">
             <div className="flex items-center gap-2">
@@ -654,8 +663,9 @@ export default function ComboDetailPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="space-y-2">
-              {userStats.recentLaps.map((lap) => (
+            {userStats && userStats.recentLaps.length > 0 ? (
+              <div className="space-y-2">
+                {userStats.recentLaps.map((lap) => (
                 <div
                   key={lap.id}
                   className={`flex items-center justify-between gap-4 p-4 rounded-lg transition-all ${
@@ -693,19 +703,46 @@ export default function ComboDetailPage() {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 space-y-4">
+                <div className="relative w-20 h-20 mx-auto">
+                  <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-secondary/5 rounded-full animate-pulse" />
+                  <Clock className="h-12 w-12 mx-auto text-muted-foreground/40 relative z-10 pt-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-muted-foreground">No lap times yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Record your first lap to see your progress!</p>
+                </div>
+                <Button onClick={() => router.push('/lap-times/new')} size="sm" variant="outline" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Lap Time
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
+      </div>
 
       {/* Run Lists & Builds */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="border-2 border-border/50">
           <CardHeader className="bg-gradient-to-r from-muted/5 to-transparent">
-            <CardTitle className="text-base flex items-center gap-2">
-              <List className="h-4 w-4" />
-              RUN LISTS
-            </CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <List className="h-4 w-4" />
+                RUN LISTS
+              </CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1 text-xs transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary"
+                onClick={() => router.push('/run-lists/new')}
+              >
+                <Plus className="h-3 w-3" />
+                Create
+              </Button>
+            </div>
             {runLists.length > 0 && (
               <CardDescription>
                 {runLists.length} {runLists.length === 1 ? 'list' : 'lists'} featuring this race
@@ -714,11 +751,24 @@ export default function ComboDetailPage() {
           </CardHeader>
           <CardContent className="pt-6">
             {runLists.length === 0 ? (
-              <div className="text-center py-8 space-y-2">
-                <List className="h-10 w-10 mx-auto text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground">
-                  This race hasn't been added to any run lists yet
-                </p>
+              <div className="text-center py-8 space-y-3">
+                <div className="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-muted/20 to-muted/5 flex items-center justify-center">
+                  <List className="h-6 w-6 text-muted-foreground/60" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    This race hasn't been added to any run lists yet
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1 transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary"
+                  onClick={() => router.push('/run-lists/new')}
+                >
+                  <Plus className="h-3 w-3" />
+                  Create the First Run List
+                </Button>
               </div>
             ) : (
               <div className="space-y-3">
@@ -791,7 +841,7 @@ export default function ComboDetailPage() {
               <Button
                 size="sm"
                 variant="outline"
-                className="gap-1 text-xs"
+                className="gap-1 text-xs transition-all hover:shadow-lg hover:shadow-accent/30 hover:border-accent hover:text-accent"
                 onClick={() => router.push(`/builds/new?carId=${car.id}`)}
               >
                 <Plus className="h-3 w-3" />
@@ -818,7 +868,7 @@ export default function ComboDetailPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="gap-1"
+                  className="gap-1 transition-all hover:shadow-lg hover:shadow-accent/30 hover:border-accent hover:text-accent"
                   onClick={() => router.push(`/builds/new?carId=${car.id}`)}
                 >
                   <Plus className="h-3 w-3" />

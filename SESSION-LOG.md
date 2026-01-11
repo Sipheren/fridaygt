@@ -2854,3 +2854,149 @@ Race Detail Page Improvements: ✅ COMPLETE
 **Next Session**: Continue with remaining features or new requirements
 
 ---
+
+# Session: 2026-01-11 Part 3 - Race Page Layout Consistency & Sign Out Fix
+
+## Issues Addressed
+
+### 1. Race Page Layout Inconsistency
+**Problem**: Race pages showed different layouts depending on whether the user had lap times or not:
+- Pages WITHOUT lap times: Missing "Your Performance" section, breaking the layout structure
+- Pages WITH lap times: Full layout with all sections
+
+**Root Cause**: 
+- "Your Performance" section was conditionally rendered only when `userStats` existed
+- "Your Recent Laps" section was also conditionally rendered
+- This made the page layout inconsistent across different car/track combinations
+
+### 2. Sign Out Not Working
+**Problem**: Clicking "Sign Out" didn't actually sign the user out
+**Root Cause**: Using form POST to `/api/auth/signout` wasn't properly clearing the session
+
+---
+
+## Solutions Implemented
+
+### Race Page Layout Fix
+**File**: `src/app/combos/[carSlug]/[trackSlug]/page.tsx`
+
+**Changes**:
+1. **Your Performance Section** (lines 516-572):
+   - Now ALWAYS renders (removed conditional `{userStats && ...}`)
+   - Shows stats when data exists
+   - Shows empty state with Award icon when no data
+   - Maintains consistent layout structure
+
+2. **Your Recent Laps Section** (lines 647-714):
+   - Already fixed in previous session
+   - Always renders with empty state when needed
+   - Keeps the side-by-side grid layout consistent
+
+**Result**: All race pages now have identical structure:
+- Your Performance (with data or empty state)
+- Leaderboard (left) + Your Recent Laps (right) in 2-column grid
+- Run Lists + Suggested Builds at bottom
+
+### Sign Out Fix
+**File**: `src/components/header.tsx`
+
+**Changes**:
+1. Added import: `import { signOut } from 'next-auth/react'` (line 7)
+2. Replaced form POST with proper NextAuth signOut (lines 163-169):
+   ```tsx
+   <DropdownMenuItem
+     className="cursor-pointer"
+     onClick={() => signOut({ callbackUrl: '/' })}
+   >
+     <LogOut className="mr-2 h-4 w-4" />
+     Sign Out
+   </DropdownMenuItem>
+   ```
+
+**Result**: Sign out now properly:
+- Clears the session
+- Redirects to home page
+- Works reliably
+
+---
+
+## Technical Details
+
+### Layout Consistency Pattern
+All race pages now follow this structure regardless of data:
+
+```
+┌─────────────────────────────────────────┐
+│         Car + Track Info                │
+├─────────────────────────────────────────┤
+│         Statistics Bar                  │
+├─────────────────────────────────────────┤
+│      YOUR PERFORMANCE                   │
+│   (stats or empty state)                │
+├──────────────────┬──────────────────────┤
+│   LEADERBOARD    │  YOUR RECENT LAPS    │
+│ (data or empty)  │  (data or empty)     │
+├──────────────────┴──────────────────────┤
+│  RUN LISTS  │  SUGGESTED BUILDS         │
+└─────────────────────────────────────────┘
+```
+
+### Empty State Styling
+Consistent pattern used across empty states:
+- Circular gradient background for icon
+- Centered layout with icon, title, subtitle
+- Call-to-action button when appropriate
+- Matches the visual style of populated sections
+
+---
+
+## Files Modified
+
+1. `src/app/combos/[carSlug]/[trackSlug]/page.tsx`
+   - Made "Your Performance" section always render
+   - Added empty state for no performance data
+   
+2. `src/components/header.tsx`
+   - Added NextAuth signOut import
+   - Replaced form POST with signOut() call
+
+---
+
+## Testing Completed
+
+### Race Page Layout
+✅ Tested race with NO lap times (787B '91 + Laguna Seca):
+- Shows "Your Performance" empty state
+- Shows Leaderboard empty state  
+- Shows "Your Recent Laps" empty state
+- Layout matches pages WITH data
+
+✅ Tested race WITH lap times (Roadster S (ND) '15 + Laguna Seca):
+- Shows performance stats (2 laps, 1:06.100, #1)
+- Shows leaderboard with driver
+- Shows recent laps
+- Same layout structure as empty pages
+
+✅ Navigation consistency:
+- Run Lists → Click race → Correct layout
+- Lap Times → Click lap → Correct layout
+- Both use same URL pattern `/combos/{carSlug}/{trackSlug}`
+
+### Sign Out
+✅ Click Sign Out → Session cleared → Redirected to home page
+
+---
+
+## Session End Status
+
+**Completed**:
+- ✅ Race page layout now 100% consistent across all car/track combinations
+- ✅ Sign out functionality working properly
+- ✅ Empty states styled consistently with populated sections
+- ✅ Single source of truth for race detail pages (`/combos/[carSlug]/[trackSlug]`)
+
+**Build Status**: ✅ Dev server running, no errors
+
+**Next Steps**: Ready for commit and push
+
+---

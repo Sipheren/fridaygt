@@ -1100,7 +1100,21 @@ Example 2: Navigating from run list to combo
 
 **Phase 6 Status**: API Complete ✅ | UI 20% Complete ⚠️ | Integrations Not Started ❌
 
-**🎉 Latest Updates (2026-01-11 Part 2)**:
+**🎉 Latest Updates (2026-01-11 Part 3)**:
+
+**Race Detail Page Layout Consistency**:
+- ✅ Fixed layout inconsistency across different car/track combinations
+- ✅ "Your Performance" section now always renders (shows empty state when no data)
+- ✅ "Your Recent Laps" section now always renders (shows empty state when no data)
+- ✅ All race pages now have identical structure regardless of lap time data
+- ✅ Empty states styled consistently with populated sections
+- ✅ Eliminated confusion - only ONE race detail page for all navigation paths
+
+**Authentication Fixes**:
+- ✅ Fixed sign out functionality using proper NextAuth signOut() method
+- ✅ Sign out now properly clears session and redirects to home page
+
+**🎉 Previous Updates (2026-01-11 Part 2)**:
 
 **Race Detail Page Improvements**:
 - ✅ Updated terminology from "combo" to "race" throughout UI
