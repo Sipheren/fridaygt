@@ -4,9 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,33 +25,14 @@ interface HeaderProps {
 export function Header({ user }: HeaderProps) {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
-  const [hasActiveSession, setHasActiveSession] = useState(false)
-
-  // Check for live run list
-  useEffect(() => {
-    const checkLiveStatus = async () => {
-      try {
-        const res = await fetch('/api/run-lists/active')
-        const data = await res.json()
-        setHasActiveSession(!!data.runList && data.runList.isLive === true)
-      } catch (error) {
-        setHasActiveSession(false)
-      }
-    }
-
-    checkLiveStatus()
-    // Check every 30 seconds
-    const interval = setInterval(checkLiveStatus, 30000)
-    return () => clearInterval(interval)
-  }, [])
 
   const navItems = [
     { href: '/', label: 'Home' },
+    { href: '/tonight', label: 'Tonight' },
     { href: '/tracks', label: 'Tracks' },
     { href: '/cars', label: 'Cars' },
     { href: '/builds', label: 'Builds' },
     { href: '/run-lists', label: 'Run Lists' },
-    { href: '/tonight', label: 'Tonight' },
     { href: '/lap-times', label: 'Lap Times' },
   ]
 
@@ -85,23 +64,18 @@ export function Header({ user }: HeaderProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1.5 ${
-                  pathname === item.href
+                className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  item.label === 'Tonight'
+                    ? 'text-destructive hover:text-destructive/80 font-bold'
+                    : pathname === item.href
                     ? 'text-foreground'
-                    : 'text-muted-foreground'
+                    : 'text-muted-foreground hover:text-primary'
                 }`}
               >
-                {item.label === 'Tonight' && hasActiveSession && (
-                  <Radio className="h-3.5 w-3.5 text-secondary animate-pulse" />
+                {item.label === 'Tonight' && (
+                  <Radio className="h-3.5 w-3.5" />
                 )}
-                <span className={item.label === 'Tonight' && hasActiveSession ? 'text-secondary font-bold' : ''}>
-                  {item.label}
-                </span>
-                {item.label === 'Tonight' && hasActiveSession && (
-                  <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0 h-4">
-                    LIVE
-                  </Badge>
-                )}
+                {item.label}
               </Link>
             ))}
           </nav>
@@ -132,18 +106,14 @@ export function Header({ user }: HeaderProps) {
                 <DropdownMenuContent align="end" className="w-48">
                   {navItems.map((item) => (
                     <DropdownMenuItem key={item.href} asChild>
-                      <Link href={item.href} className="flex items-center gap-2">
-                        {item.label === 'Tonight' && hasActiveSession && (
-                          <Radio className="h-3.5 w-3.5 text-secondary animate-pulse" />
-                        )}
-                        <span className={item.label === 'Tonight' && hasActiveSession ? 'text-secondary font-bold' : ''}>
-                          {item.label}
-                        </span>
-                        {item.label === 'Tonight' && hasActiveSession && (
-                          <Badge variant="secondary" className="ml-auto text-xs px-1.5 py-0 h-4">
-                            LIVE
-                          </Badge>
-                        )}
+                      <Link
+                        href={item.href}
+                        className={`flex items-center gap-2 ${
+                          item.label === 'Tonight' ? 'text-destructive font-bold' : ''
+                        }`}
+                      >
+                        {item.label === 'Tonight' && <Radio className="h-3.5 w-3.5" />}
+                        {item.label}
                       </Link>
                     </DropdownMenuItem>
                   ))}

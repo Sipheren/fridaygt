@@ -6,8 +6,6 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
 import { LoadingSection } from '@/components/ui/loading'
 import {
   ChevronLeft,
@@ -18,7 +16,6 @@ import {
   MapPin,
   Car as CarIcon,
   Wrench,
-  Radio,
   List,
 } from 'lucide-react'
 
@@ -28,7 +25,6 @@ interface RunList {
   description: string | null
   isPublic: boolean
   isActive: boolean
-  isLive: boolean
   createdAt: string
   updatedAt: string
   createdBy: {
@@ -93,26 +89,6 @@ export default function TonightPage() {
     }
   }
 
-  const toggleLive = async () => {
-    if (!runList) return
-
-    try {
-      const res = await fetch(`/api/run-lists/${runList.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isLive: !runList.isLive }),
-      })
-
-      if (!res.ok) throw new Error('Failed to toggle live status')
-
-      // Refresh the run list
-      fetchActiveRunList()
-    } catch (error) {
-      console.error('Error toggling live status:', error)
-      alert('Failed to update live status')
-    }
-  }
-
   const goToRace = (index: number) => {
     if (!runList) return
     setCurrentRaceIndex(index)
@@ -163,24 +139,9 @@ export default function TonightPage() {
       {/* Run List Header */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl">{runList.name}</CardTitle>
-              <CardDescription>{runList.description}</CardDescription>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Radio className={`h-5 w-5 ${runList.isLive ? 'text-secondary animate-pulse' : 'text-muted-foreground'}`} />
-                <Label htmlFor="live-toggle" className={`cursor-pointer ${runList.isLive ? 'text-secondary font-bold' : ''}`}>
-                  {runList.isLive ? 'LIVE' : 'Go Live'}
-                </Label>
-              </div>
-              <Switch
-                id="live-toggle"
-                checked={runList.isLive}
-                onCheckedChange={toggleLive}
-              />
-            </div>
+          <div>
+            <CardTitle className="text-2xl">{runList.name}</CardTitle>
+            <CardDescription>{runList.description}</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
