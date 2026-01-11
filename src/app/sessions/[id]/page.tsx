@@ -42,16 +42,21 @@ interface Session {
         slug: string
         layout: string | null
       }
-      car: {
+      cars: Array<{
         id: string
-        name: string
-        slug: string
-        manufacturer: string
-      } | null
-      build: {
-        id: string
-        name: string
-      } | null
+        carId: string
+        buildId: string | null
+        car: {
+          id: string
+          name: string
+          slug: string
+          manufacturer: string
+        }
+        build: {
+          id: string
+          name: string
+        } | null
+      }>
     }>
   }
   attendance: Array<{
@@ -179,9 +184,9 @@ export default function SessionHistoryPage() {
                 return (
                   <div
                     key={entry.id}
-                    className="flex items-center gap-3 p-4 border border-border rounded-lg hover:border-primary/30 transition-colors"
+                    className="flex items-start gap-3 p-4 border border-border rounded-lg hover:border-primary/30 transition-colors"
                   >
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-background border-2">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-background border-2 flex-shrink-0">
                       {wasCompleted ? (
                         <CheckCircle2 className="h-4 w-4 text-secondary" />
                       ) : (
@@ -193,14 +198,23 @@ export default function SessionHistoryPage() {
                         {entry.track.name}
                         {entry.track.layout && ` - ${entry.track.layout}`}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {entry.car ? `${entry.car.manufacturer} ${entry.car.name}` : 'Any Car'}
-                        {entry.build && ` • ${entry.build.name}`}
+                      <div className="text-sm text-muted-foreground space-y-1 mt-1">
+                        {entry.cars && entry.cars.length > 0 ? (
+                          entry.cars.map((carEntry) => (
+                            <div key={carEntry.id}>
+                              {carEntry.car.manufacturer} {carEntry.car.name}
+                              {carEntry.build && ` • ${carEntry.build.name}`}
+                            </div>
+                          ))
+                        ) : (
+                          <div>Any Car</div>
+                        )}
+                        {entry.notes && <div className="italic text-xs">{entry.notes}</div>}
                       </div>
                     </div>
-                    {entry.car && (
+                    {entry.cars && entry.cars.length === 1 && (
                       <Button asChild variant="ghost" size="sm">
-                        <Link href={`/combos/${entry.car.slug}/${entry.track.slug}`}>
+                        <Link href={`/combos/${entry.cars[0].car.slug}/${entry.track.slug}`}>
                           View Race Details
                         </Link>
                       </Button>

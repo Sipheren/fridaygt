@@ -97,7 +97,8 @@ export async function GET(
         .eq('email', session.user.email)
         .single()
 
-      if (userData?.id !== runList.createdBy.id) {
+      const createdBy = runList.createdBy as any
+      if (userData?.id !== createdBy?.id) {
         return NextResponse.json({ error: 'Access denied' }, { status: 403 })
       }
     }

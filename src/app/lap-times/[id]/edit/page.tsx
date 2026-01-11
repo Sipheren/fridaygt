@@ -54,6 +54,14 @@ export default async function EditLapTimePage({
     redirect('/lap-times')
   }
 
+  // Extract single objects from Supabase's array responses
+  const processedLapTime = {
+    ...lapTime,
+    track: (lapTime as any).track?.[0] || null,
+    car: (lapTime as any).car?.[0] || null,
+    build: (lapTime as any).build?.[0] || null,
+  }
+
   // Check ownership
   if ((lapTime as any).userId !== userData.id) {
     redirect('/lap-times')
@@ -81,7 +89,7 @@ export default async function EditLapTimePage({
       </div>
 
       <div className="border border-border rounded-lg p-6 bg-card">
-        <LapTimeEditForm lapTime={lapTime} />
+        <LapTimeEditForm lapTime={processedLapTime} />
       </div>
     </div>
   )

@@ -80,11 +80,14 @@ export async function GET(
     }>()
 
     for (const lapTime of lapTimes || []) {
-      const carId = lapTime.car.id
+      const car = lapTime.car as any
+      const carId = car?.id
+
+      if (!carId) continue
 
       if (!lapTimesByCar.has(carId)) {
         lapTimesByCar.set(carId, {
-          car: lapTime.car,
+          car: car,
           lapTimes: [],
           personalBest: lapTime.timeMs,
           totalLaps: 0
@@ -118,7 +121,7 @@ export async function GET(
         ? Math.round(allTimes.reduce((a, b) => a + b, 0) / allTimes.length)
         : null,
       uniqueCars: lapTimesByCar.size,
-      uniqueDrivers: new Set(lapTimes?.map(lt => lt.user.id)).size
+      uniqueDrivers: new Set(lapTimes?.map(lt => (lt.user as any)?.id).filter(Boolean)).size
     }
 
     return NextResponse.json({

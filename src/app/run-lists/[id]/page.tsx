@@ -69,17 +69,22 @@ interface RunList {
       slug: string
       layout: string | null
     }
-    car: {
+    cars: Array<{
       id: string
-      name: string
-      slug: string
-      manufacturer: string
-    } | null
-    build: {
-      id: string
-      name: string
-      description: string | null
-    } | null
+      carId: string
+      buildId: string | null
+      car: {
+        id: string
+        name: string
+        slug: string
+        manufacturer: string
+      }
+      build: {
+        id: string
+        name: string
+        description: string | null
+      } | null
+    }>
   }>
 }
 
@@ -151,10 +156,18 @@ function SortableRaceItem({ entry, index, isOwner, onRemove, onClick }: Sortable
           {entry.track.name}
           {entry.track.layout && ` - ${entry.track.layout}`}
         </div>
-        <div className="text-sm text-muted-foreground">
-          {entry.car ? `${entry.car.manufacturer} ${entry.car.name}` : 'Any Car'}
-          {entry.build && ` • Build: ${entry.build.name}`}
-          {entry.notes && ` • ${entry.notes}`}
+        <div className="text-sm text-muted-foreground space-y-1">
+          {entry.cars && entry.cars.length > 0 ? (
+            entry.cars.map((carEntry) => (
+              <div key={carEntry.id}>
+                {carEntry.car.manufacturer} {carEntry.car.name}
+                {carEntry.build && ` • Build: ${carEntry.build.name}`}
+              </div>
+            ))
+          ) : (
+            <div>Any Car</div>
+          )}
+          {entry.notes && <div className="italic">{entry.notes}</div>}
         </div>
       </div>
       {isOwner && (
@@ -195,6 +208,7 @@ export default function RunListDetailPage() {
   const [cars, setCars] = useState<Car[]>([])
   const [builds, setBuilds] = useState<Build[]>([])
   const [selectedTrackId, setSelectedTrackId] = useState('')
+  const [selectedCars, setSelectedCars] = useState<Array<{ carId: string; buildId: string }>>([])
   const [selectedCarId, setSelectedCarId] = useState('')
   const [selectedBuildId, setSelectedBuildId] = useState('')
   const [entryNotes, setEntryNotes] = useState('')
@@ -272,9 +286,30 @@ export default function RunListDetailPage() {
     }
   }
 
+  const addCarToSelection = () => {
+    if (!selectedCarId) return
+    if (selectedCars.some(c => c.carId === selectedCarId)) {
+      alert('This car is already added')
+      return
+    }
+    setSelectedCars([...selectedCars, { carId: selectedCarId, buildId: selectedBuildId }])
+    setSelectedCarId('')
+    setSelectedBuildId('')
+    setBuilds([])
+  }
+
+  const removeCarFromSelection = (carId: string) => {
+    setSelectedCars(selectedCars.filter(c => c.carId !== carId))
+  }
+
   const addEntry = async () => {
     if (!selectedTrackId) {
       alert('Please select a track')
+      return
+    }
+
+    if (selectedCars.length === 0) {
+      alert('Please add at least one car')
       return
     }
 
@@ -284,8 +319,7 @@ export default function RunListDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           trackId: selectedTrackId,
-          carId: selectedCarId || null,
-          buildId: selectedBuildId || null,
+          cars: selectedCars,
           notes: entryNotes || null,
         }),
       })
@@ -294,6 +328,7 @@ export default function RunListDetailPage() {
 
       // Reset form
       setSelectedTrackId('')
+      setSelectedCars([])
       setSelectedCarId('')
       setSelectedBuildId('')
       setEntryNotes('')
@@ -606,8 +641,10 @@ export default function RunListDetailPage() {
                         isOwner={isOwner}
                         onRemove={removeEntry}
                         onClick={() => {
-                          if (entry.car) {
-                            router.push(`/combos/${entry.car.slug}/${entry.track.slug}`)
+                          // Only navigate to combo if there's exactly one car
+                          if (entry.cars && entry.cars.length === 1) {
+                            const car = entry.cars[0].car
+                            router.push(`/combos/${car.slug}/${entry.track.slug}`)
                           }
                         }}
                       />
@@ -639,37 +676,80 @@ export default function RunListDetailPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Car (Optional)</Label>
-              <SearchableComboBox
-                options={[
-                  { value: '', label: 'Any Car (Open Choice)' },
-                  ...cars.map((c) => ({ value: c.id, label: `${c.manufacturer} ${c.name}` })),
-                ]}
-                value={selectedCarId}
-                onValueChange={handleCarChange}
-                placeholder="Select car or leave open..."
-                searchPlaceholder="Search cars..."
-                emptyText="No car found."
-              />
-            </div>
-
-            {selectedCarId && builds.length > 0 && (
+            <div className="space-y-3">
+              <Label>Cars *</Label>
               <div className="space-y-2">
-                <Label>Suggested Build (Optional)</Label>
                 <SearchableComboBox
-                  options={[
-                    { value: '', label: 'No Suggested Build' },
-                    ...builds.map((b) => ({ value: b.id, label: b.name })),
-                  ]}
-                  value={selectedBuildId}
-                  onValueChange={setSelectedBuildId}
-                  placeholder="Select build..."
-                  searchPlaceholder="Search builds..."
-                  emptyText="No build found."
+                  options={cars.map((c) => ({ value: c.id, label: `${c.manufacturer} ${c.name}` }))}
+                  value={selectedCarId}
+                  onValueChange={handleCarChange}
+                  placeholder="Select car..."
+                  searchPlaceholder="Search cars..."
+                  emptyText="No car found."
                 />
+                {selectedCarId && builds.length > 0 && (
+                  <SearchableComboBox
+                    options={[
+                      { value: '', label: 'No Build' },
+                      ...builds.map((b) => ({ value: b.id, label: b.name })),
+                    ]}
+                    value={selectedBuildId}
+                    onValueChange={setSelectedBuildId}
+                    placeholder="Select build (optional)..."
+                    searchPlaceholder="Search builds..."
+                    emptyText="No build found."
+                  />
+                )}
+                <Button
+                  type="button"
+                  onClick={addCarToSelection}
+                  disabled={!selectedCarId}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Car
+                </Button>
               </div>
-            )}
+
+              {selectedCars.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">
+                    Selected Cars ({selectedCars.length})
+                  </Label>
+                  <div className="space-y-2">
+                    {selectedCars.map((carSelection) => {
+                      const car = cars.find(c => c.id === carSelection.carId)
+                      if (!car) return null
+                      return (
+                        <div
+                          key={carSelection.carId}
+                          className="flex items-center justify-between p-2 border rounded-lg"
+                        >
+                          <span className="text-sm">
+                            {car.manufacturer} {car.name}
+                            {carSelection.buildId && (
+                              <span className="text-muted-foreground">
+                                {' '}• Build: {builds.find(b => b.id === carSelection.buildId)?.name || 'Unknown'}
+                              </span>
+                            )}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeCarFromSelection(carSelection.carId)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="notes">Notes</Label>

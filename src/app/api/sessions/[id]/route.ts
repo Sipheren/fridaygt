@@ -33,8 +33,6 @@ export async function GET(
             order,
             notes,
             track:Track(id, name, slug, location, length, category),
-            car:Car(id, name, slug, manufacturer, year),
-            build:CarBuild(id, name, description, isPublic),
             lobbySettings:LobbySettings(*)
           )
         ),
@@ -53,9 +51,51 @@ export async function GET(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
 
-    // Sort entries by order
-    if (session.runList?.entries) {
-      session.runList.entries.sort((a: any, b: any) => a.order - b.order)
+    // Fetch cars for each entry from RunListEntryCar
+    const runList = session.runList as any
+    const entryIds = runList?.entries?.map((e: any) => e.id) || []
+    let entryCars: any[] = []
+
+    if (entryIds.length > 0) {
+      const { data: carsData } = await supabase
+        .from('RunListEntryCar')
+        .select(`
+          id,
+          runListEntryId,
+          carId,
+          buildId,
+          car:Car(id, name, slug, manufacturer, year),
+          build:CarBuild(id, name, description, isPublic)
+        `)
+        .in('runListEntryId', entryIds)
+
+      entryCars = carsData || []
+    }
+
+    // Attach cars to each entry
+    if (runList?.entries) {
+      runList.entries = (runList.entries as any[]).map((entry: any) => {
+        const cars = entryCars
+          .filter((ec: any) => ec.runListEntryId === entry.id)
+          .map((ec: any) => ({
+            id: ec.id,
+            carId: ec.carId,
+            buildId: ec.buildId,
+            car: ec.car,
+            build: ec.build
+          }))
+
+        return {
+          ...entry,
+          cars
+        }
+      })
+
+      // Sort entries by order
+      runList.entries.sort((a: any, b: any) => a.order - b.order)
+
+      // Update session.runList with the modified entries
+      ;(session as any).runList = runList
     }
 
     // Get lap times for this session
@@ -131,7 +171,8 @@ export async function PATCH(
     }
 
     // Only run list creator can update session
-    if (existingSession.runList.createdById !== userData.id) {
+    const runList = existingSession.runList as any
+    if (runList?.createdById !== userData.id) {
       return NextResponse.json(
         { error: 'Access denied - only the run list creator can manage this session' },
         { status: 403 }
@@ -251,7 +292,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
 
-    if (existingSession.runList.createdById !== userData.id) {
+    const runList = existingSession.runList as any
+    if (runList?.createdById !== userData.id) {
       return NextResponse.json(
         { error: 'Access denied - only the run list creator can delete this session' },
         { status: 403 }

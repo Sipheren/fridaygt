@@ -60,20 +60,21 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort entries by order
-    if (activeSession.runList?.entries) {
-      activeSession.runList.entries.sort((a: any, b: any) => a.order - b.order)
+    const runList = activeSession.runList as any
+    if (runList?.entries) {
+      runList.entries.sort((a: any, b: any) => a.order - b.order)
     }
 
     // Get the current entry based on currentEntryOrder
     let currentEntry = null
-    if (activeSession.currentEntryOrder && activeSession.runList?.entries) {
-      currentEntry = activeSession.runList.entries.find(
+    if (activeSession.currentEntryOrder && runList?.entries) {
+      currentEntry = runList.entries.find(
         (entry: any) => entry.order === activeSession.currentEntryOrder
       )
     }
 
     // Get statistics
-    const totalEntries = activeSession.runList?.entries?.length || 0
+    const totalEntries = runList?.entries?.length || 0
     const completedEntries = activeSession.currentEntryOrder
       ? activeSession.currentEntryOrder - 1
       : 0

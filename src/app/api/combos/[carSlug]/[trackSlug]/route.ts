@@ -69,13 +69,16 @@ export async function GET(
     }>()
 
     for (const lapTime of allLapTimes || []) {
-      const userId = lapTime.user.id
+      const user = lapTime.user as any
+      const userId = user?.id
+
+      if (!userId) continue
 
       if (!leaderboardMap.has(userId)) {
         leaderboardMap.set(userId, {
           userId,
-          userName: lapTime.user.name,
-          userEmail: lapTime.user.email,
+          userName: user.name,
+          userEmail: user.email,
           bestTime: lapTime.timeMs,
           totalLaps: 1,
           bestLapId: lapTime.id,
@@ -110,7 +113,7 @@ export async function GET(
         .single()
 
       if (userData) {
-        const userLapTimes = allLapTimes?.filter(lt => lt.user.id === userData.id) || []
+        const userLapTimes = allLapTimes?.filter(lt => (lt.user as any)?.id === userData.id) || []
 
         if (userLapTimes.length > 0) {
           const times = userLapTimes.map(lt => lt.timeMs)

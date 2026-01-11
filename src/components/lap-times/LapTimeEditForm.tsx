@@ -32,6 +32,7 @@ interface LapTimeEditFormProps {
     trackId: string
     carId: string
     buildId: string | null
+    sessionType?: 'Q' | 'R' | null
     track: {
       id: string
       name: string

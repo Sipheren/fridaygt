@@ -57,17 +57,22 @@ interface RunList {
       slug: string
       layout: string | null
     }
-    car: {
+    cars: Array<{
       id: string
-      name: string
-      slug: string
-      manufacturer: string
-    } | null
-    build: {
-      id: string
-      name: string
-      description: string | null
-    } | null
+      carId: string
+      buildId: string | null
+      car: {
+        id: string
+        name: string
+        slug: string
+        manufacturer: string
+      }
+      build: {
+        id: string
+        name: string
+        description: string | null
+      } | null
+    }>
   }>
 }
 
@@ -141,46 +146,50 @@ function SortableRaceItem({ entry, index, isCurrent, isCompleted, onClick }: Sor
             </span>
           </div>
 
-          {/* Car */}
-          <div className="flex items-center gap-2">
-            <CarIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            {entry.car ? (
-              <div className="flex items-baseline gap-2 flex-wrap">
-                <span className={`font-semibold ${isCurrent ? 'text-lg' : 'text-base'}`}>
-                  {entry.car.manufacturer} {entry.car.name}
-                </span>
-                {entry.build ? (
-                  <>
-                    <span className="text-muted-foreground">•</span>
-                    <Link
-                      href={`/builds/${entry.build.id}`}
-                      className="text-sm text-primary hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {entry.build.name}
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-muted-foreground">•</span>
-                    <Button
-                      asChild
-                      variant="ghost"
-                      size="sm"
-                      className="h-5 px-2 text-xs"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Link href="/builds/new">
-                        <Plus className="h-3 w-3 mr-1" />
-                        Add build
-                      </Link>
-                    </Button>
-                  </>
-                )}
-              </div>
-            ) : (
-              <span className="text-muted-foreground">Any Car</span>
-            )}
+          {/* Cars */}
+          <div className="flex items-start gap-2">
+            <CarIcon className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+            <div className="flex-1 space-y-2">
+              {entry.cars && entry.cars.length > 0 ? (
+                entry.cars.map((carEntry) => (
+                  <div key={carEntry.id} className="flex items-baseline gap-2 flex-wrap">
+                    <span className={`font-semibold ${isCurrent ? 'text-lg' : 'text-base'}`}>
+                      {carEntry.car.manufacturer} {carEntry.car.name}
+                    </span>
+                    {carEntry.build ? (
+                      <>
+                        <span className="text-muted-foreground">•</span>
+                        <Link
+                          href={`/builds/${carEntry.build.id}`}
+                          className="text-sm text-primary hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {carEntry.build.name}
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-muted-foreground">•</span>
+                        <Button
+                          asChild
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 px-2 text-xs"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Link href="/builds/new">
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add build
+                          </Link>
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <span className="text-muted-foreground">Any Car</span>
+              )}
+            </div>
           </div>
 
           {/* Notes */}
@@ -192,25 +201,30 @@ function SortableRaceItem({ entry, index, isCurrent, isCompleted, onClick }: Sor
 
           {/* Action Buttons - Only show on current race */}
           {isCurrent && (
-            <div className="flex gap-2 pt-3">
-              <Button asChild size="sm" className="flex-1">
+            <div className="flex flex-col gap-2 pt-3">
+              <Button asChild size="sm" className="w-full">
                 <Link href="/lap-times/new" onClick={(e) => e.stopPropagation()}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Lap Time
                 </Link>
               </Button>
-              {entry.car && (
+              {entry.cars && entry.cars.length === 1 && (
                 <Button
                   asChild
                   variant="outline"
                   size="sm"
-                  className="flex-1"
+                  className="w-full"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <Link href={`/combos/${entry.car.slug}/${entry.track.slug}`}>
+                  <Link href={`/combos/${entry.cars[0].car.slug}/${entry.track.slug}`}>
                     View Race Details
                   </Link>
                 </Button>
+              )}
+              {entry.cars && entry.cars.length > 1 && (
+                <div className="text-xs text-muted-foreground text-center">
+                  Multiple cars - view details from lap times
+                </div>
               )}
             </div>
           )}
