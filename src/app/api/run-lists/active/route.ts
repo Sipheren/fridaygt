@@ -43,8 +43,6 @@ export async function GET(request: NextRequest) {
           createdAt,
           updatedAt,
           track:Track(id, name, slug, layout, location, length, category),
-          car:Car(id, name, slug, manufacturer, year),
-          build:CarBuild(id, name, description, isPublic),
           lobbySettings:LobbySettings(*)
         )
       `)
@@ -60,8 +58,46 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Sort entries by order
+    // Fetch cars for each entry from RunListEntryCar
     if (runList?.entries) {
+      const entryIds = runList.entries.map((e: any) => e.id)
+      let entryCars: any[] = []
+
+      if (entryIds.length > 0) {
+        const { data: carsData } = await supabase
+          .from('RunListEntryCar')
+          .select(`
+            id,
+            runListEntryId,
+            carId,
+            buildId,
+            car:Car(id, name, slug, manufacturer, year),
+            build:CarBuild(id, name, description, isPublic)
+          `)
+          .in('runListEntryId', entryIds)
+
+        entryCars = carsData || []
+      }
+
+      // Attach cars to each entry
+      runList.entries = runList.entries.map((entry: any) => {
+        const cars = entryCars
+          .filter((ec: any) => ec.runListEntryId === entry.id)
+          .map((ec: any) => ({
+            id: ec.id,
+            carId: ec.carId,
+            buildId: ec.buildId,
+            car: ec.car,
+            build: ec.build
+          }))
+
+        return {
+          ...entry,
+          cars
+        }
+      })
+
+      // Sort entries by order
       runList.entries.sort((a: any, b: any) => a.order - b.order)
     }
 

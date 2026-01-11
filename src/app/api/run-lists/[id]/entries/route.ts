@@ -15,12 +15,19 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { trackId, carId, buildId, lobbySettingsId, notes } = body
+    const { trackId, cars, lobbySettingsId, notes } = body
 
     // Validation
     if (!trackId) {
       return NextResponse.json(
         { error: 'trackId is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!cars || !Array.isArray(cars) || cars.length === 0) {
+      return NextResponse.json(
+        { error: 'At least one car is required' },
         { status: 400 }
       )
     }
@@ -63,17 +70,15 @@ export async function POST(
       return NextResponse.json({ error: 'Track not found' }, { status: 404 })
     }
 
-    // Verify car exists (if provided)
-    if (carId) {
-      const { data: car } = await supabase
-        .from('Car')
-        .select('id')
-        .eq('id', carId)
-        .single()
+    // Verify all cars exist
+    const carIds = cars.map((c: any) => c.carId)
+    const { data: carsData } = await supabase
+      .from('Car')
+      .select('id')
+      .in('id', carIds)
 
-      if (!car) {
-        return NextResponse.json({ error: 'Car not found' }, { status: 404 })
-      }
+    if (!carsData || carsData.length !== carIds.length) {
+      return NextResponse.json({ error: 'One or more cars not found' }, { status: 404 })
     }
 
     // Get the next order number
@@ -95,8 +100,6 @@ export async function POST(
         runListId,
         order: nextOrder,
         trackId,
-        carId: carId || null,
-        buildId: buildId || null,
         lobbySettingsId: lobbySettingsId || null,
         notes: notes || null,
         createdAt: now,
@@ -109,8 +112,6 @@ export async function POST(
         createdAt,
         updatedAt,
         track:Track(id, name, slug, location, length, category),
-        car:Car(id, name, slug, manufacturer, year),
-        build:CarBuild(id, name, description, isPublic),
         lobbySettings:LobbySettings(*)
       `)
       .single()
@@ -122,6 +123,45 @@ export async function POST(
         { status: 500 }
       )
     }
+
+    // Create RunListEntryCar records for each car
+    const entryCarsToInsert = cars.map((c: any) => ({
+      id: crypto.randomUUID(),
+      runListEntryId: entry.id,
+      carId: c.carId,
+      buildId: c.buildId || null,
+      createdAt: now,
+      updatedAt: now,
+    }))
+
+    const { error: carsError } = await supabase
+      .from('RunListEntryCar')
+      .insert(entryCarsToInsert)
+
+    if (carsError) {
+      console.error('Error creating entry cars:', carsError)
+      // Clean up the entry if cars failed
+      await supabase.from('RunListEntry').delete().eq('id', entry.id)
+      return NextResponse.json(
+        { error: 'Failed to add cars to entry', details: carsError.message },
+        { status: 500 }
+      )
+    }
+
+    // Fetch the created entry cars to return in response
+    const { data: createdCars } = await supabase
+      .from('RunListEntryCar')
+      .select(`
+        id,
+        carId,
+        buildId,
+        car:Car(id, name, slug, manufacturer, year),
+        build:CarBuild(id, name, description, isPublic)
+      `)
+      .eq('runListEntryId', entry.id)
+
+    // Attach cars to entry
+    ;(entry as any).cars = createdCars || []
 
     // Update run list updatedAt
     await supabase
@@ -135,7 +175,7 @@ export async function POST(
       runListId,
       userId: userData.id,
       action: 'ADD_ENTRY',
-      details: JSON.stringify({ entryId: entry.id, trackId, carId, order: nextOrder }),
+      details: JSON.stringify({ entryId: entry.id, trackId, cars, order: nextOrder }),
       createdAt: now
     })
 
