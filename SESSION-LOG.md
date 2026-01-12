@@ -3000,3 +3000,382 @@ Consistent pattern used across empty states:
 **Next Steps**: Ready for commit and push
 
 ---
+
+# Session: 2026-01-12 - Race Entity Architecture Refactor
+
+## Problem Statement
+
+### Current Issues
+1. **No Shared Race Concept**: RunListEntry directly stores track + cars, meaning the same race (track + car combo) cannot be reused across multiple run lists
+2. **URL Structure Limitations**: `/combos/[carSlug]/[trackSlug]` requires a single car, so races with multiple cars or "Any Car" cannot navigate to a details page
+3. **No Centralized Race Management**: Cannot edit a race once and have it reflect everywhere it appears
+4. **Inconsistent Navigation**: Clicking races from different contexts (run-lists vs lap times) may not work consistently
+
+### User Request
+> "Races probably need to be put in a table or something so its the same race in all locations they appear and when you select them you get the one details page and edits reflect in all locations"
+
+## Solution: Race Entity Architecture
+
+### New Database Schema
+
+#### 1. Race Table (NEW)
+Central entity representing a specific track with specific car options:
+
+```sql
+CREATE TABLE "Race" (
+  id TEXT PRIMARY KEY,
+  trackId TEXT NOT NULL REFERENCES "Track"(id) ON DELETE CASCADE,
+  name TEXT,
+  description TEXT,
+  createdById TEXT NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+  createdAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%S.%fZ')),
+  updatedAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%S.%fZ'))
+);
+
+-- Indexes
+CREATE INDEX idx_race_track ON "Race"(trackId);
+CREATE INDEX idx_race_createdBy ON "Race"(createdById);
+```
+
+#### 2. RaceCar Table (NEW)
+Junction table defining which cars (and optional builds) are part of a race:
+
+```sql
+CREATE TABLE "RaceCar" (
+  id TEXT PRIMARY KEY,
+  raceId TEXT NOT NULL REFERENCES "Race"(id) ON DELETE CASCADE,
+  carId TEXT NOT NULL REFERENCES "Car"(id) ON DELETE CASCADE,
+  buildId TEXT REFERENCES "CarBuild"(id) ON DELETE SET NULL,
+  UNIQUE("raceId", "carId")
+);
+
+-- Indexes
+CREATE INDEX idx_racecar_race ON "RaceCar"(raceId);
+CREATE INDEX idx_racecar_car ON "RaceCar"(carId);
+CREATE INDEX idx_racecar_build ON "RaceCar"(buildId);
+```
+
+#### 3. RunListEntry Table (MODIFIED)
+Simplified to reference a Race instead of directly storing track + cars:
+
+**Before:**
+```sql
+RunListEntry:
+  - id
+  - runListId
+  - trackId  ← direct reference
+  - order
+  - notes
+
+RunListEntryCar (junction):
+  - runListEntryId
+  - carId
+  - buildId
+```
+
+**After:**
+```sql
+RunListEntry:
+  - id
+  - runListId
+  - raceId  ← NEW: references Race
+  - order
+  - notes
+  - lobbySettingsId
+```
+
+#### 4. LapTime Table (NO CHANGE)
+LapTime already references track + car directly, which is correct:
+- A lap time is specific to a track and car
+- It may optionally reference a buildId
+- It may optionally reference a sessionId (from a RunSession, not a Race)
+
+### Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                            RACE                                │
+│  One specific track with specific car options                  │
+│                                                                 │
+│  Example: "Laguna Seca - GT3 Cars"                             │
+│  - Track: WeatherTech Raceway Laguna Seca                      │
+│  - Cars: Porsche 911 GT3 RS, McLaren 720S, Ferrari 458        │
+│  - Each car can have a suggested build                        │
+└─────────────────────────────────────────────────────────────────┘
+                          │
+        ┌─────────────────┼─────────────────┐
+        │                 │                 │
+    ┌───▼────┐      ┌────▼─────┐     ┌────▼─────┐
+    │ Track   │      │ RaceCar  │     │RunListEntry
+    │         │      │ (many)   │     │ (many)   │
+    └─────────┘      └──────────┘     └──────────┘
+                            │
+                      ┌─────┴─────┐
+                      ▼           ▼
+                    Car        Build (optional)
+```
+
+### URL Structure
+
+**New Unified Race Page:**
+```
+/races/[raceId]
+```
+
+This page shows:
+- Track information
+- All cars in the race with their builds
+- Lap times for this race (all users + user's laps)
+- Leaderboard for this race
+- Run lists using this race
+- Inline editing for members
+
+**Old URLs (deprecated but may redirect):**
+- `/combos/[carSlug]/[trackSlug]` → redirects to `/races/[raceId]`
+
+### Migration Strategy
+
+#### Step 1: Create New Tables
+1. Create `Race` table
+2. Create `RaceCar` table
+3. Create indexes
+
+#### Step 2: Migrate Existing Data
+For each existing `RunListEntry`:
+1. Check if a matching `Race` already exists (same track + same cars)
+2. If yes, use existing race
+3. If no, create new `Race`:
+   - Set trackId from RunListEntry.trackId
+   - Generate name from track + cars
+   - Create createdBy from current user or run list owner
+4. Create `RaceCar` entries for each car in RunListEntryCar
+5. Update RunListEntry to set raceId
+
+#### Step 3: Update RunListEntry
+1. Add `raceId` column (nullable initially)
+2. Migrate data (set raceId for all entries)
+3. Add NOT NULL constraint on raceId
+4. Remove old columns:
+   - `trackId` (now in Race)
+   - `RunListEntryCar` junction table (now RaceCar)
+
+#### Step 4: Update APIs
+- `/api/races` - CRUD for races
+- `/api/races/[id]` - Get single race with all details
+- `/api/run-lists/[id]/entries` - Use raceId instead of trackId + cars
+- `/api/combos/[carSlug]/[trackSlug]` - Redirect to race API
+
+#### Step 5: Update UI
+- Create `/races/[raceId]/page.tsx` - Unified race detail page
+- Update navigation from run-lists
+- Update navigation from lap times
+- Add inline editing (no edit button, always editable by members)
+
+### Benefits
+
+1. **Single Source of Truth**: One race exists once, can be referenced from multiple contexts
+2. **Consistent Navigation**: All races navigate to `/races/[id]` regardless of context
+3. **Reusability**: Same race can appear in multiple run lists
+4. **Simplified Structure**: RunListEntry is simpler (just references raceId + order + notes)
+5. **Better Editing**: Edit race once, changes reflect everywhere it appears
+6. **Multi-Car Support**: Naturally handles races with 0, 1, or multiple cars
+
+### Implementation Tasks
+
+1. ✅ Plan and document architecture
+2. ⏳ Create database migration SQL
+3. ⏳ Run migration and verify data
+4. ⏳ Update API routes
+5. ⏳ Create race detail page
+6. ⏳ Update navigation throughout app
+7. ⏳ Test all functionality
+8. ⏳ Update documentation
+
+### Files to Modify
+
+**New Files:**
+- `/supabase/migrations/20260112_create_race_entity.sql`
+- `/src/app/races/[raceId]/page.tsx`
+- `/src/app/api/races/route.ts`
+- `/src/app/api/races/[id]/route.ts`
+
+**Modified Files:**
+- `/src/app/api/run-lists/[id]/entries/route.ts`
+- `/src/app/api/run-lists/[id]/route.ts`
+- `/src/app/run-lists/[id]/page.tsx`
+- `/src/components/lap-times/LapTimeForm.tsx`
+- `/src/app/combos/[carSlug]/[trackSlug]/page.tsx` (add redirect)
+- `/IMPLEMENTATION-PLAN.md` (update Phase 6)
+
+### Status
+
+**Current Phase**: Planning complete, ready to implement migration
+
+**Estimated Complexity**: High - involves database schema change and data migration
+
+**Risk Level**: Medium - migration must be carefully tested to avoid data loss
+
+---
+
+---
+
+## Database Structure Documentation (Current as of 2026-01-12)
+
+### Actual RunListEntry Structure
+From database query on 2026-01-12:
+
+```sql
+RunListEntry (
+  id TEXT PRIMARY KEY
+  runListId TEXT
+  order INTEGER
+  trackId TEXT                    -- NOT NULL in schema, actual may vary
+  carId TEXT                     -- Legacy: single car (kept for backwards compat)
+  buildId TEXT                   -- Legacy: single build (kept for backwards compat)
+  lobbySettingsId TEXT
+  notes TEXT
+  createdAt TIMESTAMP
+  updatedAt TIMESTAMP
+)
+
+-- Also exists: RunListEntryCar junction table (added 2026-01-11)
+RunListEntryCar (
+  id TEXT PRIMARY KEY
+  runListEntryId TEXT            -- References RunListEntry
+  carId TEXT                     -- Car for this entry
+  buildId TEXT                   -- Optional build for this car
+  createdAt TIMESTAMP
+  updatedAt TIMESTAMP
+)
+```
+
+### Important Notes:
+- **Hybrid System**: RunListEntry has BOTH old single-car columns (carId, buildId) AND the new RunListEntryCar junction table
+- **Migration 2026-01-11**: Added RunListEntryCar for multiple cars but kept old columns for backwards compatibility
+- **Data May Exist In**: 
+  - Old entries: carId/buildId columns
+  - New entries: RunListEntryCar junction table
+  - Both: Some entries may have data in both places
+
+### Migration Implications:
+Any Race entity migration must handle:
+1. Data in RunListEntry.carId / RunListEntry.buildId (legacy)
+2. Data in RunListEntryCar junction table (new system)
+3. Possible duplicates where both exist
+
+---
+
+---
+
+## 2026-01-12 - Race Entity Implementation (Part 2)
+
+### Context
+Continuing from previous session where Race and RaceCar tables were created.
+
+### Work Completed
+
+#### 1. Race Page Development (ATTEMPTED - ROLLED BACK)
+**File:** `/src/app/races/[id]/page.tsx`
+
+**Attempted Features:**
+- Direct inline editing (no edit mode toggle)
+- Auto-save with debouncing (1 second)
+- Editable name, description, track selector
+- Add/remove cars functionality
+- Build selector for each car
+- Delete button on each car card
+- Optimistic UI updates
+
+**Issues Encountered:**
+- State management complexity with two sources of truth (race object vs raceCars state)
+- Delete button would intermittently delete all cars instead of one
+- RaceCars state becoming corrupted with undefined carId/buildId values
+- Multiple save triggers causing race conditions
+- State getting out of sync between UI and database
+
+**Root Cause:**
+The fundamental issue was having to maintain two separate state representations:
+1. `race` object (from API, used for display)
+2. `raceCars` state (local, used for editing)
+
+When updating one but not the other immediately, or when save operations failed, the states would desynchronize, leading to undefined values and incorrect deletions.
+
+**Decision:** ROLLED BACK all editing functionality. Race page is now read-only.
+
+#### 2. Race Page (Final - Read Only)
+**Current Implementation:**
+- Read-only display of race information
+- Shows race name, track, description
+- Lists all cars in the race with build information
+- Statistics (total laps, drivers, fastest time, average time)
+- Leaderboard (best times per driver per car per build)
+- User stats (position, best time, average time, recent laps)
+- Shows which run lists use this race
+
+**Features Working:**
+- ✅ Display of cars with build info (Wrench icon)
+- ✅ Link to car detail pages
+- ✅ Leaderboard showing builds
+- ✅ User stats showing builds
+- ✅ Run list references
+
+**Features Removed:**
+- ❌ Inline editing of race details
+- ❌ Add/remove car functionality
+- ❌ Track selector
+- ❌ Auto-save
+
+#### 3. Run List Integration
+**Status:** UNCHANGED - Run list functionality still works
+- Run lists can create races via their own forms
+- Run lists can add multiple cars to races
+- API endpoints (GET/PATCH/DELETE) on `/api/races/[id]` are functional
+- Run list entries can reference races
+
+**Files Modified:**
+- `/src/app/run-lists/[id]/page.tsx` - Removed window focus refresh (no longer needed)
+
+### Current State
+
+#### Database Schema
+✅ **COMPLETE**
+- `Race` table created
+- `RaceCar` table created
+- `RunListEntry.raceId` column added
+- Foreign key constraints in place
+- Cascade delete configured (RaceCar → Race)
+
+#### API Endpoints
+✅ **COMPLETE**
+- `GET /api/races/[id]` - Fetch race with leaderboard, user stats, run lists
+- `PATCH /api/races/[id]` - Update race (name, description, track, cars)
+- `DELETE /api/races/[id]` - Delete race (validates not in use by run lists)
+
+#### UI Pages
+⚠️ **PARTIAL**
+- ✅ `/races/[id]` - Race detail page (read-only)
+- ❌ Race editing - Decided to keep read-only for simplicity
+- ✅ Run list integration working
+
+### Key Learnings
+
+1. **State Management Complexity:** Optimistic updates with two sources of truth (display state vs edit state) can easily become desynchronized, especially with debounced auto-save.
+
+2. **Simpler Approach:** For this use case, a read-only race page with editing handled through run lists (or a separate edit page/modal) would be more maintainable.
+
+3. **Rollback Decision:** Rather than continuing to debug complex state synchronization issues, we reverted to a simpler read-only implementation since the run list already provides a way to create/edit races.
+
+### Next Steps
+
+1. **Keep race page read-only** - Current implementation is stable and functional
+2. **Use run lists for race creation** - The existing run list UI handles race creation/editing
+3. **Consider future dedicated race editing** - If needed, create a separate edit page or modal with form submission (not auto-save)
+4. **Focus on other features** - Race entity is functional, move on to other priorities
+
+### Files Modified This Session
+1. `/src/app/races/[id]/page.tsx` - Rolled back to read-only display
+2. `/src/app/run-lists/[id]/page.tsx` - Removed unnecessary window focus refresh
+
+### Files to Review
+- `/src/app/api/races/[id]/route.ts` - API remains functional for run list integration
+

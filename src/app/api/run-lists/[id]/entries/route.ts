@@ -15,22 +15,9 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { trackId, cars, lobbySettingsId, notes } = body
+    const { raceId, trackId, cars, lobbySettingsId, notes } = body
 
-    // Validation
-    if (!trackId) {
-      return NextResponse.json(
-        { error: 'trackId is required' },
-        { status: 400 }
-      )
-    }
-
-    if (!cars || !Array.isArray(cars) || cars.length === 0) {
-      return NextResponse.json(
-        { error: 'At least one car is required' },
-        { status: 400 }
-      )
-    }
+    let finalRaceId = raceId
 
     const supabase = createServiceRoleClient()
 
@@ -59,26 +46,124 @@ export async function POST(
       )
     }
 
-    // Verify track exists
-    const { data: track } = await supabase
-      .from('Track')
-      .select('id')
-      .eq('id', trackId)
-      .single()
+    // If raceId not provided, we need trackId + cars to find or create a race
+    if (!finalRaceId) {
+      // Validation for track + cars mode
+      if (!trackId) {
+        return NextResponse.json(
+          { error: 'Either raceId or trackId is required' },
+          { status: 400 }
+        )
+      }
 
-    if (!track) {
-      return NextResponse.json({ error: 'Track not found' }, { status: 404 })
-    }
+      if (!cars || !Array.isArray(cars) || cars.length === 0) {
+        return NextResponse.json(
+          { error: 'At least one car is required' },
+          { status: 400 }
+        )
+      }
 
-    // Verify all cars exist
-    const carIds = cars.map((c: any) => c.carId)
-    const { data: carsData } = await supabase
-      .from('Car')
-      .select('id')
-      .in('id', carIds)
+      // Verify track exists
+      const { data: track } = await supabase
+        .from('Track')
+        .select('id')
+        .eq('id', trackId)
+        .single()
 
-    if (!carsData || carsData.length !== carIds.length) {
-      return NextResponse.json({ error: 'One or more cars not found' }, { status: 404 })
+      if (!track) {
+        return NextResponse.json({ error: 'Track not found' }, { status: 404 })
+      }
+
+      // Verify all cars exist
+      const carIds = cars.map((c: any) => c.carId)
+      const { data: carsData } = await supabase
+        .from('Car')
+        .select('id')
+        .in('id', carIds)
+
+      if (!carsData || carsData.length !== carIds.length) {
+        return NextResponse.json({ error: 'One or more cars not found' }, { status: 404 })
+      }
+
+      // Try to find an existing race with this track + cars combination
+      const { data: existingRaces } = await supabase
+        .from('Race')
+        .select('id, raceCars:RaceCar(carId, buildId)')
+        .eq('trackid', trackId)
+
+      // Check if any existing race matches the exact car combination
+      const matchingRace = existingRaces?.find((race: any) => {
+        const raceCarIds = race.raceCars?.map((rc: any) => rc.carId).sort() || []
+        const inputCarIds = carIds.sort()
+
+        if (raceCarIds.length !== inputCarIds.length) return false
+
+        return raceCarIds.every((carId: string, index: number) => carId === inputCarIds[index])
+      })
+
+      if (matchingRace) {
+        // Use existing race
+        finalRaceId = matchingRace.id
+      } else {
+        // Create new race
+        const now = new Date().toISOString()
+        const { data: newRace, error: raceError } = await supabase
+          .from('Race')
+          .insert({
+            id: crypto.randomUUID(),
+            trackid: trackId,
+            name: null,
+            description: null,
+            createdbyid: userData.id,
+            createdat: now,
+            updatedat: now,
+          })
+          .select('id')
+          .single()
+
+        if (raceError || !newRace) {
+          console.error('Error creating race:', raceError)
+          return NextResponse.json(
+            { error: 'Failed to create race', details: raceError?.message },
+            { status: 500 }
+          )
+        }
+
+        finalRaceId = newRace.id
+
+        // Create RaceCar entries
+        const raceCarsToInsert = cars.map((c: any) => ({
+          id: crypto.randomUUID(),
+          raceid: finalRaceId,
+          carid: c.carId,
+          buildid: c.buildId || null,
+          createdat: now,
+          updatedat: now,
+        }))
+
+        const { error: carsError } = await supabase
+          .from('RaceCar')
+          .insert(raceCarsToInsert)
+
+        if (carsError) {
+          console.error('Error creating race cars:', carsError)
+          return NextResponse.json(
+            { error: 'Failed to add cars to race', details: carsError.message },
+            { status: 500 }
+          )
+        }
+      }
+    } else {
+      // Validate the provided raceId exists
+      const { data: race } = await supabase
+        .from('Race')
+        .select('id')
+        .eq('id', finalRaceId)
+        .single()
+
+      if (!race) {
+        return NextResponse.json({ error: 'Race not found' }, { status: 404 })
+      }
     }
 
     // Get the next order number
@@ -93,13 +178,26 @@ export async function POST(
 
     // Create entry
     const now = new Date().toISOString()
+
+    // Get trackId from race if not directly provided
+    let entryTrackId = trackId
+    if (!entryTrackId) {
+      const { data: raceData } = await supabase
+        .from('Race')
+        .select('trackid')
+        .eq('id', finalRaceId)
+        .single()
+      entryTrackId = raceData?.trackid
+    }
+
     const { data: entry, error } = await supabase
       .from('RunListEntry')
       .insert({
         id: crypto.randomUUID(),
         runListId,
         order: nextOrder,
-        trackId,
+        trackId: entryTrackId,
+        raceid: finalRaceId,
         lobbySettingsId: lobbySettingsId || null,
         notes: notes || null,
         createdAt: now,
@@ -175,7 +273,13 @@ export async function POST(
       runListId,
       userId: userData.id,
       action: 'ADD_ENTRY',
-      details: JSON.stringify({ entryId: entry.id, trackId, cars, order: nextOrder }),
+      details: JSON.stringify({
+        entryId: entry.id,
+        raceId: finalRaceId,
+        trackId: entryTrackId,
+        cars,
+        order: nextOrder
+      }),
       createdAt: now
     })
 

@@ -63,6 +63,7 @@ interface RunList {
     id: string
     order: number
     notes: string | null
+    raceid: string | null
     track: {
       id: string
       name: string
@@ -212,6 +213,7 @@ export default function RunListDetailPage() {
   const [selectedCarId, setSelectedCarId] = useState('')
   const [selectedBuildId, setSelectedBuildId] = useState('')
   const [entryNotes, setEntryNotes] = useState('')
+  const [carBuilds, setCarBuilds] = useState<Record<string, Build[]>>({})
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
@@ -270,20 +272,42 @@ export default function RunListDetailPage() {
     }
   }
 
+  const loadBuildsForCar = async (carId: string): Promise<Build[]> => {
+    // Return cached builds if already loaded
+    if (carBuilds[carId]) {
+      return carBuilds[carId]
+    }
+
+    if (!carId) return []
+
+    try {
+      const res = await fetch(`/api/builds?carId=${carId}`)
+      const data = await res.json()
+      const builds = data.builds || []
+      // Cache the builds for this car
+      setCarBuilds(prev => ({ ...prev, [carId]: builds }))
+      return builds
+    } catch (error) {
+      console.error('Error loading builds:', error)
+      return []
+    }
+  }
+
   const handleCarChange = async (carId: string) => {
     setSelectedCarId(carId)
     setSelectedBuildId('')
     setBuilds([])
 
     if (carId) {
-      try {
-        const res = await fetch(`/api/builds?carId=${carId}`)
-        const data = await res.json()
-        setBuilds(data.builds || [])
-      } catch (error) {
-        console.error('Error loading builds:', error)
-      }
+      const builds = await loadBuildsForCar(carId)
+      setBuilds(builds)
     }
+  }
+
+  const updateCarBuild = async (carId: string, buildId: string) => {
+    setSelectedCars(selectedCars.map(c =>
+      c.carId === carId ? { ...c, buildId } : c
+    ))
   }
 
   const addCarToSelection = () => {
@@ -293,6 +317,12 @@ export default function RunListDetailPage() {
       return
     }
     setSelectedCars([...selectedCars, { carId: selectedCarId, buildId: selectedBuildId }])
+
+    // Preload builds for this car if not already loaded
+    if (!carBuilds[selectedCarId]) {
+      loadBuildsForCar(selectedCarId)
+    }
+
     setSelectedCarId('')
     setSelectedBuildId('')
     setBuilds([])
@@ -641,10 +671,9 @@ export default function RunListDetailPage() {
                         isOwner={isOwner}
                         onRemove={removeEntry}
                         onClick={() => {
-                          // Only navigate to combo if there's exactly one car
-                          if (entry.cars && entry.cars.length === 1) {
-                            const car = entry.cars[0].car
-                            router.push(`/combos/${car.slug}/${entry.track.slug}`)
+                          // Navigate to race detail page if raceId exists
+                          if (entry.raceid) {
+                            router.push(`/races/${entry.raceid}`)
                           }
                         }}
                       />
@@ -713,36 +742,54 @@ export default function RunListDetailPage() {
               </div>
 
               {selectedCars.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label className="text-sm text-muted-foreground">
                     Selected Cars ({selectedCars.length})
                   </Label>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {selectedCars.map((carSelection) => {
                       const car = cars.find(c => c.id === carSelection.carId)
                       if (!car) return null
+                      const availableBuilds = carBuilds[carSelection.carId] || []
                       return (
                         <div
                           key={carSelection.carId}
-                          className="flex items-center justify-between p-2 border rounded-lg"
+                          className="p-3 border border-border rounded-lg space-y-2"
                         >
-                          <span className="text-sm">
-                            {car.manufacturer} {car.name}
-                            {carSelection.buildId && (
-                              <span className="text-muted-foreground">
-                                {' '}• Build: {builds.find(b => b.id === carSelection.buildId)?.name || 'Unknown'}
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">
+                              {car.manufacturer} {car.name}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeCarFromSelection(carSelection.carId)}
+                              className="text-destructive hover:text-destructive h-7 w-7 p-0"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">Build:</span>
+                            <SearchableComboBox
+                              options={[
+                                { value: '', label: 'None' },
+                                ...availableBuilds.map((b) => ({ value: b.id, label: b.name })),
+                              ]}
+                              value={carSelection.buildId || ''}
+                              onValueChange={(buildId) => updateCarBuild(carSelection.carId, buildId)}
+                              placeholder="Select build..."
+                              searchPlaceholder="Search builds..."
+                              emptyText="No builds found for this car"
+                              className="flex-1"
+                            />
+                            {availableBuilds.length === 0 && (
+                              <span className="text-xs text-muted-foreground italic">
+                                No builds available
                               </span>
                             )}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeCarFromSelection(carSelection.carId)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          </div>
                         </div>
                       )
                     })}

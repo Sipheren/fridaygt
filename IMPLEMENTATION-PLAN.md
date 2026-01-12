@@ -249,9 +249,14 @@ Start → /builds/new
 
 ### Sessions
 - RunList (collections of track/car combos)
-- RunListEntry (individual combo in a run list, buildId)
+- RunListEntry (individual combo in a run list, buildId, raceId)
 - RunSession ("Tonight's Run" active session)
 - SessionAttendance (who attended which session)
+
+### Race Entity (NEW - 2026-01-12)
+- Race (central entity for track + car combinations)
+- RaceCar (junction table linking cars/builds to races)
+- RunListEntry.raceId (foreign key to Race)
 
 ### Audit
 - RunListEdit (track all edits for collaboration)
@@ -1030,15 +1035,15 @@ Example 2: Navigating from run list to combo
 - Phase 6: Run Lists & Sessions (API layer complete, UI layer in progress)
 
 **🔜 Next Up (Priority Order)**:
-1. **Phase 8 Part 1: Critical UI/UX Fixes** (HIGH PRIORITY - user feedback)
+1. **Phase 6: Complete Run Lists UI** (HIGH PRIORITY - core feature incomplete)
+   - Create run list creation page
+   - Create run list detail/edit page
+   - Build Tonight session page
+2. **Phase 8 Part 1: Critical UI/UX Fixes** (HIGH PRIORITY - user feedback)
    - Fix dropdown search (contains vs starts-with matching)
    - Add lap time edit functionality
    - Fix auth page styling inconsistencies
    - Standardize form page styling
-2. **Phase 6: Complete Run Lists UI** (HIGH PRIORITY - core feature incomplete)
-   - Create run list creation page
-   - Create run list detail/edit page
-   - Build Tonight session page
 3. **Phase 6: Session Integration**
    - Integrate sessions with lap times
    - Session history pages
@@ -1050,6 +1055,7 @@ Example 2: Navigating from run list to combo
 - Tracks: 118 ✓
 - Cars: 552 ✓
 - Builds: Database ready, 1 test build ✓
+- Races: Database schema added (Race, RaceCar tables) ✓
 
 **🔑 Admin Access**:
 - Email: david@sipheren.com
@@ -1099,6 +1105,32 @@ Example 2: Navigating from run list to combo
 - ❌ Session history page
 
 **Phase 6 Status**: API Complete ✅ | UI 20% Complete ⚠️ | Integrations Not Started ❌
+
+**🎉 Latest Updates (2026-01-12)**:
+
+**Race Entity Implementation - PARTIAL**:
+- ✅ Database schema updated with Race and RaceCar tables
+- ✅ RunListEntry.raceId column added for linking entries to races
+- ✅ API endpoints created (GET/PATCH/DELETE /api/races/[id])
+- ✅ Race page created as read-only display (/races/[id])
+  - Shows race name, description, track info
+  - Lists all cars in the race with build information
+  - Displays statistics (total laps, drivers, fastest time, average time)
+  - Shows leaderboard (best times per driver per car per build)
+  - Shows user stats (position, best time, average time, recent laps)
+  - Lists which run lists use this race
+- ❌ Race editing functionality ROLLED BACK due to state management complexity
+  - Attempted inline editing with auto-save
+  - Encountered state synchronization issues (two sources of truth)
+  - Delete functionality was deleting all cars instead of one
+  - Decision: Keep race page read-only for stability
+  - Run lists continue to handle race creation/editing via their own UI
+
+**Current Status**:
+- Race entity: Functionally complete for viewing
+- Race creation/editing: Handled through run lists (existing functionality)
+- Race page: Stable, read-only display
+- API: Fully functional for integration with run lists
 
 **🎉 Latest Updates (2026-01-11 Part 3)**:
 
@@ -1196,3 +1228,63 @@ DEFAULT_ADMIN_EMAIL="david@sipheren.com"
 
 For detailed session-by-session progress tracking, see:
 - `/SESSION-LOG.md` - Detailed log of all development work, decisions, issues, and fixes
+
+---
+
+## Race Entity Architecture (2026-01-12)
+
+### Overview
+The Race entity centralizes track + car combinations, allowing races to be reused across multiple run lists. This replaces the old combo model where track/car combinations were only stored within individual run list entries.
+
+### Database Schema
+- **Race**: Main entity with id, trackId, name, description, createdById
+- **RaceCar**: Junction table linking cars/builds to a race (supports multiple cars per race)
+- **RunListEntry.raceId**: Foreign key linking run list entries to races
+
+### API Endpoints
+- `GET /api/races/[id]` - Fetch race with leaderboard, user stats, run lists
+- `PATCH /api/races/[id]` - Update race (name, description, track, cars)
+- `DELETE /api/races/[id]` - Delete race (validates not in use by run lists)
+
+### UI Pages
+- `/races/[id]` - Race detail page (read-only)
+  - Displays race information, cars, builds
+  - Shows statistics and leaderboard
+  - Lists run lists using this race
+  - Links to car/track/build pages
+
+### Integration Points
+- **Run Lists**: Can create/edit races when adding entries
+- **Lap Times**: Grouped by race (user + car + build combination)
+- **Leaderboards**: Calculated per race (best time per user per car per build)
+- **Builds**: Displayed prominently on race pages
+
+### Decisions Made
+1. **Race page is read-only**: Editing complexity too high with auto-save and state synchronization issues
+2. **Run lists handle race creation**: Run list UI is the primary way to create/edit races
+3. **API remains functional**: Run lists can use PATCH endpoint to update races
+4. **Simpler architecture**: Avoids complex state management issues while maintaining functionality
+
+### Technical Details
+**Attempted Features (Rolled Back)**:
+- Inline editing with auto-save (debounced 1 second)
+- Direct track, name, description editing
+- Add/remove cars with build selector
+- Delete button on each car card
+
+**Issues Encountered**:
+- Two sources of truth (race object vs raceCars state) causing desynchronization
+- State corruption with undefined carId/buildId values
+- Race conditions with multiple save triggers
+- Delete button affecting all cars instead of one
+
+**Resolution**:
+- Reverted to simple read-only display
+- Run lists continue to handle race management
+- API remains functional for programmatic updates
+
+### Files Modified
+- `/src/app/races/[id]/page.tsx` - Race detail page (read-only)
+- `/src/app/api/races/[id]/route.ts` - Race API endpoints
+- `/src/app/run-lists/[id]/page.tsx` - Run list integration
+
