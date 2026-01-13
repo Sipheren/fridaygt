@@ -1,5 +1,93 @@
 # FridayGT Development Session Log
 
+## Session: 2026-01-13 #5 - Authentication System Investigation
+
+### Problem Reported
+New users unable to set gamertag after signing in - getting "The result contains 0 rows" error when trying to update profile.
+
+### Investigation Process
+
+**1. Mapped the authentication system architecture**
+   - Discovered two separate schemas:
+     - `next_auth` schema: Managed by NextAuth SupabaseAdapter
+     - `public` schema: Managed by application (User table with role, gamertag)
+
+**2. Audited database state**
+   - Created script: `map-auth-system.ts`
+   - Found next_auth.users: 2 records (david@sipheren.com, test@sipheren.com)
+   - Found public.User: 1 record (david@sipheren.com only)
+   - **Root cause identified**: User exists in next_auth but NOT in public.User
+
+**3. Traced the sign-in flow**
+   - NextAuth creates: next_auth.users, next_auth.sessions ✅
+   - Session callback queries: public.User for role, gamertag
+   - If not found: Defaults to role=USER, gamertag=undefined
+   - Middleware redirects to: /auth/complete-profile
+   - PATCH /api/user/profile tries to UPDATE public.User
+   - **FAILS**: Record doesn't exist to update!
+
+### Root Cause
+
+**No synchronization between schemas**
+
+When NextAuth creates a user in `next_auth.users`, there is:
+- ❌ No database trigger to create matching `public.User` record
+- ❌ No application code to create matching `public.User` record
+- ❌ No error handling for missing `public.User` record
+
+### Why Two Schemas?
+
+**next_auth schema** (managed by NextAuth adapter):
+- Hardcoded by SupabaseAdapter to use this schema
+- Handles standard auth only (id, email, emailVerified)
+- Automatically manages sessions, accounts, tokens
+
+**public.User table** (managed by application):
+- Custom fields: role, gamertag
+- Referenced by Race, Session, LapTime, Build, RunList tables
+- Uses RLS policies for security
+
+### Solution Designed (Option 2: Auto-Create with USER Role)
+
+**Approach**: Database trigger automatically creates `public.User` record when `next_auth.users` is created.
+
+**Files Created**:
+- `docs/AUTH-SYSTEM-STATE.md` - Complete architecture documentation
+- `docs/AUTH-FIX-OPTION2-PLAN.md` - Step-by-step implementation plan
+- `supabase/migrations/20260113_cleanup_test_users.sql` - Cleanup script
+- `map-auth-system.ts` - Database audit script
+
+**Implementation Plan**:
+1. Run cleanup migration (remove test users/sessions)
+2. Create trigger function: `sync_next_auth_user()`
+3. Create trigger: `on_next_auth_user_created`
+4. Update `/src/app/api/user/profile/route.ts` (add safety upsert)
+5. Update `/src/lib/auth.ts` (change PENDING → USER)
+6. Test with new user sign-up
+
+**Benefits**:
+- ✅ Automatic sync via trigger (reliable, no race conditions)
+- ✅ Simple (single trigger, minimal code changes)
+- ✅ Backward compatible (existing admin unaffected)
+- ✅ No approval needed (users active immediately)
+
+### Files Modified This Session
+- `src/lib/auth.ts` - Added table names config, debug logging, changed PENDING→USER
+- Created: `docs/AUTH-SYSTEM-STATE.md`
+- Created: `docs/AUTH-FIX-OPTION2-PLAN.md`
+- Created: `supabase/migrations/20260113_cleanup_test_users.sql`
+- Created: `map-auth-system.ts`
+
+### Status
+- ⏸️ Awaiting approval to implement Option 2 fix
+- 📋 Documentation complete
+- 📋 Cleanup SQL ready
+- 📋 Implementation plan ready
+
+### Related Sessions
+- 2026-01-13 #4: Database audit method established
+- Earlier sessions: Gamertag implementation, RLS setup
+
 ## Session: 2026-01-05 - Phase 5: Car Builds & Tuning
 
 ### Session Goals
