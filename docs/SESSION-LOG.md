@@ -4517,3 +4517,71 @@ src/
 4. Update email functions to use templates
 5. Test across email clients and devices
 
+
+### Implementation Details
+
+**Email Infrastructure Created:**
+1. **Base Email Template** (src/emails/base-email.tsx)
+   - Consistent wrapper for all emails
+   - FridayGT branding header with logo
+   - Responsive 600px max-width container
+   - Dark theme background (#09090B)
+   - Footer with standard disclaimer
+
+2. **Design System Constants** (src/emails/constants.ts)
+   - Color palette matching design guide
+   - Font stacks (sans-serif, monospace)
+   - Spacing scale (8px, 12px, 16px, 24px, 32px)
+   - Border radius values (4px, 8px, 12px)
+   - Layout constants
+
+3. **Component Library** (src/emails/components/)
+   - **Button**: Primary, secondary, destructive variants
+   - **Card**: Bordered sections with colored headers
+   - **Badge**: Status indicators (success, destructive, warning, muted)
+   - **Section**: Spaced content blocks
+
+**Email Templates Implemented:**
+1. **VerificationEmail** (src/emails/verification-email.tsx)
+   - Welcome message
+   - Primary CTA button (Verify Email Address)
+   - Expiration notice (24 hours)
+   - Security notice
+
+2. **ApprovalEmail** (src/emails/approval-email.tsx)
+   - **Approved version**: Success badge, status card, sign-in button
+   - **Denied version**: Destructive badge, informative message, contact info
+
+3. **UserRemovalEmail** (src/emails/user-removal-email.tsx)
+   - Admin notification header
+   - Destructive-themed card with user details
+   - Removed by info
+   - Timestamp
+   - Automated notice
+
+**Technical Implementation:**
+- Used React Email library (@react-email/components)
+- All templates render to HTML with inline styles
+- Email client compatibility maintained
+- Responsive design works on mobile and desktop
+
+**Bug Fixes:**
+- Fixed params awaiting in pending-users approve/reject routes
+- Updated to use Promise-based params pattern (Next.js 15+)
+
+**Files Modified:**
+- src/lib/email.ts → src/lib/email.tsx (renamed for JSX, updated to use templates)
+- src/app/api/admin/pending-users/[id]/approve/route.ts (fixed params)
+- src/app/api/admin/pending-users/[id]/reject/route.ts (fixed params)
+- package.json, package-lock.json (added @react-email/components)
+
+### Commits Created
+1. **Implement email template system with design-aligned styling** (8e302bd)
+   - Created 9 new email template files
+   - Renamed email.ts to email.tsx
+   - Fixed route handler params issues
+   - Added @react-email/components dependency
+
+### Next Steps
+None - email template system complete and fully integrated. All transactional emails now match FridayGT design guide with consistent branding, typography, and styling.
+
