@@ -228,126 +228,132 @@ export default function RacesPage() {
           {filteredRaces.map((race) => (
             <div
               key={race.id}
-              className={`group relative border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors ${
+              className={`group relative flex items-start gap-2 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors ${
                 !race.isActive ? 'opacity-50' : ''
               }`}
             >
-              <Button
-                variant="ghost"
-                asChild
-                className="w-full h-auto p-0 text-left justify-start"
-              >
-                <Link href={`/races/${race.id}`} className="w-full">
-                  <div className="p-3 sm:p-4">
-                    <div className="space-y-2">
-                      {/* Race Name */}
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="font-semibold text-base sm:text-lg truncate flex-1 min-w-0">
-                          {getDisplayName(race)}
+              <div className="flex-1 min-w-0">
+                  <Button
+                    variant="ghost"
+                    asChild
+                    className="w-full h-auto p-0 text-left justify-start"
+                  >
+                    <Link href={`/races/${race.id}`} className="w-full">
+                      <div className="flex items-start gap-3 w-full p-3 sm:p-4">
+                        <div className="flex-1 min-w-0 space-y-2">
+                    {/* Race Name */}
+                    <div className="pr-12 min-w-0">
+                      <span className="font-semibold text-base sm:text-lg block truncate">
+                        {getDisplayName(race)}
+                      </span>
+                    </div>
+
+                    {/* Track */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{race.track?.name || 'Unknown Track'}</span>
+                    </div>
+
+                    {/* Cars */}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Car className="h-4 w-4 shrink-0" />
+                        <span>
+                          {race.RaceCar.length === 0
+                            ? 'No cars'
+                            : race.RaceCar.length === 1
+                            ? '1 car'
+                            : `${race.RaceCar.length} cars`}
                         </span>
                       </div>
-
-                      {/* Track */}
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{race.track?.name || 'Unknown Track'}</span>
-                      </div>
-
-                      {/* Cars */}
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Car className="h-4 w-4 shrink-0" />
-                          <span>
-                            {race.RaceCar.length === 0
-                              ? 'No cars'
-                              : race.RaceCar.length === 1
-                              ? '1 car'
-                              : `${race.RaceCar.length} cars`}
-                          </span>
-                        </div>
-                        {race.RaceCar.length > 0 && (
-                          <div className="pl-4 sm:pl-6 space-y-0.5 text-sm text-muted-foreground">
-                            {race.RaceCar.slice(0, 3).map((rc) => (
-                              <div key={rc.id} className="line-clamp-1 text-xs sm:text-sm">
-                                • {rc.car?.manufacturer || ''} {rc.car?.name || 'Unknown Car'}
-                              </div>
-                            ))}
-                            {race.RaceCar.length > 3 && (
-                              <div className="italic text-xs">
-                                +{race.RaceCar.length - 3} more
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Status and Delete - Before run lists on mobile, absolute on desktop */}
-                      <div className="flex items-center justify-between sm:absolute sm:top-4 sm:right-4">
-                        {race.isActive ? (
-                          <Badge variant="default" className="text-xs">
-                            Active
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">
-                            Inactive
-                          </Badge>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            deleteRace(race.id)
-                          }}
-                          disabled={deletingRaceId === race.id}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 h-11 w-11 sm:h-9 sm:w-9"
-                        >
-                          {deletingRaceId === race.id ? (
-                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
+                      {race.RaceCar.length > 0 && (
+                        <div className="pl-4 sm:pl-6 space-y-0.5 text-sm text-muted-foreground">
+                          {race.RaceCar.slice(0, 3).map((rc) => (
+                            <div key={rc.id} className="line-clamp-1 text-xs sm:text-sm">
+                              • {rc.car?.manufacturer || ''} {rc.car?.name || 'Unknown Car'}
+                            </div>
+                          ))}
+                          {race.RaceCar.length > 3 && (
+                            <div className="italic text-xs">
+                              +{race.RaceCar.length - 3} more
+                            </div>
                           )}
-                        </Button>
-                      </div>
-
-                      {/* Run Lists */}
-                      {race.runListCount > 0 && (
-                        <div className="pt-2 border-t">
-                          <div className="text-xs text-muted-foreground mb-1">
-                            {race.runListCount === 1
-                              ? 'Used in 1 run list:'
-                              : `Used in ${race.runListCount} run lists:`}
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {race.runLists.slice(0, 3).map((rl) => (
-                              <Badge
-                                key={rl.id}
-                                variant="outline"
-                                className="text-xs"
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  e.stopPropagation()
-                                  router.push(`/run-lists/${rl.id}`)
-                                }}
-                              >
-                                <Globe className="h-2.5 w-2.5 mr-1" />
-                                <span className="truncate max-w-[120px]">{rl.name}</span>
-                              </Badge>
-                            ))}
-                            {race.runListCount > 3 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{race.runListCount - 3}
-                              </Badge>
-                            )}
-                          </div>
                         </div>
                       )}
                     </div>
+
+                    {/* Status Badge */}
+                    <div className="flex items-center gap-2">
+                      {race.isActive ? (
+                        <Badge variant="default" className="text-xs">
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">
+                          Inactive
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Run Lists */}
+                    {race.runListCount > 0 && (
+                      <div className="pt-2 border-t">
+                        <div className="text-xs text-muted-foreground mb-1">
+                          {race.runListCount === 1
+                            ? 'Used in 1 run list:'
+                            : `Used in ${race.runListCount} run lists:`}
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {race.runLists.slice(0, 3).map((rl) => (
+                            <Badge
+                              key={rl.id}
+                              variant="outline"
+                              className="text-xs"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                router.push(`/run-lists/${rl.id}`)
+                              }}
+                            >
+                              <Globe className="h-2.5 w-2.5 mr-1" />
+                              <span className="truncate max-w-[120px]">{rl.name}</span>
+                            </Badge>
+                          ))}
+                          {race.runListCount > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{race.runListCount - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </Link>
+                </div>
+              </Link>
+            </Button>
+              </div>
+
+            {/* Delete Button */}
+            <div className="p-2 sm:p-4 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  deleteRace(race.id)
+                }}
+                disabled={deletingRaceId === race.id}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 h-11 w-11 sm:h-9 sm:w-9"
+              >
+                {deletingRaceId === race.id ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
               </Button>
             </div>
+          </div>
           ))}
         </div>
       )}
