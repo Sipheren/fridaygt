@@ -165,8 +165,8 @@ export default function RacesPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-full sm:max-w-sm">
+      <div className="flex flex-col gap-3">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search races..."
@@ -175,11 +175,12 @@ export default function RacesPage() {
             className="pl-10"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
             onClick={() => setFilter('all')}
             size="sm"
+            className="min-h-[44px] text-xs"
           >
             All Races
           </Button>
@@ -187,6 +188,7 @@ export default function RacesPage() {
             variant={filter === 'active' ? 'default' : 'outline'}
             onClick={() => setFilter('active')}
             size="sm"
+            className="min-h-[44px] text-xs"
           >
             Active
           </Button>
@@ -194,6 +196,7 @@ export default function RacesPage() {
             variant={filter === 'inactive' ? 'default' : 'outline'}
             onClick={() => setFilter('inactive')}
             size="sm"
+            className="min-h-[44px] text-xs"
           >
             Inactive
           </Button>
@@ -221,34 +224,34 @@ export default function RacesPage() {
           )}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {filteredRaces.map((race) => (
             <div
               key={race.id}
-              className={`group relative flex items-center gap-2 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors ${
+              className={`group relative flex items-start gap-2 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors ${
                 !race.isActive ? 'opacity-50' : ''
               }`}
             >
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                   <Button
                     variant="ghost"
                     asChild
                     className="w-full h-auto p-0 text-left justify-start"
                   >
                     <Link href={`/races/${race.id}`} className="w-full">
-                      <div className="flex items-start gap-4 w-full p-3 sm:p-4">
-                        <div className="flex-1 space-y-2">
+                      <div className="flex items-start gap-3 w-full p-3 sm:p-4">
+                        <div className="flex-1 min-w-0 space-y-2">
                     {/* Race Name */}
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-lg">
+                    <div className="flex items-start gap-2 flex-wrap">
+                      <span className="font-semibold text-base sm:text-lg truncate flex-1 min-w-0">
                         {getDisplayName(race)}
                       </span>
                       {race.isActive ? (
-                        <Badge variant="default" className="shrink-0">
+                        <Badge variant="default" className="shrink-0 text-xs">
                           Active
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="shrink-0">
+                        <Badge variant="secondary" className="shrink-0 text-xs">
                           Inactive
                         </Badge>
                       )}
@@ -257,7 +260,7 @@ export default function RacesPage() {
                     {/* Track */}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <MapPin className="h-4 w-4 shrink-0" />
-                      <span>{race.track?.name || 'Unknown Track'}</span>
+                      <span className="truncate">{race.track?.name || 'Unknown Track'}</span>
                     </div>
 
                     {/* Cars */}
@@ -280,7 +283,7 @@ export default function RacesPage() {
                             </div>
                           ))}
                           {race.RaceCar.length > 3 && (
-                            <div className="italic">
+                            <div className="italic text-xs">
                               +{race.RaceCar.length - 3} more
                             </div>
                           )}
@@ -309,7 +312,7 @@ export default function RacesPage() {
                               }}
                             >
                               <Globe className="h-2.5 w-2.5 mr-1" />
-                              {rl.name}
+                              <span className="truncate max-w-[120px]">{rl.name}</span>
                             </Badge>
                           ))}
                           {race.runListCount > 3 && (
@@ -327,7 +330,7 @@ export default function RacesPage() {
               </div>
 
             {/* Delete Button */}
-            <div className="p-4">
+            <div className="p-2 sm:p-4 shrink-0">
               <Button
                 variant="ghost"
                 size="icon"
@@ -337,7 +340,7 @@ export default function RacesPage() {
                   deleteRace(race.id)
                 }}
                 disabled={deletingRaceId === race.id}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 h-11 w-11 sm:h-9 sm:w-9"
               >
                 {deletingRaceId === race.id ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
