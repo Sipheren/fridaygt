@@ -186,7 +186,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
   if (loading) {
     return (
-      <div className="max-w-[1200px] mx-auto space-y-6">
+      <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
         <LoadingSection text="Loading build..." />
       </div>
     )
@@ -194,7 +194,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
   if (!build) {
     return (
-      <div className="max-w-[1200px] mx-auto">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="text-center py-12 border border-border rounded-lg">
           <p className="text-lg font-semibold">Build not found</p>
         </div>
@@ -203,22 +203,22 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
       {/* Back Button */}
-      <Button variant="ghost" onClick={() => router.push('/builds')}>
+      <Button variant="ghost" onClick={() => router.push('/builds')} className="h-11 px-4 sm:h-9">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Builds
       </Button>
 
       {/* Build Header */}
-      <div className="border border-border rounded-lg p-6 space-y-4">
-        <div className="flex items-start justify-between gap-4">
+      <div className="border border-border rounded-lg p-4 sm:p-6 space-y-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2 flex-1">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <h1 className="text-3xl font-bold">{build.name}</h1>
               <Badge
                 variant={build.isPublic ? 'default' : 'outline'}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 w-fit"
               >
                 {build.isPublic ? (
                   <>
@@ -237,13 +237,13 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
               <p className="text-muted-foreground">{build.description}</p>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={handleClone}
               disabled={cloning}
-              className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary"
+              className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary w-full sm:w-auto min-h-[44px]"
             >
               <Copy className="h-4 w-4 mr-2" />
               {cloning ? 'Cloning...' : 'Clone'}
@@ -252,7 +252,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
               variant="outline"
               size="sm"
               onClick={() => router.push(`/builds/${id}/edit`)}
-              className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary"
+              className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary w-full sm:w-auto min-h-[44px]"
             >
               <Edit className="h-4 w-4 mr-2" />
               Edit
@@ -262,6 +262,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
               size="sm"
               onClick={handleDelete}
               disabled={deleting}
+              className="w-full sm:w-auto min-h-[44px]"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               {deleting ? 'Deleting...' : 'Delete'}
@@ -272,7 +273,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
         <Separator />
 
         {/* Car Info */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
           <div>
             <p className="text-muted-foreground font-mono text-xs">CAR</p>
             <Link
@@ -314,14 +315,14 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <p className="text-muted-foreground text-xs font-mono">TOTAL LAPS</p>
-                <p className="text-2xl font-bold">{build.statistics.totalLaps}</p>
+                <p className="text-xl sm:text-2xl font-bold">{build.statistics.totalLaps}</p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs font-mono">FASTEST LAP</p>
-                <p className="text-2xl font-bold text-primary font-mono">
+                <p className="text-xl sm:text-2xl font-bold text-primary font-mono">
                   {build.statistics.fastestTime
                     ? formatLapTime(build.statistics.fastestTime)
                     : '-'}
@@ -329,7 +330,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
               </div>
               <div>
                 <p className="text-muted-foreground text-xs font-mono">AVERAGE LAP</p>
-                <p className="text-2xl font-bold font-mono">
+                <p className="text-xl sm:text-2xl font-bold font-mono">
                   {build.statistics.averageTime
                     ? formatLapTime(build.statistics.averageTime)
                     : '-'}
@@ -337,7 +338,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
               </div>
               <div>
                 <p className="text-muted-foreground text-xs font-mono">TRACKS</p>
-                <p className="text-2xl font-bold">{build.statistics.uniqueTracks}</p>
+                <p className="text-xl sm:text-2xl font-bold">{build.statistics.uniqueTracks}</p>
               </div>
             </div>
           </CardContent>
@@ -362,15 +363,15 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                 <h3 className="font-semibold text-sm text-primary mb-2">
                   {formatCategoryName(category)}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {upgrades.map((upgrade) => (
                     <div
                       key={upgrade.id}
                       className="flex items-center justify-between px-3 py-2 border border-border rounded text-sm"
                     >
-                      <span>{upgrade.part}</span>
+                      <span className="truncate">{upgrade.part}</span>
                       {upgrade.value && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs shrink-0 ml-2">
                           {upgrade.value}
                         </Badge>
                       )}
@@ -401,14 +402,14 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                 <h3 className="font-semibold text-sm text-primary mb-2">
                   {formatCategoryName(category)}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {settings.map((setting) => (
                     <div
                       key={setting.id}
                       className="flex items-center justify-between px-3 py-2 border border-border rounded text-sm"
                     >
-                      <span>{formatSettingName(setting.setting)}</span>
-                      <Badge variant="secondary" className="text-xs font-mono">
+                      <span className="truncate">{formatSettingName(setting.setting)}</span>
+                      <Badge variant="secondary" className="text-xs font-mono shrink-0 ml-2">
                         {setting.value}
                       </Badge>
                     </div>

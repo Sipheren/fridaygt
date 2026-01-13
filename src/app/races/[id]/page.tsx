@@ -184,23 +184,23 @@ export default function RaceDetailPage() {
 
   if (!race) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Race not found</h1>
-          <Button onClick={() => router.back()}>Go Back</Button>
+          <Button onClick={() => router.back()} className="min-h-[44px]">Go Back</Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
       {/* Header */}
-      <div className="mb-6">
+      <div>
         <Button
           variant="ghost"
           onClick={() => router.back()}
-          className="mb-4"
+          className="mb-4 h-11 px-4 sm:h-9"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
@@ -213,15 +213,15 @@ export default function RaceDetailPage() {
           </h1>
 
           {/* Track Info */}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
+              <MapPin className="h-4 w-4 shrink-0" />
               <Link href={`/tracks/${race.track.slug}`} className="hover:underline">
                 {race.track.name}
                 {race.track.layout && ` - ${race.track.layout}`}
               </Link>
             </div>
-            <Badge>{race.track.category}</Badge>
+            <Badge variant="outline">{race.track.category}</Badge>
             {race.track.location && (
               <span>{race.track.location}</span>
             )}
@@ -292,36 +292,36 @@ export default function RaceDetailPage() {
 
       {/* Statistics */}
       {statistics && (
-        <div className="grid gap-4 md:grid-cols-4 mb-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Activity className="h-8 w-8 text-blue-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Laps</p>
-                  <p className="text-2xl font-bold">{statistics.totalLaps}</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Total Laps</p>
+                  <p className="text-xl sm:text-2xl font-bold">{statistics.totalLaps}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Users className="h-8 w-8 text-green-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Drivers</p>
-                  <p className="text-2xl font-bold">{statistics.uniqueDrivers}</p>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Drivers</p>
+                  <p className="text-xl sm:text-2xl font-bold">{statistics.uniqueDrivers}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Target className="h-8 w-8 text-purple-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Fastest Lap</p>
-                  <p className="text-2xl font-bold">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Target className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Fastest Lap</p>
+                  <p className="text-lg sm:text-2xl font-bold font-mono">
                     {statistics.fastestTime ? formatLapTime(statistics.fastestTime) : '-'}
                   </p>
                 </div>
@@ -329,12 +329,12 @@ export default function RaceDetailPage() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <TrendingUp className="h-8 w-8 text-orange-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Avg Time</p>
-                  <p className="text-2xl font-bold">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Avg Time</p>
+                  <p className="text-lg sm:text-2xl font-bold font-mono">
                     {statistics.averageTime ? formatLapTime(statistics.averageTime) : '-'}
                   </p>
                 </div>
@@ -345,7 +345,7 @@ export default function RaceDetailPage() {
       )}
 
       {/* Leaderboard */}
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5" />
@@ -361,23 +361,23 @@ export default function RaceDetailPage() {
               {leaderboard.map((entry) => (
                 <div
                   key={`${entry.userId}-${entry.carId}-${entry.buildId || 'none'}`}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50"
+                  className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg hover:bg-accent/50"
                 >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 font-bold text-primary">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 font-bold text-primary shrink-0">
                     {entry.position}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{entry.userName}</p>
-                    <p className="text-sm text-muted-foreground">{entry.carName}</p>
+                    <p className="font-medium truncate text-sm sm:text-base">{entry.userName}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">{entry.carName}</p>
                     {entry.buildName && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Wrench className="h-3 w-3" />
-                        {entry.buildName}
+                        <span className="truncate">{entry.buildName}</span>
                       </p>
                     )}
                   </div>
-                  <div className="text-right">
-                    <p className="font-mono font-bold">{formatLapTime(entry.bestTime)}</p>
+                  <div className="text-right shrink-0">
+                    <p className="font-mono font-bold text-sm sm:text-base">{formatLapTime(entry.bestTime)}</p>
                     <p className="text-xs text-muted-foreground">{entry.totalLaps} laps</p>
                   </div>
                 </div>
@@ -389,14 +389,14 @@ export default function RaceDetailPage() {
 
       {/* User Stats */}
       {userStats && (
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Award className="h-5 w-5" />
                 Your Stats
               </CardTitle>
-              <Button onClick={() => router.push('/lap-times/new')} size="sm" className="gap-2">
+              <Button onClick={() => router.push('/lap-times/new')} size="sm" className="gap-2 w-full sm:w-auto min-h-[44px]">
                 <Plus className="h-4 w-4" />
                 Add Lap Time
               </Button>
@@ -404,18 +404,18 @@ export default function RaceDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Position</p>
-                  <p className="text-2xl font-bold">#{userStats.position || '-'}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Position</p>
+                  <p className="text-xl sm:text-2xl font-bold">#{userStats.position || '-'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Best</p>
-                  <p className="text-2xl font-bold">{formatLapTime(userStats.bestTime)}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Best</p>
+                  <p className="text-lg sm:text-2xl font-bold font-mono">{formatLapTime(userStats.bestTime)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Average</p>
-                  <p className="text-2xl font-bold">{formatLapTime(userStats.averageTime)}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Average</p>
+                  <p className="text-lg sm:text-2xl font-bold font-mono">{formatLapTime(userStats.averageTime)}</p>
                 </div>
               </div>
               <div>
@@ -423,17 +423,17 @@ export default function RaceDetailPage() {
                 <div className="space-y-1">
                   {userStats.recentLaps.slice(0, 5).map((lap) => (
                     <div key={lap.id} className="flex items-center justify-between text-sm p-2 rounded hover:bg-accent/50">
-                      <div className="flex-1">
-                        <span className="font-mono font-bold">{formatLapTime(lap.timeMs)}</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-mono font-bold text-xs sm:text-sm">{formatLapTime(lap.timeMs)}</span>
                         {lap.build && (
                           <span className="text-muted-foreground ml-2 flex items-center gap-1 text-xs">
                             <Wrench className="h-3 w-3" />
-                            {lap.build.name}
+                            <span className="truncate">{lap.build.name}</span>
                           </span>
                         )}
                       </div>
-                      <span className="text-muted-foreground">
-                        {new Date(lap.createdAt).toLocaleDateString()}
+                      <span className="text-muted-foreground text-xs shrink-0">
+                        {new Date(lap.createdAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
                       </span>
                     </div>
                   ))}

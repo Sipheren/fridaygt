@@ -160,29 +160,27 @@ export default function NewBuildPage() {
 
   if (loading) {
     return (
-      <div className="max-w-[1200px] mx-auto px-4 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
         <LoadingSection text="Loading cars..." />
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-[1200px] mx-auto px-4 py-8 space-y-6">
-      <div className="absolute inset-x-0 top-16 h-0.5 bg-primary"></div>
-
+    <form onSubmit={handleSubmit} className="mx-auto max-w-7xl px-4 py-8 space-y-6">
       {/* Back Button */}
-      <Button type="button" variant="ghost" onClick={() => router.push('/builds')}>
+      <Button type="button" variant="ghost" onClick={() => router.push('/builds')} className="h-11 px-4 sm:h-9">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Builds
       </Button>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
           <Wrench className="h-8 w-8 text-primary" />
           CREATE NEW BUILD
         </h1>
-        <Button type="submit" size="lg" disabled={saving}>
+        <Button type="submit" disabled={saving} className="w-full sm:w-auto min-h-[44px]">
           <Save className="h-4 w-4 mr-2" />
           {saving ? 'Saving...' : 'Save Build'}
         </Button>
@@ -238,7 +236,7 @@ export default function NewBuildPage() {
           </div>
 
           {/* Public Toggle */}
-          <div className="flex items-center justify-between space-x-2 border border-border rounded-lg p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-border rounded-lg p-3 sm:p-4">
             <div className="space-y-1">
               <Label htmlFor="public" className="text-base font-semibold">
                 Make Public
@@ -251,6 +249,7 @@ export default function NewBuildPage() {
               id="public"
               checked={isPublic}
               onCheckedChange={setIsPublic}
+              className="min-h-[44px] data-[state=checked]:bg-primary"
             />
           </div>
         </CardContent>
@@ -277,13 +276,13 @@ export default function NewBuildPage() {
                 <CardTitle className="text-lg">{category.name}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {category.parts.map((part) => {
                     const key = `${categoryKey}:${part.name}`
                     return (
                       <div
                         key={part.id}
-                        className="flex items-center space-x-2 border border-border rounded-lg p-3 hover:bg-accent/5 transition-colors"
+                        className="flex items-center space-x-2 border border-border rounded-lg p-3 hover:bg-accent/5 transition-colors min-h-[44px]"
                       >
                         <Checkbox
                           id={part.id}
@@ -291,6 +290,7 @@ export default function NewBuildPage() {
                           onCheckedChange={() =>
                             handleUpgradeToggle(categoryKey, part.name)
                           }
+                          className="min-h-[24px] min-w-[44px]"
                         />
                         <Label
                           htmlFor={part.id}
@@ -357,7 +357,7 @@ export default function NewBuildPage() {
 
       {/* Bottom Save Button */}
       <div className="flex justify-end">
-        <Button type="submit" size="lg" disabled={saving}>
+        <Button type="submit" disabled={saving} className="w-full sm:w-auto min-h-[44px]">
           <Save className="h-4 w-4 mr-2" />
           {saving ? 'Saving...' : 'Save Build'}
         </Button>
