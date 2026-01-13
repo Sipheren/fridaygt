@@ -225,11 +225,11 @@ export default function RacesPage() {
           {filteredRaces.map((race) => (
             <div
               key={race.id}
-              className={`group flex items-center gap-2 p-4 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors ${
+              className={`group flex items-center gap-2 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors ${
                 !race.isActive ? 'opacity-50' : ''
               }`}
             >
-              <div className="flex-1">
+              <div className="flex-1 p-4">
                 <Button
                   variant="ghost"
                   asChild
@@ -327,22 +327,24 @@ export default function RacesPage() {
           </div>
 
           {/* Delete Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.preventDefault()
-              deleteRace(race.id)
-            }}
-            disabled={deletingRaceId === race.id}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-          >
+          <div className="pr-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.preventDefault()
+                deleteRace(race.id)
+              }}
+              disabled={deletingRaceId === race.id}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+            >
             {deletingRaceId === race.id ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
             ) : (
               <Trash2 className="h-4 w-4" />
             )}
           </Button>
+          </div>
         </div>
           ))}
         </div>
