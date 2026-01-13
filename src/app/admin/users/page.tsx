@@ -4,7 +4,15 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, UserCheck, UserX, Shield, User, Clock } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { ArrowLeft, UserCheck, UserX, Shield, User, Clock, AlertTriangle, Loader2 } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 
 type User = {
@@ -15,14 +23,32 @@ type User = {
   createdAt: string
 }
 
+type Message = {
+  type: 'success' | 'error'
+  text: string
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [processingId, setProcessingId] = useState<string | null>(null)
+  const [processingAction, setProcessingAction] = useState<'approve' | 'delete' | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<User | null>(null)
+  const [message, setMessage] = useState<Message | null>(null)
   const router = useRouter()
 
   useEffect(() => {
     fetchUsers()
   }, [])
+
+  // Auto-hide messages after 5 seconds
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(null), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [message])
 
   async function fetchUsers() {
     try {
@@ -35,12 +61,21 @@ export default function AdminUsersPage() {
       setUsers(data.users || [])
     } catch (error) {
       console.error('Failed to fetch users:', error)
+      showMessage('error', 'Failed to load users')
     } finally {
       setLoading(false)
     }
   }
 
+  function showMessage(type: 'success' | 'error', text: string) {
+    setMessage({ type, text })
+  }
+
   async function updateUserRole(userId: string, role: string) {
+    setProcessingId(userId)
+    setProcessingAction('approve')
+    setMessage(null)
+
     try {
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
@@ -49,26 +84,53 @@ export default function AdminUsersPage() {
       })
 
       if (res.ok) {
-        fetchUsers()
+        showMessage('success', `User ${role === 'USER' ? 'approved' : 'role updated'}`)
+        await fetchUsers()
+      } else {
+        const data = await res.json()
+        showMessage('error', data.error || 'Failed to update user')
       }
     } catch (error) {
       console.error('Failed to update user:', error)
+      showMessage('error', 'Failed to update user')
+    } finally {
+      setProcessingId(null)
+      setProcessingAction(null)
     }
   }
 
-  async function deleteUser(userId: string) {
-    if (!confirm('Are you sure you want to reject this user?')) return
+  function openDeleteDialog(user: User) {
+    setUserToDelete(user)
+    setDeleteDialogOpen(true)
+    setMessage(null)
+  }
+
+  async function confirmDelete() {
+    if (!userToDelete) return
+
+    setProcessingId(userToDelete.id)
+    setProcessingAction('delete')
 
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
+      const res = await fetch(`/api/admin/users/${userToDelete.id}`, {
         method: 'DELETE'
       })
 
       if (res.ok) {
-        fetchUsers()
+        showMessage('success', 'User rejected and removed')
+        await fetchUsers()
+      } else {
+        const data = await res.json()
+        showMessage('error', data.error || 'Failed to reject user')
       }
     } catch (error) {
       console.error('Failed to delete user:', error)
+      showMessage('error', 'Failed to reject user')
+    } finally {
+      setProcessingId(null)
+      setProcessingAction(null)
+      setDeleteDialogOpen(false)
+      setUserToDelete(null)
     }
   }
 
@@ -86,6 +148,24 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6 max-w-[1200px] mx-auto">
+      {/* Success/Error Message */}
+      {message && (
+        <div className={`rounded-md border p-4 ${
+          message.type === 'success'
+            ? 'bg-green-500/10 border-green-500/20 text-green-500'
+            : 'bg-destructive/10 border-destructive/20 text-destructive'
+        }`}>
+          <div className="flex items-center gap-2">
+            {message.type === 'success' ? (
+              <UserCheck className="h-4 w-4" />
+            ) : (
+              <AlertTriangle className="h-4 w-4" />
+            )}
+            <p className="text-sm font-medium">{message.text}</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="space-y-1">
@@ -160,14 +240,25 @@ export default function AdminUsersPage() {
                     onClick={() => updateUserRole(user.id, 'USER')}
                     size="sm"
                     className="bg-accent hover:bg-accent/80"
+                    disabled={processingId === user.id}
                   >
-                    <UserCheck className="h-4 w-4 mr-2" />
-                    Approve
+                    {processingId === user.id && processingAction === 'approve' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Approving...
+                      </>
+                    ) : (
+                      <>
+                        <UserCheck className="h-4 w-4 mr-2" />
+                        Approve
+                      </>
+                    )}
                   </Button>
                   <Button
-                    onClick={() => deleteUser(user.id)}
+                    onClick={() => openDeleteDialog(user)}
                     size="sm"
                     variant="destructive"
+                    disabled={processingId === user.id}
                   >
                     <UserX className="h-4 w-4 mr-2" />
                     Reject
@@ -210,14 +301,25 @@ export default function AdminUsersPage() {
                     onClick={() => updateUserRole(user.id, 'ADMIN')}
                     size="sm"
                     variant="outline"
+                    disabled={processingId === user.id}
                   >
-                    <Shield className="h-4 w-4 mr-2" />
-                    Make Admin
+                    {processingId === user.id && processingAction === 'approve' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Promoting...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="h-4 w-4 mr-2" />
+                        Make Admin
+                      </>
+                    )}
                   </Button>
                   <Button
-                    onClick={() => deleteUser(user.id)}
+                    onClick={() => openDeleteDialog(user)}
                     size="sm"
                     variant="ghost"
+                    disabled={processingId === user.id}
                   >
                     Remove
                   </Button>
@@ -261,14 +363,72 @@ export default function AdminUsersPage() {
                   onClick={() => updateUserRole(user.id, 'USER')}
                   size="sm"
                   variant="outline"
+                  disabled={processingId === user.id}
                 >
-                  Remove Admin
+                  {processingId === user.id && processingAction === 'approve' ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Remove Admin'
+                  )}
                 </Button>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Reject User
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reject <strong>{userToDelete?.email}</strong>?
+              {userToDelete?.role === 'PENDING' ? (
+                <span className="block mt-2 text-muted-foreground">
+                  This will permanently delete their account and they will need to sign up again if they want to join.
+                </span>
+              ) : (
+                <span className="block mt-2 text-destructive">
+                  This will permanently delete their account and all their data. This action cannot be undone.
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={processingId !== null}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={processingId !== null}
+            >
+              {processingId === userToDelete?.id && processingAction === 'delete' ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Rejecting...
+                </>
+              ) : (
+                <>
+                  <UserX className="h-4 w-4 mr-2" />
+                  Reject User
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
