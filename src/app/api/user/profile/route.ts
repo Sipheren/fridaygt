@@ -65,6 +65,28 @@ export async function PATCH(request: NextRequest) {
       updateData.name = name.trim()
     }
 
+    // Safety: Ensure user record exists (create if missing)
+    // This handles edge case where trigger didn't fire or user was created manually
+    const now = new Date().toISOString()
+    const { error: ensureError } = await supabase
+      .from('User')
+      .upsert({
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        role: 'PENDING',
+        createdAt: now,
+        updatedAt: now,
+      }, {
+        onConflict: 'id',
+        ignoreDuplicates: true,
+      })
+
+    if (ensureError) {
+      console.error('Error ensuring user exists:', ensureError)
+      return NextResponse.json({ error: 'Failed to create user record' }, { status: 500 })
+    }
+
     // Update user profile
     const { data: updatedUser, error } = await supabase
       .from('User')
