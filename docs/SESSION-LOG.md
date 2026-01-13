@@ -4077,3 +4077,146 @@ npx tsx scripts/check-column-casing.ts
 
 This prevents incorrect assumptions about database state.
 
+
+## Session: 2026-01-14 #1 - Email Notifications & UX Improvements
+
+### Context
+User reported multiple issues with email notifications and user management UX that needed fixing.
+
+### Work Completed
+
+#### 1. Admin Users Page - Dialog Text Fix
+**Problem:** When removing an active user, the dialog said "Reject User" (reused from pending users)
+**Solution:** Made dialog text dynamic based on user role
+- Pending users: "Reject User"
+- Active users: "Remove User"
+- Updated button text and loading states accordingly
+**File:** `src/app/admin/users/page.tsx`
+
+#### 2. User Removal Email Notification Change
+**Problem:** When removing users, they received "request denied" email
+**Requirement:** Notify admins instead, don't email the removed user
+**Solution:** 
+- Removed `sendApprovalNotification(user.email, false)` call
+- Added `sendUserRemovalNotification(adminEmails, removedUserEmail, removedBy)` function
+- Sends notification to ALL admins (including the one who performed deletion)
+- Email includes: who was removed, who removed them, timestamp
+**Files:** 
+- `src/lib/email.ts` - Added new function
+- `src/app/api/admin/users/[id]/route.ts` - Updated DELETE endpoint
+
+#### 3. New User Admin Notification - Race Condition Fix
+**Problem:** Admin notification system had multiple issues:
+- Sending duplicate emails (11+ per signup)
+- Not sending at all in some cases
+- Using `createdAt` timestamp which was set when magic link was SENT, not when clicked
+- Race conditions between multiple session callback firings
+
+**Root Cause Analysis:**
+- NextAuth session callback fires on every page load, navigation, API call
+- Multiple concurrent callbacks all checked `adminNotified` before any finished updating it
+- `createdAt` timestamp from Supabase adapter is unreliable for detecting "new" users
+
+**Solution Implemented (Option 2 - Database Column):**
+- Added `adminNotified` boolean column to User table (default: false)
+- Changed logic to use ATOMIC UPDATE pattern:
+  ```typescript
+  const { data: updatedUser } = await supabase
+    .from('User')
+    .update({ adminNotified: true })
+    .eq('id', user.id)
+    .is('adminNotified', false)  // Only update if currently false
+    .select('adminNotified')
+    .single()
+  
+  if (updatedUser?.adminNotified === true) {
+    // Only send email if we actually marked it
+    sendNotification()
+  }
+  ```
+- Atomic operation prevents race conditions - only ONE callback successfully updates
+- Other callbacks see no change and skip sending email
+- **Files:** `src/lib/auth.ts`
+- **Migration:** `ALTER TABLE "User" ADD COLUMN "adminNotified" BOOLEAN DEFAULT FALSE;`
+
+#### 4. Gamertag Page UX Fix
+**Problem:** Page seemed to reload after saving gamertag, then redirected - confusing UX
+**Root Cause:** `await update()` was refreshing NextAuth session before redirect
+**Solution:** Removed session update, redirect immediately
+- Session refreshes naturally on home page
+- No flicker/reload, smooth transition
+**File:** `src/app/auth/complete-profile/page.tsx`
+
+#### 5. Test User Cleanup
+**Created:** `scripts/cleanup-test-users-simple.sql`
+- Removes all test accounts (@sipheren.com except admin)
+- Cleans up next_auth schema (sessions, accounts, users)
+- Removes User records
+- Allows reuse of test email addresses with fresh `adminNotified = false` state
+
+### Files Created
+1. `scripts/cleanup-test-users-simple.sql` - Test account cleanup script
+2. `scripts/cleanup-test-users.sql` - Comprehensive cleanup (not used, has schema issues)
+
+### Files Modified
+1. `src/app/admin/users/page.tsx` - Dynamic dialog text for Reject/Remove
+2. `src/lib/email.ts` - Added `sendUserRemovalNotification()` function
+3. `src/app/api/admin/users/[id]/route.ts` - Updated to send removal notifications to admins
+4. `src/lib/auth.ts` - Fixed admin notification with atomic update pattern
+5. `src/app/auth/complete-profile/page.tsx` - Removed session update for smoother UX
+
+### Database Changes
+- Added `adminNotified` boolean column to User table
+- Default: false (meaning admins haven't been notified yet)
+- Set to true after first notification sent
+- Prevents duplicate notifications
+
+### Testing Results
+**Admin Notification System:**
+- ✅ Sends exactly ONE email per new pending user signup
+- ✅ No spam/duplicates even with multiple page refreshes
+- ✅ Works reliably with fresh signups
+- ✅ Deleted and recreated users get fresh notifications
+
+**User Removal:**
+- ✅ Removed users no longer receive "request denied" email
+- ✅ All admins receive notification when user is removed
+- ✅ Email includes all relevant details
+
+**Dialog Text:**
+- ✅ Pending users: "Reject User" / "Rejecting..."
+- ✅ Active users: "Remove User" / "Removing..."
+- ✅ Contextually appropriate messaging
+
+**Gamertag UX:**
+- ✅ Smooth save → redirect flow
+- ✅ No page flicker or confusing reload
+- ✅ Button shows "Saving..." state
+
+### Technical Notes
+
+**Atomic Update Pattern:**
+The key insight was using Supabase's conditional update:
+```typescript
+.update({ adminNotified: true })
+.eq('id', user.id)
+.is('adminNotified', false)  // Only rows where adminNotified=false
+```
+
+This ensures:
+- Only the FIRST concurrent callback updates the row
+- Subsequent callbacks find no rows to update (already true)
+- No race conditions, no duplicates
+
+**Session Callback Behavior:**
+Understanding that NextAuth's session callback fires:
+- On initial sign in
+- On every page load
+- On every navigation
+- On every API call that checks session
+
+This is why rate limiting/atomic updates are critical.
+
+### Next Steps
+None - all requested fixes complete and working correctly.
+

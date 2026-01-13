@@ -60,14 +60,10 @@ export default function CompleteProfilePage() {
         throw new Error(data.error || 'Failed to update profile')
       }
 
-      // Update session with new gamertag
-      await update()
-
-      // Redirect to home
+      // Redirect immediately (session will refresh naturally on next page)
       router.push('/')
     } catch (error: any) {
       setError(error.message)
-    } finally {
       setIsLoading(false)
     }
   }

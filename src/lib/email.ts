@@ -37,3 +37,22 @@ export async function sendApprovalNotification(email: string, approved: boolean)
       `
   })
 }
+
+export async function sendUserRemovalNotification(adminEmails: string[], removedUserEmail: string, removedBy: string) {
+  await Promise.all(
+    adminEmails.map((email) =>
+      resend.emails.send({
+        from: process.env.EMAIL_FROM!,
+        to: email,
+        subject: 'User Account Removed - FridayGT',
+        html: `
+          <h2>User Account Removed</h2>
+          <p>The following user account has been removed from FridayGT:</p>
+          <p><strong>${removedUserEmail}</strong></p>
+          <p>Removed by: ${removedBy}</p>
+          <p>Time: ${new Date().toLocaleString()}</p>
+        `
+      })
+    )
+  )
+}

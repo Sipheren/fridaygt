@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
-import { sendApprovalNotification } from '@/lib/email'
+import { sendApprovalNotification, sendUserRemovalNotification } from '@/lib/email'
 
 export async function PATCH(
   request: Request,
@@ -77,6 +77,12 @@ export async function DELETE(
     .eq('id', id)
     .single()
 
+  // Get all admin emails for notification
+  const { data: admins } = await supabase
+    .from('User')
+    .select('email')
+    .eq('role', 'ADMIN')
+
   // Delete from next_auth schema first (foreign key dependencies)
   // Order matters: sessions → accounts → users
   await supabase
@@ -108,13 +114,20 @@ export async function DELETE(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Send rejection email
-  if (user?.email) {
+  // Send notification to ALL admins
+  if (user?.email && admins && admins.length > 0) {
+    const adminEmails = admins.map((a: any) => a.email).filter((e: string) => e)
+
+    console.log(`Sending user removal notification to ${adminEmails.length} admins:`, adminEmails)
+
     try {
-      await sendApprovalNotification(user.email, false)
+      await sendUserRemovalNotification(adminEmails, user.email, session.user?.email || 'Admin')
+      console.log('User removal notification sent successfully')
     } catch (emailError) {
-      console.error('Failed to send rejection email:', emailError)
+      console.error('Failed to send removal notification email:', emailError)
     }
+  } else {
+    console.log('Skipping user removal notification - no admins found or no user email')
   }
 
   return NextResponse.json({ success: true })

@@ -117,15 +117,15 @@ export default function AdminUsersPage() {
       })
 
       if (res.ok) {
-        showMessage('success', 'User rejected and removed')
+        showMessage('success', userToDelete.role === 'PENDING' ? 'User rejected and removed' : 'User removed successfully')
         await fetchUsers()
       } else {
         const data = await res.json()
-        showMessage('error', data.error || 'Failed to reject user')
+        showMessage('error', data.error || 'Failed to remove user')
       }
     } catch (error) {
       console.error('Failed to delete user:', error)
-      showMessage('error', 'Failed to reject user')
+      showMessage('error', 'Failed to remove user')
     } finally {
       setProcessingId(null)
       setProcessingAction(null)
@@ -321,6 +321,7 @@ export default function AdminUsersPage() {
                     variant="ghost"
                     disabled={processingId === user.id}
                   >
+                    <UserX className="h-4 w-4 mr-2" />
                     Remove
                   </Button>
                 </div>
@@ -386,10 +387,10 @@ export default function AdminUsersPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              Reject User
+              {userToDelete?.role === 'PENDING' ? 'Reject User' : 'Remove User'}
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to reject <strong>{userToDelete?.email}</strong>?
+              Are you sure you want to {userToDelete?.role === 'PENDING' ? 'reject' : 'remove'} <strong>{userToDelete?.email}</strong>?
               {userToDelete?.role === 'PENDING' ? (
                 <span className="block mt-2 text-muted-foreground">
                   This will permanently delete their account and they will need to sign up again if they want to join.
@@ -417,12 +418,12 @@ export default function AdminUsersPage() {
               {processingId === userToDelete?.id && processingAction === 'delete' ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Rejecting...
+                  {userToDelete?.role === 'PENDING' ? 'Rejecting...' : 'Removing...'}
                 </>
               ) : (
                 <>
                   <UserX className="h-4 w-4 mr-2" />
-                  Reject User
+                  {userToDelete?.role === 'PENDING' ? 'Reject User' : 'Remove User'}
                 </>
               )}
             </Button>
