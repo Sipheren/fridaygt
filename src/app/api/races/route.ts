@@ -6,23 +6,10 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = createServiceRoleClient()
 
-    // Fetch all races with their cars and track
+    // Fetch all races
     const { data: races, error: racesError } = await supabase
       .from('Race')
-      .select(`
-        id,
-        name,
-        description,
-        createdAt,
-        updatedAt,
-        track:Track(id, name, slug, location, category),
-        RaceCar(
-          id,
-          carId,
-          buildId,
-          car:Car(id, name, slug, manufacturer)
-        )
-      `)
+      .select('*')
       .order('createdAt', { ascending: false })
 
     if (racesError) {
@@ -32,40 +19,55 @@ export async function GET(req: NextRequest) {
 
     console.log('Fetched races:', races?.length)
 
-    // Fetch all run list entries that reference these races
-    const { data: runListEntries } = await supabase
-      .from('RunListEntry')
-      .select(`
-        raceId,
-        runList:RunList(id, name, isPublic)
-      `)
-      .not('raceId', 'is', null)
+    // Fetch related data for each race separately
+    const enrichedRaces = await Promise.all(
+      (races || []).map(async (race: any) => {
+        // Get track info
+        const { data: track } = await supabase
+          .from('Track')
+          .select('*')
+          .eq('id', race.trackId)
+          .single()
 
-    // Group run lists by raceId
-    const raceToLists = new Map<string, any[]>()
-    runListEntries?.forEach((entry: any) => {
-      if (!raceToLists.has(entry.raceId)) {
-        raceToLists.set(entry.raceId, [])
-      }
-      if (entry.runList && !raceToLists.get(entry.raceId).find((rl: any) => rl.id === entry.runList.id)) {
-        raceToLists.get(entry.raceId).push({
-          id: entry.runList.id,
-          name: entry.runList.name,
-          isPublic: entry.runList.isPublic
+        // Get race cars with car info
+        const { data: raceCars } = await supabase
+          .from('RaceCar')
+          .select(`
+            id,
+            carId,
+            buildId,
+            car:Car(id, name, slug, manufacturer)
+          `)
+          .eq('raceId', race.id)
+
+        // Get run lists using this race
+        const { data: runListEntries } = await supabase
+          .from('RunListEntry')
+          .select(`
+            runListId,
+            runList:RunList(id, name, isPublic)
+          `)
+          .eq('raceId', race.id)
+
+        // Deduplicate run lists
+        const runListMap = new Map<string, any>()
+        runListEntries?.forEach((entry: any) => {
+          if (entry.runList && !runListMap.has(entry.runList.id)) {
+            runListMap.set(entry.runList.id, entry.runList)
+          }
         })
-      }
-    })
+        const runLists = Array.from(runListMap.values())
 
-    // Attach run lists to races and determine active status
-    const enrichedRaces = (races || []).map((race: any) => {
-      const runLists = raceToLists.get(race.id) || []
-      return {
-        ...race,
-        isActive: runLists.length > 0,
-        runLists,
-        runListCount: runLists.length
-      }
-    })
+        return {
+          ...race,
+          track,
+          RaceCar: raceCars || [],
+          isActive: runLists.length > 0,
+          runLists,
+          runListCount: runLists.length
+        }
+      })
+    )
 
     // Sort: Active first, then by display name
     const sortedRaces = enrichedRaces.sort((a, b) => {

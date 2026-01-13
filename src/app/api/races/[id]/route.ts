@@ -52,8 +52,8 @@ export async function GET(
 
     // Attach related data to race object
     ;(race as any).track = track
-    ;(race as any).createdby = createdBy
-    ;(race as any).raceCars = raceCars || []
+    ;(race as any).createdBy = createdBy
+    ;(race as any).RaceCar = raceCars || []
 
     // Get all lap times for this race (any car in this race at this track)
     const trackId = track?.id || race.trackId
