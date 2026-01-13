@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FridayGT
+
+A GT7 lap time tracker and race management application built with Next.js, Supabase, and NextAuth.
+
+## Features
+
+- 🚗 **Car Management** - Track your car collection and builds
+- 🛤️ **Track Database** - Comprehensive track information
+- ⏱️ **Lap Times** - Record and analyze your lap times
+- 🏁 **Run Lists** - Organize races into run lists
+- 🎮 **Sessions** - Host and manage racing sessions
+- 👥 **Multiplayer** - Attendance tracking and session management
+
+## Tech Stack
+
+- **Frontend:** Next.js 14 (App Router), React, TypeScript
+- **Styling:** Tailwind CSS, shadcn/ui components
+- **Backend:** Next.js API Routes
+- **Database:** Supabase (PostgreSQL)
+- **Auth:** NextAuth.js
+- **State Management:** React hooks, Server Components
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+ installed
+- Supabase project created
+- Environment variables configured
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Install dependencies
+npm install
+
+# Copy environment variables
+cp .env.example .env
+
+# Update .env with your Supabase credentials
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Run development server
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+fridaygt/
+├── src/                    # Next.js app source
+│   ├── app/               # App Router pages and API routes
+│   ├── components/        # React components
+│   └── lib/               # Utility libraries
+├── public/                # Static assets (images, fonts)
+├── docs/                  # Project documentation
+│   ├── DATABASE-SCHEMA.md       # Database structure
+│   ├── IMPLEMENTATION-PLAN.md   # Feature roadmap
+│   └── SESSION-LOG.md           # Development log
+├── migrations/             # Database migration scripts
+├── scripts/                # Utility scripts
+└── supabase/              # Supabase configuration
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Documentation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **[DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md)** - Complete database structure
+- **[IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md)** - Feature roadmap and status
+- **[SESSION-LOG.md](docs/SESSION-LOG.md)** - Detailed development history
 
-## Deploy on Vercel
+## Database Migrations
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Database migrations are stored in the `migrations/` directory. To apply migrations:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Open Supabase Dashboard → SQL Editor
+2. Open the migration file from `migrations/`
+3. Run the SQL script
+
+**Latest Migration:** `fix-race-column-casing.sql` (2026-01-13)
+
+## Development Scripts
+
+```bash
+# Seed database with initial data
+npm run seed
+
+# Parse GT7 data files
+npm run parse-gt7-data
+
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+```
+
+## Deployment
+
+The application is deployed on Vercel and uses Supabase for the database.
+
+### Environment Variables
+
+Required environment variables:
+- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+- `NEXTAUTH_SECRET` - NextAuth secret key
+- `NEXTAUTH_URL` - Your application URL
+
+## Contributing
+
+This is a personal project for tracking GT7 lap times and managing racing sessions.
+
+## License
+
+MIT
+
+## Support
+
+For issues or questions, please open an issue in the repository.
