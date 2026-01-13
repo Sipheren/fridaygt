@@ -35,6 +35,11 @@ export default async function Home() {
     }
   }
 
+  // Fetch run list count
+  const { count: runListCount } = await supabase
+    .from('RunList')
+    .select('*', { count: 'exact', head: true })
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
       {/* Welcome Section */}
@@ -106,8 +111,8 @@ export default async function Home() {
             <ListChecks className="h-5 w-5 text-chart-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tabular-nums sm:text-4xl">0</div>
-            <p className="text-xs text-muted-foreground mt-1 font-mono">ACTIVE SESSIONS</p>
+            <div className="text-3xl font-bold tabular-nums sm:text-4xl">{runListCount || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1 font-mono">TOTAL RUN LISTS</p>
           </CardContent>
         </Card>
       </div>
