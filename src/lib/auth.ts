@@ -53,7 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.gamertag = dbUser?.gamertag || undefined
 
         // Notify admins of new pending user (only once, when user is first created)
-        if (isNewUser || dbUser?.role === 'PENDING') {
+        if (isNewUser) {
           try {
             // Fetch all admin emails
             const { data: admins } = await supabase
