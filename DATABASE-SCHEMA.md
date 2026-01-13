@@ -286,7 +286,10 @@
 
 ## Race Entity (NEW - 2026-01-12)
 
-**Status:** Migration in progress
+**Status:** ✅ COMPLETE (2026-01-13)
+- Tables created with correct camelCase column naming
+- Column casing migration completed
+- All queries working correctly
 
 ### Race
 | Column | Type | Nullable | Default | Description |

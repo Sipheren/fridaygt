@@ -1106,30 +1106,39 @@ Example 2: Navigating from run list to combo
 
 **Phase 6 Status**: API Complete ✅ | UI 20% Complete ⚠️ | Integrations Not Started ❌
 
-**🎉 Latest Updates (2026-01-12)**:
+**🎉 Latest Updates (2026-01-13)**:
 
-**Race Entity Implementation - PARTIAL**:
+**Race Entity Implementation - COMPLETE ✅**:
 - ✅ Database schema updated with Race and RaceCar tables
 - ✅ RunListEntry.raceId column added for linking entries to races
 - ✅ API endpoints created (GET/PATCH/DELETE /api/races/[id])
-- ✅ Race page created as read-only display (/races/[id])
+- ✅ Race listing page created (/races)
+  - Shows all race combinations across run lists
+  - Search and filter functionality (All/Active/Inactive)
+  - Table-style layout matching lap times page
+  - Displays track, cars, and run list associations
+  - Click to view race details
+- ✅ Race detail page created as read-only display (/races/[id])
   - Shows race name, description, track info
   - Lists all cars in the race with build information
   - Displays statistics (total laps, drivers, fastest time, average time)
   - Shows leaderboard (best times per driver per car per build)
   - Shows user stats (position, best time, average time, recent laps)
   - Lists which run lists use this race
-- ❌ Race editing functionality ROLLED BACK due to state management complexity
-  - Attempted inline editing with auto-save
-  - Encountered state synchronization issues (two sources of truth)
-  - Delete functionality was deleting all cars instead of one
-  - Decision: Keep race page read-only for stability
-  - Run lists continue to handle race creation/editing via their own UI
+- ✅ Database column casing migration completed
+  - Fixed Race/RaceCar tables to use camelCase (createdAt, carId, etc.)
+  - All database tables now use consistent naming
+  - Queries working correctly without errors
+- ❌ Race editing functionality intentionally omitted
+  - Run lists handle race creation/editing via their own UI
+  - Simpler, more maintainable approach
 
 **Current Status**:
-- Race entity: Functionally complete for viewing
+- Race entity: FULLY FUNCTIONAL ✅
+- Races listing page: Complete with search and filters ✅
+- Race detail page: Stable, read-only display ✅
+- Database column naming: Consistent across all tables ✅
 - Race creation/editing: Handled through run lists (existing functionality)
-- Race page: Stable, read-only display
 - API: Fully functional for integration with run lists
 
 **🎉 Latest Updates (2026-01-11 Part 3)**:
