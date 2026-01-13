@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test-emails": "tsx send-test-emails.tsx"
   },
   "dependencies": {
     "@auth/supabase-adapter": "^1.11.1",
