@@ -445,38 +445,304 @@ border-accent/30       // Active states
 
 ---
 
-## Common Inconsistencies
+## Page Audit & Inconsistencies (2026-01-14)
 
-### Known Issues to Fix
+### Comprehensive Page Review
 
-#### 1. Page Title Styling
-**Inconsistent:** Some pages use icons in titles, some don't
-**Standard:** Icons are encouraged for visual clarity
+**Pages Audited:** Home, Lap Times, Builds, Races, Run Lists, Admin Users, Complete Profile
+
+---
+
+## Critical Inconsistencies Found
+
+### 1. Container Width & Padding (HIGH PRIORITY)
+
+| Page | Container | Padding |
+|------|-----------|---------|
+| Home | `max-w-[1400px]` | None |
+| Lap Times | `max-w-7xl` | `px-4 py-8` |
+| Builds | `max-w-[1400px]` | None |
+| Races | `max-w-7xl` | `px-4 py-8` |
+| Run Lists | `max-w-7xl` | `p-4 md:p-8` (on wrapper) |
+| Admin Users | `max-w-[1200px]` | None |
+| Complete Profile | `max-w-md` | N/A (auth form) |
+
+**Standard:** Use `mx-auto max-w-7xl px-4 py-8 space-y-6` for all list/detail pages
+
+**Fix Needed:**
+- Home: Change to `max-w-7xl px-4 py-8 space-y-6`
+- Builds: Change to `max-w-7xl px-4 py-8 space-y-6`
+- Admin Users: Change to `max-w-7xl px-4 py-8 space-y-6`
+- Run Lists: Remove full-page background wrapper
+
+---
+
+### 2. Header Title & Icon Sizes (HIGH PRIORITY)
+
+| Page | Title Size | Icon Size | Notes |
+|------|------------|-----------|-------|
+| Lap Times | `text-3xl` | `h-8 w-8` | ✅ Standard |
+| Builds | `text-4xl` | `h-10 w-10` | ❌ Too large |
+| Races | `text-3xl` | `h-8 w-8` | ✅ Standard |
+| Run Lists | `text-3xl md:text-4xl` | No icon | ⚠️ No icon |
+| Admin Users | `text-3xl` | No icon | ⚠️ No icon |
+| Complete Profile | `text-2xl` | Separate | ⚠️ Auth pattern |
+
+**Standard:** Use `text-3xl` title with `h-8 w-8` icon
+
+**Fix Needed:**
+- Builds: Reduce to `text-3xl` and `h-8 w-8` icon
+- Run Lists: Add icon to header
+- Admin Users: Add icon to header
+
+---
+
+### 3. Search Icon Positioning Bug (MEDIUM PRIORITY)
+
+**Correct** (lap-times, races):
 ```tsx
-// ✅ Good
-<h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-  <Icon className="h-8 w-8 text-primary" />
-  Title
-</h1>
-
-// ❌ Avoid
-<h1 className="text-3xl font-bold">Title</h1>
+<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 ```
 
-#### 2. Button Text Capitalization
-**Inconsistent:** Mixed capitalization
+**Incorrect** (builds):
+```tsx
+<Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+```
+
+**Fix Needed:** Update builds page search icon to use correct centering
+
+---
+
+### 4. Empty State Inconsistencies (MEDIUM PRIORITY)
+
+| Page | Padding | Icon Size | Text Size |
+|------|---------|-----------|-----------|
+| Lap Times | `py-12` | `h-12 w-12` | `text-lg` |
+| Builds | `p-12` | `h-16 w-16` | `text-lg` |
+| Races | `py-12` | `h-12 w-12` | `text-lg` |
+| Run Lists | `py-16` | `h-16 w-16` | `text-xl` |
+| Admin Users | `py-8` | `h-12 w-12` | Default |
+
+**Standard:**
+```tsx
+<div className="text-center py-12 border border-border rounded-lg">
+  <Icon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+  <p className="text-muted-foreground text-lg">No items found</p>
+  {cta && <Button asChild className="mt-4">...</Button>}
+</div>
+```
+
+**Fix Needed:**
+- Builds: Change to `py-12` and `h-12 w-12` icon
+- Run Lists: Change to `py-12` and `h-12 w-12` icon
+- Admin Users: Change to `py-12`
+
+---
+
+### 5. Card/Row Styling Fragmentation (HIGH PRIORITY)
+
+**Current State:**
+- **Lap Times:** Custom div rows with `p-4`
+- **Builds:** Custom div cards with `p-6`
+- **Races:** Nested button structure with custom rows
+- **Run Lists:** shadcn Card components (only page!)
+- **Admin Users:** Section-based layout with nested rows
+- **Home:** shadcn Card components for stats
+
+**Standard:** Create consistent card component or pattern
+
+**Recommendation:** Use shadcn Card components everywhere for consistency
+
+---
+
+### 6. Description Text Styling (MEDIUM PRIORITY)
+
+| Page | Pattern |
+|------|----------|
+| Lap Times | `text-muted-foreground mt-1` with count |
+| Builds | `text-muted-foreground font-mono text-sm mb-2` UPPERCASE count |
+| Races | `text-muted-foreground mt-1` with count |
+| Admin Users | `text-muted-foreground font-mono text-sm` UPPERCASE |
+
+**Standard:** Use sentence case, sans-serif for descriptions
+```tsx
+<p className="text-muted-foreground mt-1">{count} items</p>
+```
+
+**Fix Needed:**
+- Builds: Remove `font-mono` and `uppercase`, change `mb-2` to `mt-1`
+- Admin Users: Remove `font-mono` and `uppercase`
+
+---
+
+### 7. Button Sizes in Headers (LOW PRIORITY)
+
+| Page | Button Size |
+|------|-------------|
+| Lap Times | Default |
+| Builds | `size="lg"` |
+| Run Lists | `size="lg"` |
+
+**Standard:** Use `size="default"` for header CTAs
+
+---
+
+### 8. Filter Button Inconsistencies (LOW PRIORITY)
+
+| Page | Filter Button Style |
+|------|---------------------|
+| Builds | `font-mono` class |
+| Races | No special styling |
+| Run Lists | No special styling |
+
+**Standard:** Remove `font-mono` from filter buttons
+
+---
+
+### 9. Grid Layout Gaps (LOW PRIORITY)
+
+| Page | Grid Pattern |
+|------|--------------|
+| Builds | `grid-cols-1 md:grid-cols-2 gap-4` |
+| Run Lists | `grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6` |
+
+**Standard:** Use `gap-4` for card grids, `gap-6` for section spacing
+
+---
+
+### 10. Loading State Container Structures (LOW PRIORITY)
+
+| Page | Loading Container |
+|------|-------------------|
+| Lap Times | Full container with padding |
+| Builds | Simple container |
+| Races | Centered with `min-h-[50vh]` |
+| Run Lists | Inline (no wrapper) |
+
+**Standard:**
+```tsx
+<div className="mx-auto max-w-7xl px-4 py-8">
+  <LoadingSection text="Loading items..." />
+</div>
+```
+
+---
+
+## Standardized Page Patterns
+
+### Listing Page (Lap Times, Races Pattern)
+```tsx
+<div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+  {/* Header */}
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+        <Icon className="h-8 w-8 text-primary" />
+        PAGE TITLE
+      </h1>
+      <p className="text-muted-foreground mt-1">{count} items</p>
+    </div>
+    <Button asChild>
+      <Link href="/new">
+        <Plus className="h-4 w-4 mr-2" />
+        Add New
+      </Link>
+    </Button>
+  </div>
+
+  {/* Search */}
+  <div className="relative">
+    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <Input className="pl-10" />
+  </div>
+
+  {/* Items or Empty State */}
+  {items.length === 0 ? (
+    <div className="text-center py-12 border border-border rounded-lg">
+      <Icon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+      <p className="text-muted-foreground text-lg">No items found</p>
+    </div>
+  ) : (
+    <div className="space-y-3">{items.map(item => <ItemCard key={item.id} {...item} />)}</div>
+  )}
+</div>
+```
+
+### Card Grid Page (Builds, Run Lists Pattern)
+```tsx
+<div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+  {/* Header - same as above */}
+
+  {/* Filters */}
+  <div className="flex flex-col sm:flex-row gap-4">
+    {/* Search - same as above */}
+    <div className="flex flex-wrap gap-2">
+      <Button variant="outline" size="sm">All</Button>
+    </div>
+  </div>
+
+  {/* Card Grid */}
+  {items.length === 0 ? (
+    <div className="text-center py-12 border border-border rounded-lg">
+      {/* Empty state - same as above */}
+    </div>
+  ) : (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {items.map(item => <Card key={item.id}>{...}</Card>)}
+    </div>
+  )}
+</div>
+```
+
+---
+
+## Components to Create
+
+### 1. PageHeader Component
+```tsx
+<PageHeader
+  title="Lap Times"
+  icon={Clock}
+  count={lapTimes.length}
+  cta={<Button>Add Lap Time</Button>}
+/>
+```
+
+### 2. EmptyState Component
+```tsx
+<EmptyState
+  icon={Clock}
+  title="No lap times recorded yet"
+  cta={<Button>Add Your First Lap Time</Button>}
+/>
+```
+
+### 3. SearchBar Component
+```tsx
+<SearchBar
+  placeholder="Search..."
+  value={search}
+  onChange={setSearch}
+/>
+```
+
+---
+
+## Common Inconsistencies (Legacy Section)
+
+The following are still relevant but superseded by the comprehensive audit above:
+
+### Button Text Capitalization
 **Standard:** Title Case for button labels
 ```tsx
 // ✅ Good
 <Button>Add Lap Time</Button>
-<Button>Create Build</Button>
 
 // ❌ Avoid
 <Button>Add lap time</Button>
 ```
 
-#### 3. Spacing in Button + Icons
-**Inconsistent:** Some use `gap-2`, some use manual spacing
+### Icon Button Spacing
 **Standard:** `mr-2` for icon before text
 ```tsx
 // ✅ Good
@@ -484,27 +750,9 @@ border-accent/30       // Active states
   <Icon className="h-4 w-4 mr-2" />
   Text
 </Button>
-
-// ❌ Avoid
-<Button className="gap-2">
-  <Icon className="h-4 w-4" />
-  Text
-</Button>
 ```
 
-#### 4. Empty State Messaging
-**Inconsistent:** Some use "No X", others use full sentences
-**Standard:** Brief, clear messaging
-```tsx
-// ✅ Good
-<p className="text-muted-foreground">No lap times recorded yet</p>
-
-// ❌ Avoid
-<p>You don't have any lap times. Try adding some!</p>
-```
-
-#### 5. Card Border Styles
-**Inconsistent:** Mix of `rounded-lg` and `rounded-md`
+### Card Border Radius
 **Standard:** `rounded-lg` for cards
 ```tsx
 // ✅ Good
@@ -512,17 +760,6 @@ border-accent/30       // Active states
 
 // ❌ Avoid
 <div className="border border-border rounded-md p-6">
-```
-
-#### 6. Loading Text
-**Inconsistent:** "Loading..." vs "Loading data..."
-**Standard:** Contextual loading messages
-```tsx
-// ✅ Good
-<LoadingSection text="Loading tracks..." />
-
-// ❌ Avoid
-<LoadingSection text="Loading..." />
 ```
 
 ---

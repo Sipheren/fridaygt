@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ArrowLeft, UserCheck, UserX, Shield, User, Clock, AlertTriangle, Loader2 } from 'lucide-react'
+import { ArrowLeft, UserCheck, UserX, Shield, User, Clock, AlertTriangle, Loader2, Users } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 
 type User = {
@@ -136,7 +136,7 @@ export default function AdminUsersPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 max-w-[1200px] mx-auto">
+      <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
         <LoadingSection text="Loading users..." />
       </div>
     )
@@ -147,7 +147,7 @@ export default function AdminUsersPage() {
   const admins = users.filter(u => u.role === 'ADMIN')
 
   return (
-    <div className="space-y-6 max-w-[1200px] mx-auto">
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
       {/* Success/Error Message */}
       {message && (
         <div className={`rounded-md border p-4 ${
@@ -169,8 +169,11 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">USER MANAGEMENT</h1>
-          <p className="text-muted-foreground font-mono text-sm">
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <Users className="h-8 w-8 text-primary" />
+            USER MANAGEMENT
+          </h1>
+          <p className="text-muted-foreground">
             Approve pending users and manage roles
           </p>
         </div>
@@ -221,8 +224,8 @@ export default function AdminUsersPage() {
           </h2>
         </div>
         {pendingUsers.length === 0 ? (
-          <div className="text-center py-8">
-            <UserCheck className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-3" />
+          <div className="text-center py-12">
+            <UserCheck className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-4" />
             <p className="text-muted-foreground">No pending users</p>
           </div>
         ) : (
@@ -282,8 +285,8 @@ export default function AdminUsersPage() {
           </h2>
         </div>
         {activeUsers.length === 0 ? (
-          <div className="text-center py-8">
-            <User className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-3" />
+          <div className="text-center py-12">
+            <User className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-4" />
             <p className="text-muted-foreground">No active users</p>
           </div>
         ) : (
@@ -343,8 +346,8 @@ export default function AdminUsersPage() {
           </h2>
         </div>
         {admins.length === 0 ? (
-          <div className="text-center py-8">
-            <Shield className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-3" />
+          <div className="text-center py-12">
+            <Shield className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-4" />
             <p className="text-muted-foreground">No administrators</p>
           </div>
         ) : (

@@ -36,7 +36,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="space-y-8 max-w-[1400px] mx-auto">
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
       {/* Welcome Section */}
       <div className="flex flex-col items-start gap-3">
         <Image

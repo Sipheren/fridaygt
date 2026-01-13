@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, Globe, Lock, User, Calendar, List, Radio } from 'lucide-react'
+import { Plus, Search, Globe, Lock, User, Calendar, List, Radio, ListChecks } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -139,17 +139,19 @@ export default function RunListsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Run Lists</h1>
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+              <ListChecks className="h-8 w-8 text-primary" />
+              RUN LISTS
+            </h1>
             <p className="text-muted-foreground mt-1">
               Create and manage racing session playlists
             </p>
           </div>
-          <Button onClick={() => router.push('/run-lists/new')} size="lg">
+          <Button onClick={() => router.push('/run-lists/new')}>
             <Plus className="mr-2 h-4 w-4" />
             Create Run List
           </Button>
@@ -267,8 +269,8 @@ export default function RunListsPage() {
         {/* Empty State */}
         {!loading && filteredRunLists.length === 0 && (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <List className="h-16 w-16 text-muted-foreground mb-4" />
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <List className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">No run lists found</h3>
               <p className="text-muted-foreground text-center mb-6">
                 {searchQuery
@@ -286,7 +288,6 @@ export default function RunListsPage() {
             </CardContent>
           </Card>
         )}
-      </div>
     </div>
   )
 }

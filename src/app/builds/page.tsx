@@ -89,26 +89,26 @@ export default function BuildsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 max-w-[1400px] mx-auto">
+      <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
         <LoadingSection text="Loading builds..." />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto">
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-2 flex items-center gap-3">
-            <Wrench className="h-10 w-10 text-primary" />
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <Wrench className="h-8 w-8 text-primary" />
             BUILDS
           </h1>
-          <p className="text-muted-foreground font-mono text-sm">
-            {filteredBuilds.length} {filteredBuilds.length === 1 ? 'BUILD' : 'BUILDS'} AVAILABLE
+          <p className="text-muted-foreground mt-1">
+            {filteredBuilds.length} {filteredBuilds.length === 1 ? 'build' : 'builds'} available
           </p>
         </div>
-        <Button asChild size="lg">
+        <Button asChild>
           <Link href="/builds/new">
             <Plus className="h-4 w-4 mr-2" />
             Create Build
@@ -119,7 +119,7 @@ export default function BuildsPage() {
       {/* Filters */}
       <div className="flex flex-col gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             id="build-search"
             name="build-search"
@@ -133,7 +133,6 @@ export default function BuildsPage() {
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
             onClick={() => setFilter('all')}
-            className="font-mono"
             size="sm"
           >
             ALL BUILDS
@@ -141,7 +140,6 @@ export default function BuildsPage() {
           <Button
             variant={filter === 'public' ? 'default' : 'outline'}
             onClick={() => setFilter('public')}
-            className="font-mono"
             size="sm"
           >
             <Globe className="h-3 w-3 mr-2" />
@@ -150,7 +148,6 @@ export default function BuildsPage() {
           <Button
             variant={filter === 'mine' ? 'default' : 'outline'}
             onClick={() => setFilter('mine')}
-            className="font-mono"
             size="sm"
           >
             <User className="h-3 w-3 mr-2" />
@@ -161,9 +158,9 @@ export default function BuildsPage() {
 
       {/* Builds Grid */}
       {filteredBuilds.length === 0 ? (
-        <div className="border border-border rounded-lg p-12">
+        <div className="border border-border rounded-lg py-12">
           <div className="text-center space-y-4">
-            <Wrench className="h-16 w-16 text-muted-foreground mx-auto" />
+            <Wrench className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <div className="space-y-2">
               <p className="text-lg font-semibold">NO BUILDS FOUND</p>
               <p className="text-sm text-muted-foreground font-mono">
