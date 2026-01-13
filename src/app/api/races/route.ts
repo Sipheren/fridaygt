@@ -1,27 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { auth } from '@/lib/auth'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 
+// GET /api/races - List all races with run list associations
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const supabase = createServiceRoleClient()
 
-    const supabase = await createClient()
-
-    // Fetch all run list entries with their relationships
-    const { data: entries, error } = await supabase
-      .from('RunListEntry')
+    // Fetch all races with their cars and track
+    const { data: races, error: racesError } = await supabase
+      .from('Race')
       .select(`
         id,
-        notes,
+        name,
+        description,
         createdAt,
+        updatedAt,
         track:Track(id, name, slug, location, category),
-        runListId,
-        runList:RunList(id, name, isPublic),
-        RunListEntryCar(
+        RaceCar(
+          id,
           carId,
           buildId,
           car:Car(id, name, slug, manufacturer)
@@ -29,67 +25,54 @@ export async function GET(req: NextRequest) {
       `)
       .order('createdAt', { ascending: false })
 
-    if (error) {
-      console.error('Error fetching entries:', error)
-      return NextResponse.json({ error: 'Failed to fetch entries' }, { status: 500 })
+    if (racesError) {
+      console.error('Error fetching races:', racesError)
+      return NextResponse.json({ error: 'Failed to fetch races' }, { status: 500 })
     }
 
-    console.log('Fetched entries:', entries?.length)
+    console.log('Fetched races:', races?.length)
 
-    // Group entries by track + car combination to create unique "races"
-    const raceMap = new Map<string, any>()
+    // Fetch all run list entries that reference these races
+    const { data: runListEntries } = await supabase
+      .from('RunListEntry')
+      .select(`
+        raceId,
+        runList:RunList(id, name, isPublic)
+      `)
+      .not('raceId', 'is', null)
 
-    entries?.forEach((entry: any) => {
-      const cars = entry.RunListEntryCar?.map((rlc: any) => ({
-        id: `${entry.id}-${rlc.car.id}`,
-        carId: rlc.car.id,
-        buildId: rlc.buildId,
-        car: rlc.car
-      })) || []
-
-      // Create a unique key based on track + cars
-      const carKey = cars.map((c: any) => c.car.id).sort().join(',')
-      const key = `${entry.track.id}-${carKey}`
-
-      if (!raceMap.has(key)) {
-        raceMap.set(key, {
-          id: key,
-          name: null,
-          description: null,
-          createdAt: entry.createdAt,
-          updatedAt: entry.createdAt,
-          track: entry.track,
-          RaceCar: cars,
-          isActive: false,
-          runLists: [],
-          runListCount: 0
-        })
+    // Group run lists by raceId
+    const raceToLists = new Map<string, any[]>()
+    runListEntries?.forEach((entry: any) => {
+      if (!raceToLists.has(entry.raceId)) {
+        raceToLists.set(entry.raceId, [])
       }
-
-      // Add this run list to the race
-      const race = raceMap.get(key)
-      if (entry.runList && !race.runLists.find((rl: any) => rl.id === entry.runList.id)) {
-        race.runLists.push({
+      if (entry.runList && !raceToLists.get(entry.raceId).find((rl: any) => rl.id === entry.runList.id)) {
+        raceToLists.get(entry.raceId).push({
           id: entry.runList.id,
           name: entry.runList.name,
           isPublic: entry.runList.isPublic
         })
       }
-      race.isActive = race.runLists.length > 0
-      race.runListCount = race.runLists.length
     })
 
-    const allRaces = Array.from(raceMap.values())
+    // Attach run lists to races and determine active status
+    const enrichedRaces = (races || []).map((race: any) => {
+      const runLists = raceToLists.get(race.id) || []
+      return {
+        ...race,
+        isActive: runLists.length > 0,
+        runLists,
+        runListCount: runLists.length
+      }
+    })
 
     // Sort: Active first, then by display name
-    const sortedRaces = allRaces.sort((a, b) => {
+    const sortedRaces = enrichedRaces.sort((a, b) => {
       if (a.isActive !== b.isActive) {
         return a.isActive ? -1 : 1
       }
-
-      const aName = getDisplayName(a)
-      const bName = getDisplayName(b)
-      return aName.localeCompare(bName)
+      return getDisplayName(a).localeCompare(getDisplayName(b))
     })
 
     return NextResponse.json({ races: sortedRaces })
