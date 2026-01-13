@@ -255,12 +255,12 @@ export default function CarsPage() {
               href={`/cars/${car.slug}`}
               className="block"
             >
-              <div className="border border-border rounded-lg hover:border-accent/30 hover:bg-accent/5 transition-colors cursor-pointer group">
+              <div className="border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer group">
                 <div className="p-3 sm:p-4">
                   <div className="space-y-2">
                     {/* Car Name */}
                     <div className="min-w-0">
-                      <span className="font-semibold text-base sm:text-lg block truncate">
+                      <span className="font-semibold text-base sm:text-lg block truncate group-hover:text-primary transition-colors">
                         {car.manufacturer} {car.name}
                       </span>
                     </div>
