@@ -52,8 +52,8 @@ interface Race {
   id: string
   name: string | null
   description: string | null
-  createdat: string
-  updatedat: string
+  createdAt: string
+  updatedAt: string
   track: {
     id: string
     name: string
@@ -64,7 +64,7 @@ interface Race {
     layout: string | null
     imageUrl?: string
   }
-  createdby: {
+  createdBy: {
     id: string
     name: string | null
     email: string

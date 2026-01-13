@@ -28,14 +28,14 @@ export async function GET(
     const { data: track } = await supabase
       .from('Track')
       .select('*')
-      .eq('id', race.trackid)
+      .eq('id', race.trackId)
       .single()
 
     // Get created by user
     const { data: createdBy } = await supabase
       .from('User')
       .select('id, name, email')
-      .eq('id', race.createdbyid)
+      .eq('id', race.createdById)
       .single()
 
     // Get race cars with nested data
@@ -43,12 +43,12 @@ export async function GET(
       .from('RaceCar')
       .select(`
         id,
-        carid,
-        buildid,
+        carId,
+        buildId,
         car:Car(id, name, slug, manufacturer, year, category, imageUrl),
         build:CarBuild(id, name, description, isPublic)
       `)
-      .eq('raceid', id)
+      .eq('raceId', id)
 
     // Attach related data to race object
     ;(race as any).track = track
@@ -56,8 +56,8 @@ export async function GET(
     ;(race as any).raceCars = raceCars || []
 
     // Get all lap times for this race (any car in this race at this track)
-    const trackId = track?.id || race.trackid
-    const carIds = raceCars?.map((rc: any) => rc.carid) || []
+    const trackId = track?.id || race.trackId
+    const carIds = raceCars?.map((rc: any) => rc.carId) || []
 
     const { data: lapTimes } = await supabase
       .from('LapTime')
@@ -146,7 +146,7 @@ export async function GET(
         notes,
         runList:RunList(id, name, isPublic, createdById)
       `)
-      .eq('raceid', id)
+      .eq('raceId', id)
 
     // Get current user's data if logged in
     const session = await auth()
@@ -242,7 +242,7 @@ export async function PATCH(
     // Get race to check permissions
     const { data: existingRace } = await supabase
       .from('Race')
-      .select('createdbyid')
+      .select('createdById')
       .eq('id', id)
       .single()
 
@@ -251,7 +251,7 @@ export async function PATCH(
     }
 
     // Check if user is creator or admin
-    const isCreator = existingRace.createdbyid === userData.id
+    const isCreator = existingRace.createdById === userData.id
     const isAdmin = userData.role === 'ADMIN'
 
     if (!isCreator && !isAdmin) {
@@ -276,12 +276,12 @@ export async function PATCH(
 
     const now = new Date().toISOString()
     const updates: any = {
-      updatedat: now
+      updatedAt: now
     }
 
     if (name !== undefined) updates.name = name || null
     if (description !== undefined) updates.description = description || null
-    if (trackId !== undefined) updates.trackid = trackId
+    if (trackId !== undefined) updates.trackId = trackId
 
     // Update race basic info
     const { data: race, error: raceError } = await supabase
@@ -292,10 +292,10 @@ export async function PATCH(
         id,
         name,
         description,
-        createdat,
-        updatedat,
+        createdAt,
+        updatedAt,
         track:Track(id, name, slug, location, length, category, layout),
-        createdby:User(id, name, email)
+        createdBy:User(id, name, email)
       `)
       .single()
 
@@ -328,16 +328,16 @@ export async function PATCH(
       }
 
       // Delete existing race cars
-      await supabase.from('RaceCar').delete().eq('raceid', id)
+      await supabase.from('RaceCar').delete().eq('raceId', id)
 
       // Create new race car entries
       const raceCarsToInsert = cars.map((c: any) => ({
         id: crypto.randomUUID(),
-        raceid: id,
-        carid: c.carId,
-        buildid: c.buildId || null,
-        createdat: now,
-        updatedat: now,
+        raceId: id,
+        carId: c.carId,
+        buildId: c.buildId || null,
+        createdAt: now,
+        updatedAt: now,
       }))
 
       const { error: carsError } = await supabase
@@ -362,7 +362,7 @@ export async function PATCH(
           car:Car(id, name, slug, manufacturer, year, category),
           build:CarBuild(id, name, description, isPublic)
         `)
-        .eq('raceid', id)
+        .eq('raceId', id)
 
       // Attach cars to race
       ;(race as any).raceCars = createdCars || []
@@ -377,7 +377,7 @@ export async function PATCH(
           car:Car(id, name, slug, manufacturer, year, category),
           build:CarBuild(id, name, description, isPublic)
         `)
-        .eq('raceid', id)
+        .eq('raceId', id)
 
       ;(race as any).raceCars = existingCars || []
     }
@@ -420,7 +420,7 @@ export async function DELETE(
     // Get race to check permissions
     const { data: existingRace } = await supabase
       .from('Race')
-      .select('createdbyid')
+      .select('createdById')
       .eq('id', id)
       .single()
 
@@ -429,7 +429,7 @@ export async function DELETE(
     }
 
     // Check if user is creator or admin
-    const isCreator = existingRace.createdbyid === userData.id
+    const isCreator = existingRace.createdById === userData.id
     const isAdmin = userData.role === 'ADMIN'
 
     if (!isCreator && !isAdmin) {
@@ -443,7 +443,7 @@ export async function DELETE(
     const { data: runListEntries } = await supabase
       .from('RunListEntry')
       .select('id')
-      .eq('raceid', id)
+      .eq('raceId', id)
 
     if (runListEntries && runListEntries.length > 0) {
       return NextResponse.json(
