@@ -71,7 +71,7 @@ interface RunList {
     id: string
     order: number
     notes: string | null
-    raceid: string | null
+    raceId: string | null
     track: {
       id: string
       name: string
@@ -705,8 +705,8 @@ export default function RunListDetailPage() {
                         onRemove={removeEntry}
                         onClick={() => {
                           // Navigate to race detail page if raceId exists
-                          if (entry.raceid) {
-                            router.push(`/races/${entry.raceid}`)
+                          if (entry.raceId) {
+                            router.push(`/races/${entry.raceId}`)
                           }
                         }}
                         deletingRaceId={deletingRaceId}
