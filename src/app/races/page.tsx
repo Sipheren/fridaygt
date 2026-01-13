@@ -330,9 +330,12 @@ export default function RacesPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => deleteRace(race.id)}
+            onClick={(e) => {
+              e.preventDefault()
+              deleteRace(race.id)
+            }}
             disabled={deletingRaceId === race.id}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
           >
             {deletingRaceId === race.id ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
