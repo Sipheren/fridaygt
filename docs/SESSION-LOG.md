@@ -4220,3 +4220,201 @@ This is why rate limiting/atomic updates are critical.
 ### Next Steps
 None - all requested fixes complete and working correctly.
 
+
+## Session: 2026-01-14 #7 - Mobile Responsiveness & UI Consistency
+
+### Problem Report
+User requested mobile responsiveness improvements, noting that most users would likely access the site from mobile devices during track sessions. The site had inconsistent UI/UX and several mobile usability issues.
+
+### Requirements
+1. Ensure all pages work properly on mobile devices (375px+)
+2. Standardize UI/UX consistency across all pages
+3. Fix touch targets, text overflow, and layout issues
+4. Maintain design guide as source of truth
+
+### Implementation
+
+**Phase 1: Documentation Cleanup**
+- Consolidated scattered documentation into 4 main files
+- Renamed `IMPLEMENTATION-PLAN.md` → `PLAN.md`
+- Kept: PLAN.md, SESSION-LOG.md, DATABASE-SCHEMA.md, DESIGN-SYSTEM.md
+- Deleted 15+ outdated plan/migration/guide files
+- Updated README.md to reference new structure
+
+**Phase 2: UI/UX Consistency Audit**
+- Conducted page-by-page audit (excluding tracks/cars)
+- Documented 10 critical inconsistencies in DESIGN-SYSTEM.md
+- Fixed all inconsistencies:
+  - Container standardization (max-w-7xl px-4 py-8 space-y-6)
+  - Header consistency (text-3xl with icons)
+  - Empty state standardization
+  - Button sizing uniformity
+  - Description text styling
+
+**Phase 3: Mobile Responsiveness**
+
+**Pages Fixed:**
+
+1. **Home Page** (src/app/page.tsx)
+   - Stats grid: 2x2 layout on mobile (grid-cols-2)
+   - Number sizes: Responsive (text-3xl sm:text-4xl)
+   - Icon containers: Smaller on mobile (p-2 sm:p-2.5)
+
+2. **Builds Page** (src/app/builds/page.tsx)
+   - Container standardization
+   - Header with icon (Wrench)
+   - Search icon centering fix
+   - Filter buttons: Mobile-optimized
+   - Card padding: Responsive (p-4 sm:p-6)
+
+3. **Build Details Page** (src/app/builds/[id]/page.tsx)
+   - Action buttons: Stack vertically on mobile with 44px min height
+   - Statistics grid: 2x2 on mobile
+   - Upgrades/settings: Single column on mobile with text truncation
+
+4. **Build New/Edit Pages** (src/app/builds/new/page.tsx, src/app/builds/[id]/edit/page.tsx)
+   - Removed extra top border
+   - Save buttons: Full width on mobile with 44px min height
+   - Switch control: Normal toggle (removed custom styling)
+   - Upgrade checkboxes: 44px touch targets
+
+5. **Races List Page** (src/app/races/page.tsx)
+   - Filter buttons: 3-column grid on mobile
+   - Race cards: Responsive padding and spacing
+   - Status badge moved after cars section (before run lists)
+   - Delete button: Always 44px on mobile, proper positioning
+   - Race name: Truncated to prevent overflow
+   - Track location: Truncated
+
+6. **Run Lists Page** (src/app/run-lists/page.tsx)
+   - Removed full-page background wrapper
+   - Container standardization
+   - Filter buttons: Grid layout on mobile
+   - Active toggle: Optimized touch targets
+
+7. **Race Details Page** (src/app/races/[id]/page.tsx)
+   - Statistics grid: 2x2 on mobile
+   - Responsive icon and text sizes
+   - Add Lap Time button: 44px min height on mobile
+   - Leaderboard: Responsive padding and text sizing
+   - Recent laps: Compact date format
+
+8. **Admin Users Page** (src/app/admin/users/page.tsx)
+   - Action buttons: Full width on mobile with 44px min height
+   - User cards: Responsive padding and email overflow handling
+   - Stats grid: Responsive gaps and padding
+
+9. **Lap Times Page** (src/app/lap-times/page.tsx)
+   - Delete button: 44px square touch target on mobile
+   - Track/car layout: Stacks on mobile
+   - Date format: Compact localeDateString
+
+10. **Header Component** (src/components/header.tsx)
+    - Theme toggle: 44px on mobile (h-11 w-11 sm:h-9 sm:w-9)
+    - Menu button: Larger on mobile (h-11 w-11)
+    - Avatar button: Larger on mobile (h-11 w-11 sm:h-9 sm:w-9)
+    - Logo: Smaller on mobile (h-8 w-auto sm:h-10)
+
+11. **Tracks Page** (src/app/tracks/page.tsx)
+    - Converted from table layout to card-based list
+    - Matches races list styling
+    - Track name and location: Truncated
+    - Filter buttons: 44px touch targets
+    - Empty state: Standardized
+
+12. **Cars Page** (src/app/cars/page.tsx)
+    - Converted from table layout to card-based list
+    - Matches races/tracks list styling
+    - Car name: Truncated (manufacturer + name)
+    - Filter buttons: 44px touch targets
+    - Hover colors: Changed from accent to primary for consistency
+    - Empty state: Standardized
+
+**Mobile Design Patterns Applied:**
+
+- **Touch Targets**: Minimum 44x44px (WCAG standard)
+- **Responsive Breakpoints**: Mobile-first with `sm:` (640px)
+- **Text Truncation**: `truncate` class with `min-w-0` for overflow prevention
+- **Responsive Padding**: `p-3 sm:p-4` (tighter on mobile)
+- **Responsive Text**: `text-base sm:text-lg`, `text-xs sm:text-sm`
+- **Full-width Buttons**: `w-full sm:w-auto` on mobile
+- **Grid Layouts**: `grid-cols-1 sm:grid-cols-2` (single column on mobile)
+
+### Files Modified
+
+**Modified:**
+- `src/app/page.tsx` - Home page mobile optimization
+- `src/app/builds/page.tsx` - Builds list mobile optimization
+- `src/app/builds/[id]/page.tsx` - Build details mobile optimization
+- `src/app/builds/new/page.tsx` - Build creation mobile optimization
+- `src/app/builds/[id]/edit/page.tsx` - Build editing mobile optimization
+- `src/app/races/page.tsx` - Races list mobile optimization (multiple iterations)
+- `src/app/races/[id]/page.tsx` - Race details mobile optimization
+- `src/app/run-lists/page.tsx` - Run lists mobile optimization
+- `src/app/lap-times/page.tsx` - Lap times mobile optimization
+- `src/app/admin/users/page.tsx` - Admin user management mobile optimization
+- `src/components/header.tsx` - Header mobile touch targets
+- `src/app/tracks/page.tsx` - Converted to card layout, mobile optimization
+- `src/app/cars/page.tsx` - Converted to card layout, mobile optimization
+- `docs/PLAN.md` - Renamed from IMPLEMENTATION-PLAN.md
+- `docs/DESIGN-SYSTEM.md` - Added UI/UX audit findings
+- `README.md` - Updated documentation references
+
+**Deleted (15 files):**
+- Various plan, migration, and guide files consolidated into main docs
+
+### Commits Created
+
+1. **Consolidate documentation structure** (7e60e05)
+2. **UI/UX consistency audit and fixes** (a1a5e1c)
+3. **Mobile responsiveness: Home, builds, run-lists, races, lap-times, admin** (b5a380d)
+4. **Mobile responsiveness: Build details, edit, and race details pages** (c78681f)
+5. **Mobile responsiveness: Fix races list page layout issues** (872cd04)
+6. **Mobile races list: Move status and delete before run lists section** (66f2070)
+7. **Mobile races list: Fix text overflow with truncation** (2adef99)
+8. **Fix public toggle styling to look like normal toggle** (47af519)
+9. **Mobile responsiveness: Convert tracks and cars lists to card layout** (fd4a315)
+10. **Match cars list hover colors to tracks list** (8074bd5)
+
+### Key Insights
+
+**Mobile-First Approach:**
+Starting with mobile layout and enhancing for desktop is more effective than the reverse. Users will primarily access on mobile during track sessions.
+
+**Text Truncation Critical:**
+Long text (race names, track names, car names) MUST truncate with `truncate` class and parent container with `min-w-0` to prevent overflow on mobile screens.
+
+**Touch Target Standards:**
+All interactive elements must meet WCAG 44x44px minimum. This includes buttons, switches, checkboxes, and tappable areas.
+
+**Consistent Containers:**
+Standardizing on `max-w-7xl px-4 py-8 space-y-6` creates predictable, maintainable layouts across all pages.
+
+### Design Guide Updates
+
+Updated `docs/DESIGN-SYSTEM.md` with:
+- Page audit findings (10 critical inconsistencies)
+- Standardized patterns for listing pages and card grids
+- Component recommendations (PageHeader, EmptyState, SearchBar)
+- Mobile responsiveness guidelines
+- Before/after examples for each fix
+
+### Technical Notes
+
+**Races List Iterations:**
+Required multiple attempts to get right:
+1. Initial layout broke (status badge/delete positioning)
+2. Fixed by moving badge after cars, before run lists
+3. Text overflow fixed with truncation
+4. User feedback: "text still fucking off the screen"
+5. Final fix: Added `truncate` class to race name
+
+**Toggle Switch Issue:**
+Custom styling (`min-h-[44px] data-[state=checked]:bg-primary`) made toggle look weird. Removed custom classes for default appearance.
+
+**Table vs Card Layout:**
+Tracks and cars pages used table-based layouts which don't work well on mobile. Converted to card-based lists matching races page styling.
+
+### Next Steps
+None - mobile responsiveness and UI consistency work complete. All pages now work properly on mobile devices with consistent styling and proper touch targets.
+
