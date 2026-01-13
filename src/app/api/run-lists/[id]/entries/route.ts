@@ -15,9 +15,11 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { raceId, trackId, cars, lobbySettingsId, notes } = body
+    const { raceId, trackId, cars: requestCars, lobbySettingsId, notes } = body
 
     let finalRaceId = raceId
+    // Use let to allow reassignment when selecting existing race
+    let cars = requestCars
 
     const supabase = createServiceRoleClient()
 
@@ -154,16 +156,26 @@ export async function POST(
         }
       }
     } else {
-      // Validate the provided raceId exists
+      // Validate the provided raceId exists and fetch its cars
       const { data: race } = await supabase
         .from('Race')
-        .select('id')
+        .select(`
+          id,
+          RaceCar(
+            id,
+            carId,
+            buildId
+          )
+        `)
         .eq('id', finalRaceId)
         .single()
 
       if (!race) {
         return NextResponse.json({ error: 'Race not found' }, { status: 404 })
       }
+
+      // Use the cars from the existing race
+      cars = race.RaceCar || []
     }
 
     // Get the next order number

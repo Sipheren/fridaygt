@@ -116,6 +116,31 @@ interface Build {
   description: string | null
 }
 
+interface RaceCar {
+  id: string
+  carId: string
+  buildId: string | null
+  car: {
+    id: string
+    name: string
+    slug: string
+    manufacturer: string
+  }
+}
+
+interface Race {
+  id: string
+  name: string | null
+  track: {
+    id: string
+    name: string
+    slug: string
+    location: string | null
+  }
+  RaceCar: RaceCar[]
+  runListCount: number
+}
+
 interface SortableRaceItemProps {
   entry: RunList['entries'][0]
   index: number
@@ -233,6 +258,13 @@ export default function RunListDetailPage() {
   const [entryNotes, setEntryNotes] = useState('')
   const [carBuilds, setCarBuilds] = useState<Record<string, Build[]>>({})
 
+  // Race selection state
+  const [addMode, setAddMode] = useState<'create' | 'select'>('create')
+  const [races, setRaces] = useState<Race[]>([])
+  const [selectedRaceId, setSelectedRaceId] = useState('')
+  const [selectedRace, setSelectedRace] = useState<Race | null>(null)
+  const [loadingRaces, setLoadingRaces] = useState(false)
+
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   const sensors = useSensors(
@@ -270,6 +302,52 @@ export default function RunListDetailPage() {
       setCars(carsData.cars || [])
     } catch (error) {
       console.error('Error loading form data:', error)
+    }
+  }
+
+  const fetchRaces = async () => {
+    setLoadingRaces(true)
+    try {
+      const res = await fetch('/api/races')
+      const data = await res.json()
+      setRaces(data.races || [])
+    } catch (error) {
+      console.error('Error fetching races:', error)
+    } finally {
+      setLoadingRaces(false)
+    }
+  }
+
+  const getRaceDisplayName = (race: Race): string => {
+    if (race.name) return race.name
+
+    const trackName = race.track?.name || 'Unknown Track'
+    const carNames = race.RaceCar.map(rc =>
+      `${rc.car.manufacturer} ${rc.car.name}`
+    ).join(', ')
+
+    return `${trackName} + ${carNames}`
+  }
+
+  const handleRaceSelect = (raceId: string) => {
+    setSelectedRaceId(raceId)
+    const race = races.find(r => r.id === raceId)
+    setSelectedRace(race || null)
+  }
+
+  const handleModeChange = (mode: 'create' | 'select') => {
+    setAddMode(mode)
+    // Reset selection when switching modes
+    if (mode === 'create') {
+      setSelectedRaceId('')
+      setSelectedRace(null)
+    } else {
+      // Fetch races when switching to select mode
+      fetchRaces()
+      setSelectedTrackId('')
+      setSelectedCars([])
+      setSelectedCarId('')
+      setSelectedBuildId('')
     }
   }
 
@@ -351,38 +429,58 @@ export default function RunListDetailPage() {
   }
 
   const addEntry = async () => {
-    if (!selectedTrackId) {
-      alert('Please select a track')
-      return
-    }
+    // Validate based on mode
+    if (addMode === 'create') {
+      if (!selectedTrackId) {
+        alert('Please select a track')
+        return
+      }
 
-    if (selectedCars.length === 0) {
-      alert('Please add at least one car')
-      return
+      if (selectedCars.length === 0) {
+        alert('Please add at least one car')
+        return
+      }
+    } else {
+      if (!selectedRaceId) {
+        alert('Please select a race')
+        return
+      }
     }
 
     setAddingRace(true)
 
     try {
+      const body: any = {
+        notes: entryNotes || null,
+      }
+
+      if (addMode === 'create') {
+        body.trackId = selectedTrackId
+        body.cars = selectedCars
+      } else {
+        body.raceId = selectedRaceId
+      }
+
       const res = await fetch(`/api/run-lists/${id}/entries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          trackId: selectedTrackId,
-          cars: selectedCars,
-          notes: entryNotes || null,
-        }),
+        body: JSON.stringify(body),
       })
 
       if (!res.ok) throw new Error('Failed to add race')
 
-      // Reset form
-      setSelectedTrackId('')
-      setSelectedCars([])
-      setSelectedCarId('')
-      setSelectedBuildId('')
+      // Reset form based on mode
+      if (addMode === 'create') {
+        setSelectedTrackId('')
+        setSelectedCars([])
+        setSelectedCarId('')
+        setSelectedBuildId('')
+        setBuilds([])
+      } else {
+        setSelectedRaceId('')
+        setSelectedRace(null)
+      }
       setEntryNotes('')
-      setBuilds([])
 
       // Refresh run list
       await fetchRunList()
@@ -724,9 +822,38 @@ export default function RunListDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle>Add Race</CardTitle>
-            <CardDescription>Add a new race to the run list</CardDescription>
+            <CardDescription>
+              {addMode === 'create' ? 'Create a new race or add cars to a track' : 'Select an existing race to add'}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Mode Toggle */}
+            <div className="flex gap-2 p-1 bg-muted rounded-lg">
+              <Button
+                type="button"
+                variant={addMode === 'create' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handleModeChange('create')}
+                className="flex-1"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create New Race
+              </Button>
+              <Button
+                type="button"
+                variant={addMode === 'select' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handleModeChange('select')}
+                className="flex-1"
+              >
+                <List className="h-4 w-4 mr-2" />
+                Select Existing Race
+              </Button>
+            </div>
+
+            {/* Create Mode */}
+            {addMode === 'create' && (
+              <>
             <div className="space-y-2">
               <Label>Track *</Label>
               <SearchableComboBox
@@ -831,6 +958,78 @@ export default function RunListDetailPage() {
                 </div>
               )}
             </div>
+            </>
+            )}
+
+            {/* Select Mode */}
+            {addMode === 'select' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Select Race *</Label>
+                  {loadingRaces ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    </div>
+                  ) : (
+                    <SearchableComboBox
+                      options={races.map((r) => ({ value: r.id, label: getRaceDisplayName(r) }))}
+                      value={selectedRaceId}
+                      onValueChange={handleRaceSelect}
+                      placeholder="Select race..."
+                      searchPlaceholder="Search races..."
+                      emptyText="No races found."
+                    />
+                  )}
+                </div>
+
+                {/* Race Preview */}
+                {selectedRace && (
+                  <div className="p-4 border border-border rounded-lg space-y-3 bg-muted/30">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 space-y-2">
+                        <div>
+                          <div className="font-semibold">{selectedRace.track.name}</div>
+                          {selectedRace.track.location && (
+                            <div className="text-sm text-muted-foreground flex items-center gap-1">
+                              <Radio className="h-3 w-3" />
+                              {selectedRace.track.location}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">
+                            {selectedRace.RaceCar.length === 1
+                              ? '1 car'
+                              : `${selectedRace.RaceCar.length} cars`}
+                          </div>
+                          {selectedRace.RaceCar.map((rc) => (
+                            <div key={rc.id} className="text-sm pl-2">
+                              • {rc.car.manufacturer} {rc.car.name}
+                            </div>
+                          ))}
+                        </div>
+
+                        {selectedRace.runListCount > 0 && (
+                          <div className="text-xs text-muted-foreground">
+                            Used in {selectedRace.runListCount} run list{selectedRace.runListCount > 1 ? 's' : ''}
+                          </div>
+                        )}
+                      </div>
+                      <Link
+                        href={`/races/${selectedRace.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button variant="ghost" size="sm">
+                          View Details
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="notes">Notes</Label>
