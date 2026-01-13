@@ -229,14 +229,14 @@ export default function RacesPage() {
                 !race.isActive ? 'opacity-50' : ''
               }`}
             >
-              <div className="flex-1 p-4">
+              <div className="flex-1">
                   <Button
                     variant="ghost"
                     asChild
                     className="w-full h-auto p-0 text-left justify-start"
                   >
                     <Link href={`/races/${race.id}`} className="w-full">
-                      <div className="flex items-start gap-4 w-full">
+                      <div className="flex items-start gap-4 w-full p-4">
                         <div className="flex-1 space-y-2">
                     {/* Race Name */}
                     <div className="flex items-center gap-2">
@@ -327,23 +327,25 @@ export default function RacesPage() {
               </div>
 
             {/* Delete Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                deleteRace(race.id)
-              }}
-              disabled={deletingRaceId === race.id}
-              className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 transition-opacity"
-            >
-              {deletingRaceId === race.id ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-            </Button>
+            <div className="p-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  deleteRace(race.id)
+                }}
+                disabled={deletingRaceId === race.id}
+                className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 transition-opacity"
+              >
+                {deletingRaceId === race.id ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
           ))}
         </div>
