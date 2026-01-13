@@ -4585,3 +4585,97 @@ src/
 ### Next Steps
 None - email template system complete and fully integrated. All transactional emails now match FridayGT design guide with consistent branding, typography, and styling.
 
+
+---
+
+## Session 9 - UI Consistency Fixes (2026-01-14)
+
+**Objective**: Fix hover color inconsistencies across listing pages and components to match design guide.
+
+### Issues Identified
+
+1. **Home Page Run List Count**: Showing hardcoded "0" instead of actual count
+2. **Builds Page**: Using `accent` color for hover instead of `primary`
+3. **Badge Component**: Using `accent` color for hover (green/teal tint)
+4. **Button Component**: Ghost and outline variants using `accent` color
+5. **Button Opacity**: Full opacity instead of subtle /5 like other pages
+6. **Races Page**: Double hover effect from nested Button wrapper creating solid color
+
+### Fixes Applied
+
+**1. Home Page** (src/app/page.tsx)
+- Added database query to fetch total RunList count
+- Changed display from hardcoded "0" to dynamic `{runListCount || 0}`
+- Updated label from "ACTIVE SESSIONS" to "TOTAL RUN LISTS"
+
+**2. Builds Page** (src/app/builds/page.tsx)
+- Changed hover colors from `accent` to `primary`:
+  - `hover:bg-accent/5` → `hover:bg-primary/5`
+  - `hover:border-accent/30` → `hover:border-primary/30`
+  - `hover:shadow-accent/10` → `hover:shadow-primary/10`
+  - `group-hover:text-accent` → `group-hover:text-primary`
+
+**3. Badge Component** (src/components/ui/badge.tsx)
+- Fixed outline variant hover from `accent` to `primary`:
+  - `[a&]:hover:bg-accent` → `[a&]:hover:bg-primary`
+  - `[a&]:hover:text-accent-foreground` → `[a&]:hover:text-primary-foreground`
+- Affects all outline badges site-wide (races, builds, cars, tracks, run lists)
+
+**4. Button Component** (src/components/ui/button.tsx)
+- Fixed ghost variant hover from `accent` to `primary`:
+  - `hover:bg-accent` → `hover:bg-primary/5`
+  - `hover:text-accent-foreground` → `hover:text-primary-foreground`
+- Fixed outline variant hover from `accent` to `primary`:
+  - `hover:bg-accent` → `hover:bg-primary/5`
+  - `hover:text-accent-foreground` → `hover:text-primary-foreground`
+- Added `/5` opacity modifier to both for subtle effect matching other pages
+
+**5. Races Page** (src/app/races/page.tsx)
+- Removed nested `Button` wrapper with `variant="ghost"`
+- Restructured to match other listing pages:
+  - Outer div with `hover:bg-primary/5` and `hover:border-primary/30`
+  - Direct `Link` component (no Button wrapper)
+  - Delete button stays outside Link
+- Eliminated double hover effect that created solid color appearance
+
+### Design Consistency Achieved
+
+**All listing pages now use:**
+- Hover background: `bg-primary/5` (5% opacity - subtle)
+- Hover border: `border-primary/30` (30% opacity)
+- Hover text: `text-primary` (blue)
+- Hover shadow: `shadow-primary/10` (10% opacity)
+
+**All interactive components now use:**
+- Primary color (blue) for hover states
+- Consistent opacity levels (/5 for backgrounds, /30 for borders)
+- No green/teal accent colors in hover states
+
+### Technical Notes
+
+**Root Cause of Races Issue:**
+The races page had a `Button` with `variant="ghost"` nested inside a div with hover classes. The ghost button added its own hover effect on top of the div's hover, creating a layered/solid appearance. Removing the Button wrapper and using Link directly (like tracks/cars) fixed it.
+
+**Why Accent Color Was Problematic:**
+The accent color in the theme is a green/teal shade, which was inconsistent with the blue primary color used throughout the site. Standardized all hover states to use primary color.
+
+### Files Modified
+- src/app/page.tsx (run list count)
+- src/app/builds/page.tsx (hover colors)
+- src/components/ui/badge.tsx (hover color)
+- src/components/ui/button.tsx (hover color and opacity)
+- src/app/races/page.tsx (removed Button wrapper, fixed structure)
+- docs/SESSION-LOG.md (this entry)
+
+### Commits Created
+1. **Fix home page run list count to show total run lists** (412bfd6)
+2. **Fix builds page hover colors to match other pages** (039de20)
+3. **Fix badge hover color from green accent to blue primary** (9bcc817)
+4. **Fix button ghost and outline hover colors from green accent to blue primary** (4201ea1)
+5. **Fix button hover opacity to be more subtle** (92e7897)
+6. **Fix races page double hover effect by removing nested Button wrapper** (26aa1ce)
+7. **Fix JSX structure in races page after refactoring** (1320b2c)
+
+### Next Steps
+None - all hover states now consistent across the application.
+
