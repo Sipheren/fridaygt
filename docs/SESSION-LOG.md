@@ -1,5 +1,125 @@
 # FridayGT Development Session Log
 
+## Session: 2026-01-13 #6 - User Approval System Implementation
+
+### Problem Report
+User requested approval system: new users should require admin approval before accessing the system, with email notifications to admins and approval emails to users.
+
+### Requirements
+1. New users enter email → magic link sent
+2. User clicks link → account created with `role='PENDING'`
+3. Admins receive email notification of new pending user
+4. Admin approves user → role changed to 'USER'
+5. User receives approval email with link to complete profile
+6. User sets gamertag and can access the app
+
+### Implementation
+
+**Database Changes:**
+- Updated trigger to set `role='PENDING'` instead of `'USER'`
+- Migration: `20260113_update_trigger_for_pending.sql`
+
+**User Experience:**
+- Created `/auth/pending` page for users awaiting approval
+- Shows clear message: "Account Pending Approval"
+- Lists what happens next (admin review → approval email → set gamertag)
+- "Back to Sign In" button for easy navigation
+
+**Middleware Updates:**
+- PENDING users redirected to `/auth/pending`
+- USER/ADMIN users without gamertag → `/auth/complete-profile`
+- Users with gamertag → normal app access
+
+**Admin Experience:**
+- Admins receive notification emails when new users sign up
+- Admin visits `/admin/users` (existing page)
+- Sees pending users with Approve/Reject buttons
+- Approving sends styled approval email to user
+- Rejecting sends denial email and deletes all user records
+
+**Email Notifications:**
+- **To Admins**: "New User Awaiting Approval - FridayGT"
+  - Includes user email, name, date
+  - Link to `/admin/users` to approve
+  - Sent to all admins
+- **To Users (Approval)**: "Your FridayGT Account Has Been Approved!"
+  - Styled HTML with FridayGT branding
+  - "Complete Your Profile" button
+  - Friendly "See you on the track!" message
+- **To Users (Rejection)**: "Account Request Denied - FridayGT"
+  - Brief message about denial
+  - Suggestion to contact admin if error
+
+### Bugs Fixed
+
+**Bug 1: Admin Notification Spam**
+- **Problem**: Admins receiving 7+ notification emails per pending user
+- **Root Cause**: Condition checked `isNewUser || dbUser?.role === 'PENDING'`
+- **Fix**: Changed to only check `isNewUser`
+- **Impact**: One notification per new user
+
+**Bug 2: User Deletion Incomplete**
+- **Problem**: DELETE only removed `public.User`, left orphaned records in `next_auth`
+- **Fix**: Added cascading deletes for sessions → accounts → users → public.User
+- **Order matters**: Foreign key dependencies
+
+**Bug 3: Missing Timestamps in Safety Upsert**
+- **Problem**: Safety upsert failed with "updatedAt cannot be null"
+- **Fix**: Added `createdAt` and `updatedAt` to upsert data
+
+**Bug 4: Rejection Email Sent in Error**
+- **Problem**: Test user received rejection email despite being PENDING
+- **Explanation**: First test account had gamertag error, was deleted, sent legitimate rejection email
+- **Second test account**: Created successfully, currently PENDING
+- **Not a bug**: Rejection email was for the failed first account, not the current one
+
+### Files Created/Modified
+
+**Created:**
+- `src/app/auth/pending/page.tsx` - Pending approval page
+- `src/app/api/admin/pending-users/route.ts` - List pending users
+- `src/app/api/admin/pending-users/[id]/approve/route.ts` - Approve user
+- `src/app/api/admin/pending-users/[id]/reject/route.ts` - Reject user
+- `supabase/migrations/20260113_create_user_sync_trigger.sql` - Trigger migration
+- `supabase/migrations/20260113_update_trigger_for_pending.sql` - PENDING role migration
+- `map-auth-system.ts` - Database audit script
+- `check-test-user.ts` - Debug script
+- `check-deleted-user.ts` - Debug script
+
+**Modified:**
+- `src/lib/auth.ts` - Added admin notifications, removed table names config, debug logging
+- `src/app/api/user/profile/route.ts` - Added safety upsert with timestamps
+- `src/proxy.ts` - Updated redirect logic for PENDING users
+- `src/app/api/admin/users/[id]/route.ts` - Fixed deletion to clean up next_auth records
+- `src/app/admin/users/page.tsx` - Added loading states, confirmation dialogs, success/error messages
+
+### Commits Created
+
+1. **Document authentication system investigation and fix plan**
+2. **Fix auth pages UI/UX and add missing logos**
+3. **Add table name configuration and debug logging to NextAuth**
+4. **Fix static file routing in proxy matcher**
+5. **Add race selection feature to run lists**
+6. **Add auth system cleanup and diagnostic tools**
+7. **Implement user approval system with admin notifications**
+8. **Fix user deletion to clean up next_auth schema records**
+9. **Improve admin user management UX with better feedback and dialogs**
+10. **Fix admin notification spam - only send once per user**
+
+### Status
+✅ **COMPLETE** - Approval system fully implemented and tested
+- ✅ Trigger creates PENDING users
+- ✅ Admin notification emails work (once per user)
+- ✅ Pending page displays correctly
+- ✅ Admin approval/rejection works
+- ✅ User approval emails work
+- ✅ All bugs fixed
+
+### Related Sessions
+- 2026-01-13 #5: Authentication system investigation (this session's planning phase)
+- 2026-01-13 #4: Database audit method established
+- Earlier sessions: Gamertag implementation, RLS setup
+
 ## Session: 2026-01-13 #5 - Authentication System Investigation
 
 ### Problem Reported

@@ -1,28 +1,53 @@
 # Current Situation & Next Steps
 
 **Date:** 2026-01-13
-**Status:** Auth System Issue Identified ⚠️ | Build Fixed ✅ | Database Audit Complete ✅ | All Tables camelCase ✅
+**Status:** Approval System Complete ✅ | Auth Pages Fixed ✅ | Race Selection Complete ✅ | Build Fixed ✅ | Database Audit Complete ✅ | All Tables camelCase ✅
 
 ---
 
-## 🚨 Current Issue: Authentication System Broken
+## ✅ Recently Completed (2026-01-13)
 
-**Problem:** New users cannot set gamertag - "The result contains 0 rows" error
+### User Approval System
+**Status:** ✅ COMPLETE
 
-**Root Cause:** Two-schema setup with no synchronization
-- `next_auth.users` - Managed by NextAuth adapter (2 users)
-- `public.User` - Managed by application (1 user only)
-- When NextAuth creates user → No corresponding `public.User` record created
-- PATCH `/api/user/profile` fails because record doesn't exist
+New user registration now requires admin approval:
+1. User signs up → Account created with `role='PENDING'`
+2. Admins receive email notification
+3. Admin approves → User receives approval email
+4. User completes profile (sets gamertag)
+5. User can access the app
 
-**Solution:** Database trigger to auto-sync schemas (see `docs/AUTH-FIX-OPTION2-PLAN.md`)
+**Key Features:**
+- Database trigger auto-creates `public.User` records when `next_auth.users` is created
+- Pending users see "Account Pending Approval" page with clear instructions
+- Admins receive styled HTML emails with approve/reject links
+- Users receive styled approval emails with "Complete Your Profile" button
+- Full cascade deletion (sessions → accounts → users → public.User)
 
-**Status:** ⏸️ Awaiting approval to implement fix
+**Files:**
+- `src/app/auth/pending/page.tsx` - Pending approval page
+- `src/app/admin/users/page.tsx` - Improved UX with loading states, dialogs, success/error messages
+- `src/lib/auth.ts` - Admin notification system
+- `src/proxy.ts` - Redirect logic for PENDING users
+- `supabase/migrations/20260113_update_trigger_for_pending.sql` - Trigger for PENDING role
 
-**Documentation:**
-- `docs/AUTH-SYSTEM-STATE.md` - Full architecture analysis
-- `docs/AUTH-FIX-OPTION2-PLAN.md` - Implementation plan
-- `docs/SESSION-LOG.md` (2026-01-13 #5) - Investigation details
+### Auth Pages UI/UX
+**Status:** ✅ COMPLETE
+
+All auth pages now have consistent styling:
+- FridayGT logo on all pages (signin, verify-request, error, pending, complete-profile)
+- shadcn/ui components for consistent look and feel
+- Improved positioning (higher on page)
+- Clear messaging and error handling
+
+### Race Selection Feature
+**Status:** ✅ COMPLETE
+
+Can now select existing races when adding to run lists:
+- Mode toggle: Create New Race vs Select Existing Race
+- Race dropdown with search
+- Race preview cards with track, cars, lobby settings
+- API handles both modes
 
 ---
 
