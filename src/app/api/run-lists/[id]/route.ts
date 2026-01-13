@@ -28,7 +28,7 @@ export async function GET(
           id,
           order,
           notes,
-          raceid,
+          raceId,
           createdAt,
           updatedAt,
           track:Track(id, name, slug, location, length, category),

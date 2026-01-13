@@ -89,7 +89,7 @@ export async function POST(
       const { data: existingRaces } = await supabase
         .from('Race')
         .select('id, raceCars:RaceCar(carId, buildId)')
-        .eq('trackid', trackId)
+        .eq('trackId', trackId)
 
       // Check if any existing race matches the exact car combination
       const matchingRace = existingRaces?.find((race: any) => {
@@ -111,12 +111,12 @@ export async function POST(
           .from('Race')
           .insert({
             id: crypto.randomUUID(),
-            trackid: trackId,
+            trackId: trackId,
             name: null,
             description: null,
-            createdbyid: userData.id,
-            createdat: now,
-            updatedat: now,
+            createdById: userData.id,
+            createdAt: now,
+            updatedAt: now,
           })
           .select('id')
           .single()
@@ -134,11 +134,11 @@ export async function POST(
         // Create RaceCar entries
         const raceCarsToInsert = cars.map((c: any) => ({
           id: crypto.randomUUID(),
-          raceid: finalRaceId,
-          carid: c.carId,
-          buildid: c.buildId || null,
-          createdat: now,
-          updatedat: now,
+          raceId: finalRaceId,
+          carId: c.carId,
+          buildId: c.buildId || null,
+          createdAt: now,
+          updatedAt: now,
         }))
 
         const { error: carsError } = await supabase
@@ -184,10 +184,10 @@ export async function POST(
     if (!entryTrackId) {
       const { data: raceData } = await supabase
         .from('Race')
-        .select('trackid')
+        .select('trackId')
         .eq('id', finalRaceId)
         .single()
-      entryTrackId = raceData?.trackid
+      entryTrackId = raceData?.trackId
     }
 
     const { data: entry, error } = await supabase
@@ -197,7 +197,7 @@ export async function POST(
         runListId,
         order: nextOrder,
         trackId: entryTrackId,
-        raceid: finalRaceId,
+        raceId: finalRaceId,
         lobbySettingsId: lobbySettingsId || null,
         notes: notes || null,
         createdAt: now,
