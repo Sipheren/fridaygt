@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -31,9 +32,20 @@ export default function SignInPage() {
 
   if (isSuccess) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-8">
+      <div className="flex min-h-screen items-start justify-center bg-background pt-20">
+        <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-8 relative">
           <div className="absolute inset-x-0 top-0 h-0.5 bg-primary"></div>
+
+          <div className="flex justify-center pt-4">
+            <Link href="/">
+              <img
+                src="/logo-fgt.png"
+                alt="FridayGT"
+                className="h-12 w-auto"
+              />
+            </Link>
+          </div>
+
           <div className="text-center space-y-4">
             <div className="flex justify-center">
               <CheckCircle className="h-16 w-16 text-primary" />
@@ -49,13 +61,23 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="flex min-h-screen items-start justify-center bg-background pt-20">
       <div className="w-full max-w-md space-y-8 rounded-lg border border-border bg-card p-8 relative">
         <div className="absolute inset-x-0 top-0 h-0.5 bg-primary"></div>
 
+        <div className="flex justify-center pt-4">
+          <Link href="/">
+            <img
+              src="/logo-fgt.png"
+              alt="FridayGT"
+              className="h-12 w-auto"
+            />
+          </Link>
+        </div>
+
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">FridayGT</h1>
-          <p className="text-muted-foreground">Sign in to your account</p>
+          <h1 className="text-2xl font-bold tracking-tight">Sign in to your account</h1>
+          <p className="text-muted-foreground">Enter your email to receive a magic link</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

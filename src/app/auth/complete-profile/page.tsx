@@ -3,6 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Gamepad2 } from 'lucide-react'
 
 export default function CompleteProfilePage() {
   const { data: session, status, update } = useSession()
@@ -69,8 +74,8 @@ export default function CompleteProfilePage() {
 
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
+      <div className="flex min-h-screen items-start justify-center bg-background pt-20">
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     )
   }
@@ -81,52 +86,67 @@ export default function CompleteProfilePage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white dark:bg-gray-800 p-8 shadow">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Complete Your Profile</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+    <div className="flex min-h-screen items-start justify-center bg-background pt-20">
+      <div className="w-full max-w-md space-y-8 rounded-lg border border-border bg-card p-8 relative">
+        <div className="absolute inset-x-0 top-0 h-0.5 bg-primary"></div>
+
+        {/* Logo */}
+        <div className="flex justify-center pt-4">
+          <Link href="/">
+            <img
+              src="/logo-fgt.png"
+              alt="FridayGT"
+              className="h-12 w-auto"
+            />
+          </Link>
+        </div>
+
+        {/* Icon */}
+        <div className="flex justify-center">
+          <Gamepad2 className="h-10 w-10 text-primary" />
+        </div>
+
+        {/* Title */}
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-bold tracking-tight">Complete Your Profile</h1>
+          <p className="text-muted-foreground">
             Choose a gamertag that will be visible on leaderboards
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div>
-            <label htmlFor="gamertag" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Gamertag / Username
-            </label>
-            <input
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="gamertag">Gamertag / Username</Label>
+            <Input
               id="gamertag"
               type="text"
               required
               value={gamertag}
               onChange={(e) => setGamertag(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:text-white"
               placeholder="YourGamertag"
               minLength={3}
               maxLength={20}
+              autoFocus
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               3-20 characters. Letters, numbers, hyphens, and underscores only.
             </p>
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4 text-sm text-red-600 dark:text-red-400">
+            <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive border border-destructive/20">
               {error}
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
+          <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading ? 'Saving...' : 'Continue'}
-          </button>
+          </Button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+        {/* Footer */}
+        <p className="text-center text-sm text-muted-foreground">
           Your gamertag will be shown on public leaderboards and race sessions.
           Your email and real name remain private.
         </p>
