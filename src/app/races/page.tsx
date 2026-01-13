@@ -5,7 +5,15 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Car, Plus, List, Globe, Search } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { MapPin, Car, Plus, List, Globe, Search, Trash2 } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 import Link from 'next/link'
 
@@ -58,6 +66,9 @@ export default function RacesPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<FilterType>('all')
+  const [deletingRaceId, setDeletingRaceId] = useState<string | null>(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchRaces()
@@ -73,6 +84,39 @@ export default function RacesPage() {
       console.error('Error fetching races:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const deleteRace = async (raceId: string) => {
+    setPendingDeleteId(raceId)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return
+
+    setDeletingRaceId(pendingDeleteId)
+    setShowDeleteDialog(false)
+
+    try {
+      const res = await fetch(`/api/races/${pendingDeleteId}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        alert(data.error || 'Failed to delete race')
+        return
+      }
+
+      // Refresh the races list
+      await fetchRaces()
+    } catch (error) {
+      console.error('Error deleting race:', error)
+      alert('Failed to delete race')
+    } finally {
+      setDeletingRaceId(null)
+      setPendingDeleteId(null)
     }
   }
 
@@ -179,17 +223,21 @@ export default function RacesPage() {
       ) : (
         <div className="space-y-2">
           {filteredRaces.map((race) => (
-            <Button
+            <div
               key={race.id}
-              variant="ghost"
-              asChild
-              className={`w-full h-auto p-4 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors text-left ${
+              className={`group flex items-center gap-2 p-4 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors ${
                 !race.isActive ? 'opacity-50' : ''
               }`}
             >
-              <Link href={`/races/${race.id}`}>
-                <div className="flex items-start justify-between gap-4 w-full">
-                  <div className="flex-1 space-y-2">
+              <div className="flex-1">
+                <Button
+                  variant="ghost"
+                  asChild
+                  className="w-full h-auto p-0 text-left justify-start"
+                >
+                  <Link href={`/races/${race.id}`} className="w-full">
+                    <div className="flex items-start gap-4 w-full">
+                      <div className="flex-1 space-y-2">
                     {/* Race Name */}
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-lg">
@@ -276,9 +324,52 @@ export default function RacesPage() {
                 </div>
               </Link>
             </Button>
+          </div>
+
+          {/* Delete Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => deleteRace(race.id)}
+            disabled={deletingRaceId === race.id}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            {deletingRaceId === race.id ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Race?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete this race. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteDialog(false)
+                setPendingDeleteId(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete Race
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
