@@ -6,6 +6,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: SupabaseAdapter({
     url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
     secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    tables: {
+      users: 'User',
+      accounts: 'Account',
+      sessions: 'Session',
+      verification_tokens: 'VerificationToken',
+    },
   }),
   session: {
     strategy: "database", // Use database sessions instead of JWT
@@ -30,6 +36,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return true
     },
     async session({ session, user }) {
+      console.log('[auth] session callback - user ID:', user.id, 'email:', user.email)
+
       if (session.user) {
         session.user.id = user.id
 
@@ -40,13 +48,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
 
-        const { data: dbUser } = await supabase
+        const { data: dbUser, error } = await supabase
           .from('User')
           .select('role, gamertag')
           .eq('id', user.id)
           .single()
 
-        session.user.role = dbUser?.role || 'PENDING'
+        console.log('[auth] dbUser query result:', dbUser, 'error:', error)
+
+        session.user.role = dbUser?.role || 'USER'
         session.user.gamertag = dbUser?.gamertag || undefined
 
         // Auto-promote default admin
