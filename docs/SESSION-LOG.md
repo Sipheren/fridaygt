@@ -14,7 +14,7 @@ Continue with Phase 5 implementation plan - Car Builds & Tuning system
 **Task**: Create database tables for Car Builds system
 
 **Actions**:
-- Created migration file: `/migrations/add-car-builds.sql`
+- Created migration file: `migrations/add-car-builds.sql`
 - Fixed schema to use TEXT for IDs (not UUID) to match existing schema
 - Fixed timestamp precision to TIMESTAMP(3) to match existing tables
 - Manually ran SQL migration in Supabase Dashboard
@@ -144,7 +144,7 @@ Continue with Phase 5 implementation plan - Car Builds & Tuning system
 **Time**: After testing
 **Task**: Update implementation plan with progress
 
-**Updated**: `/IMPLEMENTATION-PLAN.md`
+**Updated**: `docs/IMPLEMENTATION-PLAN.md`
 
 **Changes**:
 - Marked Phase 5 as "IN PROGRESS"
@@ -242,7 +242,7 @@ Continue with Phase 5 implementation plan - Car Builds & Tuning system
 
 ## Files Created This Session
 
-1. `/migrations/add-car-builds.sql` - Database migration SQL
+1. `migrations/add-car-builds.sql` - Database migration SQL
 2. `/run-builds-migration.ts` - Migration script (not used - ran manually)
 3. `/src/data/gt7-upgrades.json` - GT7 upgrades database
 4. `/src/data/gt7-tuning.json` - GT7 tuning settings database
@@ -256,7 +256,7 @@ Continue with Phase 5 implementation plan - Car Builds & Tuning system
 
 ## Files Modified This Session
 
-1. `/IMPLEMENTATION-PLAN.md` - Updated Phase 5 progress
+1. `docs/IMPLEMENTATION-PLAN.md` - Updated Phase 5 progress
 2. Fixed timestamp handling in API routes
 
 ---
@@ -609,7 +609,7 @@ npx shadcn@latest add checkbox slider
 ## Files Modified This Session
 
 1. `/src/components/header.tsx` - Added "Builds" navigation link
-2. `/IMPLEMENTATION-PLAN.md` - Updated Phase 5 Parts 3-4 as completed
+2. `docs/IMPLEMENTATION-PLAN.md` - Updated Phase 5 Parts 3-4 as completed
 3. `/SESSION-LOG.md` - This log file
 
 ---
@@ -868,7 +868,7 @@ Complete all missing integrations for the builds system - integrate builds into 
 5. `/src/components/lap-times/LapTimeForm.tsx` - Added build selector dropdown
 6. `/src/app/api/lap-times/route.ts` - Added buildId handling
 7. `/src/components/lap-times/CarLapTimes.tsx` - Added build info display
-8. `/IMPLEMENTATION-PLAN.md` - Marked Phase 5 Part 5 as complete, updated critical files list
+8. `docs/IMPLEMENTATION-PLAN.md` - Marked Phase 5 Part 5 as complete, updated critical files list
 9. `/SESSION-LOG.md` - This log file
 
 ---
@@ -1890,7 +1890,7 @@ if (loading) {
 **Task**: Update implementation plan with loading animation progress
 **Time**: After integration complete
 
-**Modified**: `/IMPLEMENTATION-PLAN.md`
+**Modified**: `docs/IMPLEMENTATION-PLAN.md`
 
 **Changes Made**:
 - Updated Phase 8 Part 4 status: "NOT STARTED" → "PARTIALLY COMPLETE"
@@ -1963,7 +1963,7 @@ if (loading) {
 8. `/src/app/builds/page.tsx` - Added LoadingSection
 9. `/src/app/admin/users/page.tsx` - Added LoadingSection
 10. `/src/app/cars/page.tsx` - Added LoadingSection
-11. `/IMPLEMENTATION-PLAN.md` - Marked Phase 8 Part 4 as partially complete
+11. `docs/IMPLEMENTATION-PLAN.md` - Marked Phase 8 Part 4 as partially complete
 
 ---
 
@@ -3205,7 +3205,7 @@ For each existing `RunListEntry`:
 - `/src/app/run-lists/[id]/page.tsx`
 - `/src/components/lap-times/LapTimeForm.tsx`
 - `/src/app/combos/[carSlug]/[trackSlug]/page.tsx` (add redirect)
-- `/IMPLEMENTATION-PLAN.md` (update Phase 6)
+- `docs/IMPLEMENTATION-PLAN.md` (update Phase 6)
 
 ### Status
 
