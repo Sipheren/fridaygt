@@ -21,6 +21,7 @@ import {
   Lock,
   List,
   ChevronRight,
+  Plus,
 } from 'lucide-react'
 import Link from 'next/link'
 import { LoadingSection } from '@/components/ui/loading'
@@ -390,10 +391,16 @@ export default function RaceDetailPage() {
       {userStats && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5" />
-              Your Stats
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5" />
+                Your Stats
+              </CardTitle>
+              <Button onClick={() => router.push('/lap-times/new')} size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Lap Time
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

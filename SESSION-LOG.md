@@ -3379,3 +3379,158 @@ When updating one but not the other immediately, or when save operations failed,
 ### Files to Review
 - `/src/app/api/races/[id]/route.ts` - API remains functional for run list integration
 
+
+---
+
+## Session: 2026-01-13 #2 (Races Listing Page & Database Casing Investigation)
+
+### Context
+User requested a races listing page to show all race combinations across run lists.
+
+### Work Completed
+
+#### 1. Races Listing Page (`/races`)
+**Status:** ✅ COMPLETE
+
+**Implementation:**
+- Created `/src/app/races/page.tsx` - Lists all race combinations
+- Created `/src/app/api/races/route.ts` - API to fetch races from run list entries
+- Updated `/src/components/header.tsx` - Added "Races" navigation link
+
+**Features:**
+- Displays all race combinations (track + cars) from run lists
+- Shows active/inactive status (based on run list usage)
+- Shows which run lists each race is used in
+- Search functionality
+- Filter by: All Races, Active, Inactive
+- Sorts: Active first, then alphabetically by name
+- Click to view race details (navigates to `/races/[id]`)
+- Auto-generates display name: "Track Name + Car Name" if no custom name
+- Handles multi-car races correctly
+
+**Design:**
+- Table-style layout matching lap times page
+- Full-width bordered rows
+- Clean, scannable format
+- Shows track, cars, and run list associations
+- Responsive design
+
+#### 2. Database Column Casing Issue
+**Status:** 🔍 INVESTIGATED
+
+**Problem Discovered:**
+The database has **inconsistent column naming conventions**:
+
+- **Legacy tables** use **camelCase**: `createdAt`, `trackId`, `carId`, `isPublic`
+  - Track, Car, LapTime, RunList, RunListEntry, RunListEntryCar, etc.
+  
+- **New Race tables** use **lowercase**: `createdat`, `carid`, `buildid`
+  - Race, RaceCar
+
+**Root Cause:**
+- Supabase dashboard creates columns with **quoted identifiers** → `"createdAt"` (preserves case)
+- Race/RaceCar tables likely created via SQL with **unquoted identifiers** → `createdat` (lowercase)
+
+**Impact:**
+- Supabase query errors when joining tables with different casing
+- Confusing error messages: `column "RaceCar.carId" does not exist`
+- Code maintenance issues
+- Developer confusion
+
+**Current Workaround:**
+The `/api/races` endpoint fetches data from `RunListEntry` directly (avoiding Race/RaceCar tables) and groups entries by track + car combinations to create pseudo-races. This works but isn't ideal.
+
+**Solution Planned:**
+- Rename Race/RaceCar columns to camelCase to match rest of database
+- Safe operation: `ALTER TABLE RENAME COLUMN` is instant and reversible
+- No data loss, no foreign key issues, no downtime
+- Migration plan documented in `COLUMN-CASING-MIGRATION.md`
+- Explanation documented in `COLUMN-CASING-ISSUE-EXPLANATION.md`
+
+### Files Created
+1. `/src/app/races/page.tsx` - Races listing page
+2. `/src/app/api/races/route.ts` - Races API endpoint
+3. `/COLUMN-CASING-MIGRATION.md` - Migration plan
+4. `/COLUMN-CASING-ISSUE-EXPLANATION.md` - Detailed explanation
+
+### Files Modified
+1. `/src/components/header.tsx` - Added "Races" link to navigation
+
+### Database Schema Notes
+
+**Race Entity Tables (NEED CASE FIXING):**
+- `Race` - Has lowercase columns (`createdat`, `updatedat`, `createdbyid`)
+- `RaceCar` - Has lowercase columns (`carid`, `buildid`, `raceid`)
+
+**Other Tables to Verify:**
+- `RunSession` - NEW table, needs casing verification
+- `SessionAttendance` - NEW table, needs casing verification
+- `CarBuild`, `CarBuildUpgrade`, `CarBuildSetting` - Should be camelCase (verify)
+
+### Next Steps
+
+1. **Verify RunSession/SessionAttendance column casing**
+   - Check if new tables also have lowercase issues
+   - Add to migration if needed
+
+2. **Test database migration in development**
+   - Apply column renaming to dev database
+   - Test all race-related functionality
+   - Verify no broken queries
+
+3. **Deploy migration to production**
+   - DB migration first (renames columns)
+   - Code deploy second (already uses camelCase)
+   - < 1 second downtime
+
+4. **Update `/api/races` endpoint**
+   - Query Race/RaceCar tables directly after migration
+   - Remove workaround (current approach works but isn't ideal)
+
+### Technical Details
+
+**API Endpoint - Current Implementation:**
+```typescript
+// Fetches from RunListEntry (working table)
+const { data: entries } = await supabase
+  .from('RunListEntry')
+  .select(`
+    id, notes, createdAt,
+    track:Track(...),
+    runListId,
+    runList:RunList(...),
+    RunListEntryCar(
+      carId,
+      buildId,
+      car:Car(...)
+    )
+  `)
+
+// Groups by track + car combination to create unique "races"
+```
+
+**Why This Works:**
+- RunListEntry uses camelCase (consistent with rest of DB)
+- Avoids Race/RaceCar tables (which have lowercase issues)
+- Creates pseudo-race entries dynamically
+- Shows correct data to users
+
+**Why It's Not Ideal:**
+- Workaround for underlying issue
+- More complex query logic
+- Doesn't use actual Race entities
+- Should be fixed at DB level
+
+### Lessons Learned
+
+1. **Database Consistency Matters:** Mixed naming conventions cause real issues
+2. **Supabase vs PostgreSQL:** Understanding identifier quoting is crucial
+3. **Migration Timing:** Fix these issues early before more tables are added
+4. **Workarounds Work:** Can build functional features despite underlying issues
+5. **Documentation Helps:** DATABASE-SCHEMA.md showed expected camelCase naming
+
+### Screenshots
+- Races listing page showing 2 races in table format
+- Search and filter functionality working
+- Race cards showing track, cars, and run list associations
+

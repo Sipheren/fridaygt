@@ -33,6 +33,7 @@ export function Header({ user }: HeaderProps) {
     { href: '/tracks', label: 'Tracks' },
     { href: '/cars', label: 'Cars' },
     { href: '/builds', label: 'Builds' },
+    { href: '/races', label: 'Races' },
     { href: '/run-lists', label: 'Run Lists' },
     { href: '/lap-times', label: 'Lap Times' },
   ]

@@ -10,6 +10,14 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { SearchableComboBox } from '@/components/ui/searchable-combobox'
 import { LoadingSection } from '@/components/ui/loading'
 import {
@@ -114,9 +122,10 @@ interface SortableRaceItemProps {
   isOwner: boolean
   onRemove: (id: string) => void
   onClick: () => void
+  deletingRaceId: string | null
 }
 
-function SortableRaceItem({ entry, index, isOwner, onRemove, onClick }: SortableRaceItemProps) {
+function SortableRaceItem({ entry, index, isOwner, onRemove, onClick, deletingRaceId }: SortableRaceItemProps) {
   const {
     attributes,
     listeners,
@@ -179,9 +188,14 @@ function SortableRaceItem({ entry, index, isOwner, onRemove, onClick }: Sortable
             e.stopPropagation()
             onRemove(entry.id)
           }}
+          disabled={deletingRaceId === entry.id}
           className="text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
         >
-          <Trash2 className="h-4 w-4" />
+          {deletingRaceId === entry.id ? (
+            <LoadingSection variant="spinner" className="h-4 w-4" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
         </Button>
       )}
     </div>
@@ -197,6 +211,10 @@ export default function RunListDetailPage() {
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [addingRace, setAddingRace] = useState(false)
+  const [deletingRaceId, setDeletingRaceId] = useState<string | null>(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   // Edit mode state
   const [editName, setEditName] = useState('')
@@ -343,6 +361,8 @@ export default function RunListDetailPage() {
       return
     }
 
+    setAddingRace(true)
+
     try {
       const res = await fetch(`/api/run-lists/${id}/entries`, {
         method: 'POST',
@@ -365,27 +385,40 @@ export default function RunListDetailPage() {
       setBuilds([])
 
       // Refresh run list
-      fetchRunList()
+      await fetchRunList()
     } catch (error) {
       console.error('Error adding race:', error)
       alert('Failed to add race')
+    } finally {
+      setAddingRace(false)
     }
   }
 
   const removeEntry = async (entryId: string) => {
-    if (!confirm('Remove this race from the run list?')) return
+    setPendingDeleteId(entryId)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return
+
+    setDeletingRaceId(pendingDeleteId)
+    setShowDeleteDialog(false)
 
     try {
-      const res = await fetch(`/api/run-lists/${id}/entries/${entryId}`, {
+      const res = await fetch(`/api/run-lists/${id}/entries/${pendingDeleteId}`, {
         method: 'DELETE',
       })
 
       if (!res.ok) throw new Error('Failed to remove race')
 
-      fetchRunList()
+      await fetchRunList()
     } catch (error) {
       console.error('Error removing race:', error)
       alert('Failed to remove race')
+    } finally {
+      setDeletingRaceId(null)
+      setPendingDeleteId(null)
     }
   }
 
@@ -676,6 +709,7 @@ export default function RunListDetailPage() {
                             router.push(`/races/${entry.raceid}`)
                           }
                         }}
+                        deletingRaceId={deletingRaceId}
                       />
                     ))}
                 </div>
@@ -808,13 +842,45 @@ export default function RunListDetailPage() {
               />
             </div>
 
-            <Button type="button" onClick={addEntry} className="w-full">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Race
+            <Button type="button" onClick={addEntry} disabled={addingRace} className="w-full">
+              {addingRace ? (
+                <>
+                  <LoadingSection variant="spinner" className="h-4 w-4 mr-2" />
+                  Adding Race...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Race
+                </>
+              )}
             </Button>
           </CardContent>
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove Race from Run List?</DialogTitle>
+            <DialogDescription>
+              This will remove the race from the run list. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowDeleteDialog(false)
+              setPendingDeleteId(null)
+            }}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Remove Race
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -333,14 +333,10 @@ export default function ComboDetailPage() {
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex items-center gap-4">
         <Button variant="ghost" onClick={() => router.push('/')} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Back
-        </Button>
-        <Button onClick={() => router.push('/lap-times/new')} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Lap Time
         </Button>
       </div>
 
@@ -657,9 +653,15 @@ export default function ComboDetailPage() {
         {/* User's Recent Laps */}
         <Card className="border-2 border-border/50">
           <CardHeader className="bg-gradient-to-r from-secondary/5 to-transparent">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-secondary" />
-              <CardTitle>YOUR RECENT LAPS</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-secondary" />
+                <CardTitle>YOUR RECENT LAPS</CardTitle>
+              </div>
+              <Button onClick={() => router.push('/lap-times/new')} size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Lap Time
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
