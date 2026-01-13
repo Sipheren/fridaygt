@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Search, MapPin } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
+import Link from 'next/link'
 
 interface Track {
   id: string
@@ -112,97 +113,118 @@ export default function TracksPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 max-w-[1400px] mx-auto">
+      <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
         <LoadingSection text="Loading GT7 circuits..." />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto">
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight mb-2">TRACKS</h1>
-        <p className="text-muted-foreground font-mono text-sm">
-          {filteredTracks.length} GT7 CIRCUITS AVAILABLE
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <MapPin className="h-8 w-8 text-primary" />
+            TRACKS
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {filteredTracks.length} {filteredTracks.length === 1 ? 'track' : 'tracks'} available
+          </p>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            id="track-search"
-            name="track-search"
             placeholder="Search tracks or locations..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
           />
         </div>
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="flex flex-wrap gap-2">
           {categories.map((cat) => (
             <Button
               key={cat}
               variant={selectedCategory === cat ? 'default' : 'outline'}
               onClick={() => setSelectedCategory(cat)}
-              className="whitespace-nowrap"
+              size="sm"
+              className="min-h-[44px] text-xs"
             >
-              {cat === 'all' ? 'ALL' : getCategoryDisplay(cat).toUpperCase()}
+              {cat === 'all' ? 'ALL TRACKS' : getCategoryDisplay(cat).toUpperCase()}
             </Button>
           ))}
         </div>
       </div>
 
-      {/* Track Table */}
-      <div className="space-y-3">
-        <div className="bg-muted/30 border border-border rounded-lg px-6 py-3">
-          <div className="grid grid-cols-12 gap-4 text-xs font-mono font-semibold text-muted-foreground uppercase">
-            <div className="col-span-5">Track Name</div>
-            <div className="col-span-2">Location</div>
-            <div className="col-span-2">Category</div>
-            <div className="col-span-2">Layout</div>
-            <div className="col-span-1 text-right">Length</div>
+      {/* Tracks List */}
+      {filteredTracks.length === 0 ? (
+        <div className="border border-border rounded-lg py-12">
+          <div className="text-center space-y-4">
+            <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <div className="space-y-2">
+              <p className="text-lg font-semibold">NO TRACKS FOUND</p>
+              <p className="text-sm text-muted-foreground font-mono">
+                {search || selectedCategory !== 'all'
+                  ? 'Try adjusting your search or filters'
+                  : 'No tracks available'}
+              </p>
+            </div>
           </div>
         </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredTracks.map((track) => (
+            <Link
+              key={track.id}
+              href={`/tracks/${track.slug}`}
+              className="block"
+            >
+              <div className="border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer group">
+                <div className="p-3 sm:p-4">
+                  <div className="space-y-2">
+                    {/* Track Name */}
+                    <div className="min-w-0">
+                      <span className="font-semibold text-base sm:text-lg block truncate">
+                        {track.name}
+                      </span>
+                    </div>
 
-        {filteredTracks.map((track) => (
-          <div
-            key={track.id}
-            onClick={() => router.push(`/tracks/${track.slug}`)}
-            className="grid grid-cols-12 gap-4 px-6 py-4 border border-border rounded-lg hover:bg-accent/5 hover:border-accent/30 hover:shadow-sm hover:shadow-accent/10 transition-all cursor-pointer group"
-          >
-            <div className="col-span-5 font-semibold group-hover:text-accent transition-colors">
-              {track.name}
-            </div>
-            <div className="col-span-2 flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-3 w-3" />
-              <span className="font-mono">{track.location}</span>
-            </div>
-            <div className="col-span-2">
-              <Badge className={getCategoryColor(track.category)} variant="outline">
-                {getCategoryDisplay(track.category)}
-              </Badge>
-            </div>
-            <div className="col-span-2 text-sm text-muted-foreground font-mono">
-              {track.layout && track.layout !== 'Default' ? track.layout : '-'}
-            </div>
-            <div className="col-span-1 text-right font-bold tabular-nums">
-              {track.length ? `${track.length.toFixed(3)}` : 'N/A'}
-            </div>
-          </div>
-        ))}
-      </div>
+                    {/* Location */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{track.location}</span>
+                    </div>
 
-      {filteredTracks.length === 0 && (
-        <div className="border border-border rounded-lg p-12">
-          <div className="text-center space-y-2">
-            <p className="text-lg font-semibold">NO TRACKS FOUND</p>
-            <p className="text-sm text-muted-foreground font-mono">
-              Try adjusting your search or filters
-            </p>
-          </div>
+                    {/* Details */}
+                    <div className="flex flex-wrap items-center gap-3 text-sm">
+                      {/* Category */}
+                      <Badge className={getCategoryColor(track.category)} variant="outline">
+                        {getCategoryDisplay(track.category)}
+                      </Badge>
+
+                      {/* Layout */}
+                      {track.layout && track.layout !== 'Default' && (
+                        <span className="text-muted-foreground">
+                          {track.layout}
+                        </span>
+                      )}
+
+                      {/* Length */}
+                      {track.length && (
+                        <span className="text-muted-foreground font-mono">
+                          {track.length.toFixed(3)}m
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       )}
     </div>
