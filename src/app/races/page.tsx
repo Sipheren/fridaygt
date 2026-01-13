@@ -225,19 +225,19 @@ export default function RacesPage() {
           {filteredRaces.map((race) => (
             <div
               key={race.id}
-              className={`group flex items-center gap-2 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors ${
+              className={`group relative flex items-center gap-2 p-4 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors ${
                 !race.isActive ? 'opacity-50' : ''
               }`}
             >
-              <div className="flex-1 p-4">
-                <Button
-                  variant="ghost"
-                  asChild
-                  className="w-full h-auto p-0 text-left justify-start"
-                >
-                  <Link href={`/races/${race.id}`} className="w-full">
-                    <div className="flex items-start gap-4 w-full">
-                      <div className="flex-1 space-y-2">
+              <div className="flex-1">
+                  <Button
+                    variant="ghost"
+                    asChild
+                    className="w-full h-auto p-0 text-left justify-start"
+                  >
+                    <Link href={`/races/${race.id}`} className="w-full">
+                      <div className="flex items-start gap-4 w-full">
+                        <div className="flex-1 space-y-2">
                     {/* Race Name */}
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-lg">
@@ -324,28 +324,26 @@ export default function RacesPage() {
                 </div>
               </Link>
             </Button>
-          </div>
 
-          {/* Delete Button */}
-          <div className="pr-4">
+            {/* Delete Button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={(e) => {
                 e.preventDefault()
+                e.stopPropagation()
                 deleteRace(race.id)
               }}
               disabled={deletingRaceId === race.id}
               className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
             >
-            {deletingRaceId === race.id ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
-            ) : (
-              <Trash2 className="h-4 w-4" />
-            )}
-          </Button>
+              {deletingRaceId === race.id ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+            </Button>
           </div>
-        </div>
           ))}
         </div>
       )}
