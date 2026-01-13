@@ -253,7 +253,7 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
           </div>
 
           {/* Public Toggle */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-border rounded-lg p-3 sm:p-4">
+          <div className="flex items-center justify-between space-x-2 border border-border rounded-lg p-4">
             <div className="space-y-1">
               <Label htmlFor="public" className="text-base font-semibold">
                 Make Public
@@ -266,7 +266,6 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
               id="public"
               checked={isPublic}
               onCheckedChange={setIsPublic}
-              className="min-h-[44px] data-[state=checked]:bg-primary"
             />
           </div>
         </CardContent>
