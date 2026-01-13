@@ -1,7 +1,7 @@
 # Column Casing Migration - Test Plan
 
 **Date:** 2026-01-13
-**Migration:** `migrations/fix-race-column-casing.sql`
+**Migration:** `supabase/migrations/fix-race-column-casing.sql`
 
 ## Pre-Migration Checklist
 

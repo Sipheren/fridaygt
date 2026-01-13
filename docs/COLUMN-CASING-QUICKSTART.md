@@ -8,7 +8,7 @@
    - RunSession/SessionAttendance verified as camelCase (good!)
 
 2. **Created migration script**
-   - `migrations/fix-race-column-casing.sql`
+   - `supabase/migrations/fix-race-column-casing.sql`
    - Renames 6 columns across 2 tables
    - Includes rollback instructions
 
@@ -90,7 +90,7 @@ http://localhost:3000/races
 
 ## Files Created
 
-1. `migrations/fix-race-column-casing.sql` - Run this on your database
+1. `supabase/migrations/fix-race-column-casing.sql` - Run this on your database
 2. `scripts/verify-column-casing.sql` - Verification script
 3. `COLUMN-CASING-ISSUE-EXPLANATION.md` - Detailed explanation
 4. `COLUMN-CASING-MIGRATION.md` - Full migration plan

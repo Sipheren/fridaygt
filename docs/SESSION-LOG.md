@@ -14,7 +14,7 @@ Continue with Phase 5 implementation plan - Car Builds & Tuning system
 **Task**: Create database tables for Car Builds system
 
 **Actions**:
-- Created migration file: `migrations/add-car-builds.sql`
+- Created migration file: `supabase/migrations/add-car-builds.sql`
 - Fixed schema to use TEXT for IDs (not UUID) to match existing schema
 - Fixed timestamp precision to TIMESTAMP(3) to match existing tables
 - Manually ran SQL migration in Supabase Dashboard
@@ -242,7 +242,7 @@ Continue with Phase 5 implementation plan - Car Builds & Tuning system
 
 ## Files Created This Session
 
-1. `migrations/add-car-builds.sql` - Database migration SQL
+1. `supabase/migrations/add-car-builds.sql` - Database migration SQL
 2. `/run-builds-migration.ts` - Migration script (not used - ran manually)
 3. `/src/data/gt7-upgrades.json` - GT7 upgrades database
 4. `/src/data/gt7-tuning.json` - GT7 tuning settings database
@@ -3596,7 +3596,7 @@ raceId (camelCase) ✅
    - `MIGRATION-TEST-PLAN.md` - Test procedures
 
 3. **Migration Scripts:**
-   - `migrations/fix-race-column-casing.sql` - Migration script
+   - `supabase/migrations/fix-race-column-casing.sql` - Migration script
    - `scripts/verify-column-casing.sql` - Verification script
 
 ### Impact

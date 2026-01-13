@@ -62,7 +62,7 @@ fridaygt/
 │   ├── DATABASE-SCHEMA.md       # Database structure
 │   ├── IMPLEMENTATION-PLAN.md   # Feature roadmap
 │   └── SESSION-LOG.md           # Development log
-├── migrations/             # Database migration scripts
+├── supabase/migrations/             # Database migration scripts
 ├── scripts/                # Utility scripts
 └── supabase/              # Supabase configuration
 ```
@@ -75,10 +75,10 @@ fridaygt/
 
 ## Database Migrations
 
-Database migrations are stored in the `migrations/` directory. To apply migrations:
+Database migrations are stored in the `supabase/migrations/` directory. To apply migrations:
 
 1. Open Supabase Dashboard → SQL Editor
-2. Open the migration file from `migrations/`
+2. Open the migration file from `supabase/migrations/`
 3. Run the SQL script
 
 **Latest Migration:** `fix-race-column-casing.sql` (2026-01-13)
