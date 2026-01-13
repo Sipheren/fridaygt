@@ -321,6 +321,7 @@ export default function RacesPage() {
                         </div>
                       </div>
                     )}
+                  </div>
                 </div>
               </Link>
 
