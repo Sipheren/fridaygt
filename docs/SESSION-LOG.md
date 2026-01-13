@@ -3689,3 +3689,90 @@ ALTER TABLE "RaceCar" RENAME COLUMN "raceId" TO "raceid";
 - Race entity creation (2026-01-12)
 - Run lists multiple cars per race (previous session)
 
+
+## Session: 2026-01-13 #2 - Race Entity Migration (DO OVER)
+
+### Problem Discovered
+**Issue**: Race entity system is BROKEN and incomplete. Previous session logs claimed it was complete, but it's not.
+
+**Evidence**:
+- Application has BOTH "Combos" (old) and "Races" (new) systems
+- Database has INCONSISTENT column casing across multiple tables
+- `/races/[id]` pages fail to load with column errors
+- `/api/races` endpoint uses workaround instead of proper queries
+
+**Error Messages from Logs**:
+```
+column RaceCar_1.carId does not exist
+hint: Perhaps you meant to reference the column "RaceCar_1.carid"
+
+column RunListEntry.raceId does not exist  
+hint: Perhaps you meant to reference the column "RunListEntry.raceid"
+
+column RunList_1.ispublic does not exist
+hint: Perhaps you meant to reference the column "RunList_1.isPublic"
+
+column RunListEntryCar_1.carid does not exist
+hint: Perhaps you meant to reference the column "RunListEntryCar_1.carId"
+```
+
+### Root Cause Analysis
+1. Race/RaceCar tables were created with lowercase columns (createdat, carid, etc.)
+2. Column casing migration was written but NOT FULLY EXECUTED
+3. Other tables (RunList, RunListEntry, RunListEntryCar) also have lowercase columns
+4. Code was updated to use camelCase but database wasn't fully migrated
+5. Result: Mismatch between code expectations and database reality
+
+### Current State (BROKEN)
+**Two Systems Coexist**:
+1. **"Combos" (OLD)**: `/combos/[carSlug]/[trackSlug]` - Works, URL-based
+2. **"Races" (NEW)**: `/races/[id]` - Broken, UUID-based, incomplete
+
+**Database Issues**:
+- Race table: Has lowercase columns (createdat, updatedat, createdbyid)
+- RaceCar table: Has lowercase columns (carid, buildid, raceid)
+- RunList table: Has lowercase columns (ispublic, isactive, islive)
+- RunListEntry table: Has lowercase columns (trackid, raceid, carid, buildid)
+- RunListEntryCar table: Has lowercase columns (carid, buildid)
+
+**Code Issues**:
+- `/api/races/[id]/route.ts` - Updated to camelCase ✅ but database has lowercase ❌
+- `/api/races/route.ts` - Uses workaround to avoid broken tables
+- `/races/[id]/page.tsx` - Updated interface but can't load data
+- `/races/page.tsx` - Works but queries workaround endpoint
+
+### Corrective Action Plan
+Created comprehensive migration plan: `docs/COMPLETE-MIGRATION-PLAN.md`
+
+**Migration Strategy**: Complete "Races" system (Option B)
+- Phase 1: Database audit and fix ALL column casing issues
+- Phase 2: Update all API routes to use camelCase
+- Phase 3: Update all frontend pages
+- Phase 4: Migrate data from combos to races
+- Phase 5: Add URL redirects (combo → race)
+- Phase 6: Cleanup and documentation
+
+**Files Created**:
+1. `scripts/audit-all-column-casing.sql` - Comprehensive column audit
+2. `docs/COMPLETE-MIGRATION-PLAN.md` - Full migration plan
+
+### Next Steps
+**USER REQUIRED**:
+1. Run `scripts/audit-all-column-casing.sql` in Supabase SQL Editor
+2. Copy full output and provide results
+3. Then I'll generate complete migration script
+
+**AFTER AUDIT**:
+1. Generate complete column casing migration script
+2. User runs migration
+3. Update all code to use camelCase
+4. Migrate combo data to race entities
+5. Add redirects
+6. Test and cleanup
+
+### Status
+- ❌ Race entity system: INCOMPLETE and BROKEN
+- ❌ Database column casing: INCONSISTENT
+- ❌ Combo → Race migration: NOT STARTED
+- ⏳ Awaiting audit results to proceed
+
