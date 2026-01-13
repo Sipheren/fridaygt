@@ -344,6 +344,7 @@ export default function RacesPage() {
               )}
             </Button>
           </div>
+            </div>
           ))}
         </div>
       )}
