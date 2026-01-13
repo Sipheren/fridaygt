@@ -187,12 +187,12 @@ export default function BuildsPage() {
             <div
               key={build.id}
               onClick={() => router.push(`/builds/${build.id}`)}
-              className="border border-border rounded-lg p-4 sm:p-6 hover:bg-accent/5 hover:border-accent/30 hover:shadow-sm hover:shadow-accent/10 transition-all cursor-pointer group space-y-4"
+              className="border border-border rounded-lg p-4 sm:p-6 hover:bg-primary/5 hover:border-primary/30 hover:shadow-sm hover:shadow-primary/10 transition-all cursor-pointer group space-y-4"
             >
               {/* Build Header */}
               <div className="space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-xl font-bold group-hover:text-accent transition-colors">
+                  <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
                     {build.name}
                   </h3>
                   <Badge
