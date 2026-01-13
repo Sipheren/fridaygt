@@ -3837,3 +3837,35 @@ All other car+track combinations → Just data display, no race entity
 **No More**: Two-system confusion, combo pages, inconsistent navigation
 **Yes**: Single race system, clear data flow, working navigation
 
+
+## Session: 2026-01-13 #4 - Database Audit Complete
+
+### Database Audit Method Established
+**Script:** `scripts/check-column-casing.ts`
+**Command:** `npx tsx scripts/check-column-casing.ts`
+
+**Why this works:**
+- Uses Supabase client library (HTTP/REST API)
+- No Docker required
+- Directly queries actual database structure
+- Shows exact column names returned by Supabase
+
+**Audit Results:**
+✅ ALL TABLES USE CORRECT CAMELCASE
+- Race: id, trackId, name, description, createdById, createdAt, updatedAt
+- RaceCar: id, raceId, carId, buildId, createdAt, updatedAt
+- RunListEntry: id, runListId, trackId, carId, buildId, raceId, order, notes, createdAt, updatedAt
+- RunList: id, name, description, isPublic, createdById, createdAt, updatedAt, isActive, isLive
+- All other tables: ✅ camelCase
+
+**Key Finding:**
+Database is correct! Recent commit (cb22998c9) unnecessarily changed code to use lowercase column names. Need to revert and use camelCase directly.
+
+**IMPORTANT: ALWAYS AUDIT FIRST**
+Before making any database assumptions or writing migrations:
+```bash
+npx tsx scripts/check-column-casing.ts
+```
+
+This prevents incorrect assumptions about database state.
+

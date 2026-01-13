@@ -192,7 +192,7 @@ function SortableRaceItem({ entry, index, isOwner, onRemove, onClick, deletingRa
           className="text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
         >
           {deletingRaceId === entry.id ? (
-            <LoadingSection variant="spinner" className="h-4 w-4" />
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           ) : (
             <Trash2 className="h-4 w-4" />
           )}
@@ -845,7 +845,7 @@ export default function RunListDetailPage() {
             <Button type="button" onClick={addEntry} disabled={addingRace} className="w-full">
               {addingRace ? (
                 <>
-                  <LoadingSection variant="spinner" className="h-4 w-4 mr-2" />
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2" />
                   Adding Race...
                 </>
               ) : (

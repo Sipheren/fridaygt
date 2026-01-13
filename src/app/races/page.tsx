@@ -209,7 +209,7 @@ export default function RacesPage() {
                     {/* Track */}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <MapPin className="h-4 w-4 shrink-0" />
-                      <span>{race.track.name}</span>
+                      <span>{race.track?.name || 'Unknown Track'}</span>
                     </div>
 
                     {/* Cars */}
@@ -228,7 +228,7 @@ export default function RacesPage() {
                         <div className="pl-6 space-y-0.5 text-sm text-muted-foreground">
                           {race.RaceCar.slice(0, 3).map((rc) => (
                             <div key={rc.id} className="line-clamp-1">
-                              • {rc.car.manufacturer} {rc.car.name}
+                              • {rc.car?.manufacturer || ''} {rc.car?.name || 'Unknown Car'}
                             </div>
                           ))}
                           {race.RaceCar.length > 3 && (

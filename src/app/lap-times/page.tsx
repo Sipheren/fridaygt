@@ -217,7 +217,6 @@ export default function LapTimesPage() {
                     </div>
                   </div>
                 </div>
-              </div>
             )
           })}
         </div>
