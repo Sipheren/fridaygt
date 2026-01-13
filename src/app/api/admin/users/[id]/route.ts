@@ -77,13 +77,34 @@ export async function DELETE(
     .eq('id', id)
     .single()
 
-  // Delete user
+  // Delete from next_auth schema first (foreign key dependencies)
+  // Order matters: sessions → accounts → users
+  await supabase
+    .schema('next_auth')
+    .from('sessions')
+    .delete()
+    .eq('userId', id)
+
+  await supabase
+    .schema('next_auth')
+    .from('accounts')
+    .delete()
+    .eq('userId', id)
+
+  await supabase
+    .schema('next_auth')
+    .from('users')
+    .delete()
+    .eq('id', id)
+
+  // Delete from public.User
   const { error } = await supabase
     .from('User')
     .delete()
     .eq('id', id)
 
   if (error) {
+    console.error('Error deleting user:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
