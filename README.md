@@ -60,7 +60,8 @@ fridaygt/
 ├── public/                # Static assets (images, fonts)
 ├── docs/                  # Project documentation
 │   ├── DATABASE-SCHEMA.md       # Database structure
-│   ├── IMPLEMENTATION-PLAN.md   # Feature roadmap
+│   ├── DESIGN-SYSTEM.md         # UI/UX design system
+│   ├── PLAN.md                  # Overall vision and roadmap
 │   └── SESSION-LOG.md           # Development log
 ├── supabase/migrations/             # Database migration scripts
 ├── scripts/                # Utility scripts
@@ -69,9 +70,10 @@ fridaygt/
 
 ## Documentation
 
-- **[DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md)** - Complete database structure
-- **[IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md)** - Feature roadmap and status
-- **[SESSION-LOG.md](docs/SESSION-LOG.md)** - Detailed development history
+- **[PLAN.md](docs/PLAN.md)** - Overall vision, architecture, and implementation roadmap
+- **[DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md)** - Complete database structure and table definitions
+- **[DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md)** - UI/UX design system and component standards
+- **[SESSION-LOG.md](docs/SESSION-LOG.md)** - Detailed development history and session logs
 
 ## Database Migrations
 

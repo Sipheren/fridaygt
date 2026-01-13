@@ -1238,6 +1238,7 @@ DEFAULT_ADMIN_EMAIL="david@sipheren.com"
 For detailed session-by-session progress tracking, see:
 - [`docs/SESSION-LOG.md`](SESSION-LOG.md) - Detailed log of all development work, decisions, issues, and fixes
 - [`docs/DATABASE-SCHEMA.md`](DATABASE-SCHEMA.md) - Complete database structure and table definitions
+- [`docs/DESIGN-SYSTEM.md`](DESIGN-SYSTEM.md) - UI/UX design system and component standards
 
 ---
 

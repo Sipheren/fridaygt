@@ -6,8 +6,16 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { formatLapTime } from '@/lib/time'
-import { Plus, Search, Clock, Trophy, Wrench } from 'lucide-react'
+import { Plus, Search, Clock, Trophy, Wrench, Trash2, Loader2 } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 
 interface LapTime {
@@ -43,6 +51,9 @@ export default function LapTimesPage() {
   const [filteredLapTimes, setFilteredLapTimes] = useState<LapTime[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [lapToDelete, setLapToDelete] = useState<LapTime | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // Load lap times
   useEffect(() => {
@@ -87,6 +98,39 @@ export default function LapTimesPage() {
     )
     if (times.length === 0) return null
     return Math.min(...times.map((t) => t.timeMs))
+  }
+
+  function openDeleteDialog(lap: LapTime) {
+    setLapToDelete(lap)
+    setDeleteDialogOpen(true)
+  }
+
+  async function confirmDelete() {
+    if (!lapToDelete) return
+
+    setDeletingId(lapToDelete.id)
+
+    try {
+      const response = await fetch(`/api/lap-times/${lapToDelete.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to delete lap time')
+      }
+
+      // Remove from local state
+      setLapTimes(lapTimes.filter((lap) => lap.id !== lapToDelete!.id))
+      setFilteredLapTimes(filteredLapTimes.filter((lap) => lap.id !== lapToDelete!.id))
+      setDeleteDialogOpen(false)
+      setLapToDelete(null)
+    } catch (error: any) {
+      console.error('Error deleting lap time:', error)
+      alert(error.message || 'Failed to delete lap time')
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   if (loading) {
@@ -215,12 +259,77 @@ export default function LapTimesPage() {
                         </p>
                       </div>
                     </div>
+
+                    {/* Delete Button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openDeleteDialog(lap)}
+                      disabled={deletingId === lap.id}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      {deletingId === lap.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
                 </div>
-            )
-          })}
-        </div>
-      )}
+              )
+            })}
+          </div>
+        )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Lap Time</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this lap time?
+              <div className="mt-3 p-3 bg-muted rounded-md">
+                <p className="font-medium">{lapToDelete?.track.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {lapToDelete?.car.manufacturer} {lapToDelete?.car.name}
+                </p>
+                <p className="text-lg font-bold text-primary font-mono mt-2">
+                  {lapToDelete && formatLapTime(lapToDelete.timeMs)}
+                </p>
+              </div>
+              <p className="text-destructive text-sm mt-2">
+                This action cannot be undone.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deletingId !== null}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deletingId !== null}
+            >
+              {deletingId ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
