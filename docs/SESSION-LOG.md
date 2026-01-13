@@ -3776,3 +3776,64 @@ Created comprehensive migration plan: `docs/COMPLETE-MIGRATION-PLAN.md`
 - ❌ Combo → Race migration: NOT STARTED
 - ⏳ Awaiting audit results to proceed
 
+
+### 2026-01-13 #3 - Race Entity System COMPLETED ✅
+
+**Final Status**: SUCCESS - Race system is complete and working
+
+**What Was Actually Done**:
+
+1. **Database Column Casing Fixed** ✅
+   - User ran migration script in Supabase
+   - Fixed 4 columns: Race.trackId, RaceCar.createdAt/updatedAt, RunListEntry.raceId
+   - All Race/RaceCar/RunListEntry columns now camelCase
+
+2. **API Routes Updated** ✅
+   - `/api/races/route.ts` - Now queries Race/RaceCar tables directly
+   - `/api/races/[id]/route.ts` - Updated to use camelCase columns
+   - Removed workaround that queried RunListEntry
+
+3. **Combo System Removed** ✅
+   - Deleted `/src/app/combos/` directory entirely
+   - Deleted `/src/app/api/combos/` directory entirely
+   - Removed all "View Combo" buttons from:
+     * TrackLapTimes component
+     * CarLapTimes component
+     * Lap times listing page
+     * Session history pages
+     * Tonight page
+
+**Final Architecture**:
+
+Single source of truth for races:
+- **Race entity created ONLY when adding to run lists**
+- **Race detail pages accessible ONLY from**:
+  - Run list entries (clicking on a race)
+  - Races listing page (/races)
+- **Other pages show data WITHOUT race links**:
+  - Track pages (show lap times, link to car page)
+  - Car pages (show lap times, link to track page)
+  - Lap times listing (show data only, no navigation)
+  - Session pages (historical view, no navigation)
+
+**Navigation Flow**:
+```
+User adds entry to run list → Race entity created → Can view race details
+                                                    ↓
+All other car+track combinations → Just data display, no race entity
+```
+
+**Files Changed**:
+- `supabase/migrations/fix-remaining-column-casing.sql` - Migration script
+- `src/app/api/races/route.ts` - Now uses Race/RaceCar queries
+- `src/app/api/races/[id]/route.ts` - Column names updated
+- Deleted: `src/app/combos/` - Combo pages removed
+- Deleted: `src/app/api/combos/` - Combo API removed
+- Updated: All lap time components (removed combo links)
+- Updated: All session pages (removed combo links)
+
+**Status**: ✅ Race entity system is complete and working correctly
+
+**No More**: Two-system confusion, combo pages, inconsistent navigation
+**Yes**: Single race system, clear data flow, working navigation
+
