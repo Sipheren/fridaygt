@@ -212,13 +212,6 @@ export default function SessionHistoryPage() {
                         {entry.notes && <div className="italic text-xs">{entry.notes}</div>}
                       </div>
                     </div>
-                    {entry.cars && entry.cars.length === 1 && (
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/combos/${entry.cars[0].car.slug}/${entry.track.slug}`}>
-                          View Race Details
-                        </Link>
-                      </Button>
-                    )}
                   </div>
                 )
               })}

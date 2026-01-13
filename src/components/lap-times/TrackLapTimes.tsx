@@ -206,14 +206,9 @@ export function TrackLapTimes({ trackSlug, trackName }: TrackLapTimesProps) {
 
                 {/* Quick Actions */}
                 <div className="flex flex-col gap-2">
-                  <Button asChild size="sm">
-                    <Link href={`/combos/${car.slug}/${trackSlug}`}>
-                      View Combo
-                    </Link>
-                  </Button>
-                  <Button asChild size="sm" variant="outline" className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary">
+                  <Button asChild size="sm" className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary">
                     <Link href={`/cars/${car.slug}`}>
-                      View Car
+                      View Car Details
                     </Link>
                   </Button>
                 </div>

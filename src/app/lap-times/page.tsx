@@ -155,14 +155,11 @@ export default function LapTimesPage() {
             const isPersonalBest = lap.timeMs === personalBest
 
             return (
-              <Button
+              <div
                 key={lap.id}
-                variant="ghost"
-                asChild
                 className="w-full h-auto p-4 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors"
               >
-                <Link href={`/combos/${lap.car.slug}/${lap.track.slug}`}>
-                  <div className="flex items-start justify-between gap-4 w-full">
+                <div className="flex items-start justify-between gap-4 w-full">
                     <div className="flex-1 space-y-2">
                       {/* Track & Car */}
                       <div className="flex flex-wrap items-center gap-2">
@@ -219,8 +216,8 @@ export default function LapTimesPage() {
                       </div>
                     </div>
                   </div>
-                </Link>
-              </Button>
+                </div>
+              </div>
             )
           })}
         </div>

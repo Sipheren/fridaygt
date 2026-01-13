@@ -217,12 +217,6 @@ export function CarLapTimes({ carSlug, carName }: CarLapTimesProps) {
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Button asChild size="sm">
-                      <Link href={`/combos/${carSlug}/${trackData.track.slug}`}>
-                        <Target className="h-3 w-3 mr-1" />
-                        View Combo
-                      </Link>
-                    </Button>
                     <Badge variant="outline" className="text-xs text-center">
                       {trackData.totalLaps} {trackData.totalLaps === 1 ? 'LAP' : 'LAPS'}
                     </Badge>

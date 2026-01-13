@@ -208,24 +208,6 @@ function SortableRaceItem({ entry, index, isCurrent, isCompleted, onClick }: Sor
                   Add Lap Time
                 </Link>
               </Button>
-              {entry.cars && entry.cars.length === 1 && (
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Link href={`/combos/${entry.cars[0].car.slug}/${entry.track.slug}`}>
-                    View Race Details
-                  </Link>
-                </Button>
-              )}
-              {entry.cars && entry.cars.length > 1 && (
-                <div className="text-xs text-muted-foreground text-center">
-                  Multiple cars - view details from lap times
-                </div>
-              )}
             </div>
           )}
         </div>
