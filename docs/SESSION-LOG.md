@@ -4418,3 +4418,102 @@ Tracks and cars pages used table-based layouts which don't work well on mobile. 
 ### Next Steps
 None - mobile responsiveness and UI consistency work complete. All pages now work properly on mobile devices with consistent styling and proper touch targets.
 
+
+---
+
+## Session 8 - Email Template System Implementation (2026-01-14)
+
+**Objective**: Align all transactional emails with the FridayGT design system for consistent branding and improved user experience.
+
+### Current State
+
+**Email Types Identified:**
+1. **Verification Email** - Sent via NextAuth Resend provider on user signup
+2. **Approval Notification** - Sent when admin approves/rejects user registration
+3. **User Removal Notification** - Sent to all admins when a user account is deleted
+
+**Problems Found:**
+- ❌ No brand colors or visual identity
+- ❌ Plain HTML with basic tags only (h2, p, a)
+- ❌ No typography hierarchy
+- ❌ No visual structure (containers, cards)
+- ❌ Plain links instead of button-like CTAs
+- ❌ No spacing/whitespace consistency
+- ❌ No logo or branding elements
+- ❌ Dark mode not supported
+- ❌ Not mobile-responsive
+
+### Implementation Plan
+
+**Phase 1: Create Email Template System**
+- Create base email template with consistent layout
+- Define design system constants (colors, fonts, spacing)
+- Implement responsive max-width container (600px)
+
+**Phase 2: Build Email Component Library**
+- Button component (primary, secondary, destructive)
+- Card component (bordered sections with colored headers)
+- Badge component (status indicators)
+- Section component (spaced content blocks)
+
+**Phase 3: Implement Email Templates**
+- Verification email template (welcome message + CTA)
+- Approval email template (approved/denied versions)
+- User removal notification template (admin alert)
+
+**Phase 4: Integration**
+- Update `src/lib/email.ts` to use new templates
+- Configure NextAuth to use custom verification template
+
+**Phase 5: Testing**
+- Test across email clients (Gmail, Apple Mail, Outlook)
+- Test dark mode support
+- Test responsive design
+
+### Technical Approach
+
+**Framework**: React Email components (industry standard for transactional emails)
+
+**CSS Strategy**:
+- Use Tailwind CSS with `@react-email/components`
+- Inline all styles for email client compatibility
+- Use conditional CSS for dark mode support
+
+**Color Palette** (matching design guide):
+```javascript
+{
+  primary: '#3B82F6',      // Blue accent
+  background: '#09090B',   // Dark background
+  foreground: '#FAFAFA',   // Light text
+  muted: '#71717A',        // Secondary text
+  border: '#27272A',       // Subtle borders
+  destructive: '#EF4444',  // Red/pink
+  success: '#10B981',      // Green
+}
+```
+
+### File Structure
+```
+src/
+├── emails/
+│   ├── base-email.tsx          # Wrapper template
+│   ├── constants.ts            # Design tokens
+│   ├── components/
+│   │   ├── button.tsx
+│   │   ├── card.tsx
+│   │   ├── badge.tsx
+│   │   └── section.tsx
+│   ├── verification-email.tsx
+│   ├── approval-email.tsx
+│   └── user-removal-email.tsx
+└── lib/
+    └── email.ts                # Updated to use templates
+```
+
+### Deliverables
+1. Create base email template system
+2. Build reusable email component library
+3. Implement 3 email templates
+4. Update email functions to use templates
+5. Test across email clients and devices
+
