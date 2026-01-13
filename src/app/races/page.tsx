@@ -232,14 +232,8 @@ export default function RacesPage() {
                 !race.isActive ? 'opacity-50' : ''
               }`}
             >
-              <div className="flex-1 min-w-0">
-                  <Button
-                    variant="ghost"
-                    asChild
-                    className="w-full h-auto p-0 text-left justify-start"
-                  >
-                    <Link href={`/races/${race.id}`} className="w-full">
-                      <div className="flex items-start gap-3 w-full p-3 sm:p-4">
+              <Link href={`/races/${race.id}`} className="flex-1 min-w-0">
+                <div className="flex items-start gap-3 w-full p-3 sm:p-4">
                         <div className="flex-1 min-w-0 space-y-2">
                     {/* Race Name */}
                     <div className="pr-12 min-w-0">
@@ -327,11 +321,8 @@ export default function RacesPage() {
                         </div>
                       </div>
                     )}
-                  </div>
                 </div>
               </Link>
-            </Button>
-              </div>
 
             {/* Delete Button */}
             <div className="p-2 sm:p-4 shrink-0">
