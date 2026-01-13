@@ -206,18 +206,18 @@ export default function LapTimesPage() {
                 <div className="flex items-start justify-between gap-4 w-full">
                     <div className="flex-1 space-y-2">
                       {/* Track & Car */}
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1.5 sm:gap-2">
                         <span className="font-semibold">
                           {lap.track.name}
                           {lap.track.layout && ` - ${lap.track.layout}`}
                         </span>
-                        <span className="text-muted-foreground">•</span>
+                        <span className="hidden sm:inline text-muted-foreground">•</span>
                         <span className="text-muted-foreground">
                           {lap.car.manufacturer} {lap.car.name}
                         </span>
                         {lap.build && (
                           <>
-                            <span className="text-muted-foreground">•</span>
+                            <span className="hidden sm:inline text-muted-foreground">•</span>
                             <span className="text-sm text-muted-foreground flex items-center gap-1">
                               <Wrench className="h-3 w-3" />
                               {lap.build.name}
@@ -228,7 +228,7 @@ export default function LapTimesPage() {
 
                       {/* Time */}
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl font-bold text-primary font-mono">
+                        <span className="text-xl sm:text-2xl font-bold text-primary font-mono">
                           {formatLapTime(lap.timeMs)}
                         </span>
                         {lap.sessionType && (
@@ -253,9 +253,8 @@ export default function LapTimesPage() {
                       {/* Notes & Date */}
                       <div className="text-sm text-muted-foreground space-y-1">
                         {lap.notes && <p>{lap.notes}</p>}
-                        <p>
-                          Recorded on {new Date(lap.createdAt).toLocaleDateString()}{' '}
-                          at {new Date(lap.createdAt).toLocaleTimeString()}
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(lap.createdAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}
                         </p>
                       </div>
                     </div>
@@ -266,7 +265,7 @@ export default function LapTimesPage() {
                       size="sm"
                       onClick={() => openDeleteDialog(lap)}
                       disabled={deletingId === lap.id}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-11 w-11 sm:h-10 sm:w-auto sm:px-3"
                     >
                       {deletingId === lap.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />

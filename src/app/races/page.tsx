@@ -166,7 +166,7 @@ export default function RacesPage() {
 
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1 max-w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search races..."
@@ -236,7 +236,7 @@ export default function RacesPage() {
                     className="w-full h-auto p-0 text-left justify-start"
                   >
                     <Link href={`/races/${race.id}`} className="w-full">
-                      <div className="flex items-start gap-4 w-full p-4">
+                      <div className="flex items-start gap-4 w-full p-3 sm:p-4">
                         <div className="flex-1 space-y-2">
                     {/* Race Name */}
                     <div className="flex items-center gap-2">
@@ -273,9 +273,9 @@ export default function RacesPage() {
                         </span>
                       </div>
                       {race.RaceCar.length > 0 && (
-                        <div className="pl-6 space-y-0.5 text-sm text-muted-foreground">
+                        <div className="pl-4 sm:pl-6 space-y-0.5 text-sm text-muted-foreground">
                           {race.RaceCar.slice(0, 3).map((rc) => (
-                            <div key={rc.id} className="line-clamp-1">
+                            <div key={rc.id} className="line-clamp-1 text-xs sm:text-sm">
                               • {rc.car?.manufacturer || ''} {rc.car?.name || 'Unknown Car'}
                             </div>
                           ))}
@@ -337,7 +337,7 @@ export default function RacesPage() {
                   deleteRace(race.id)
                 }}
                 disabled={deletingRaceId === race.id}
-                className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 transition-opacity"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
               >
                 {deletingRaceId === race.id ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />

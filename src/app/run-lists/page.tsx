@@ -171,22 +171,28 @@ export default function RunListsPage() {
               className="pl-10"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-3 gap-1.5 sm:flex sm:gap-2">
             <Button
               variant={filter === 'all' ? 'default' : 'outline'}
               onClick={() => setFilter('all')}
+              size="sm"
+              className="text-xs"
             >
               All Lists
             </Button>
             <Button
               variant={filter === 'public' ? 'default' : 'outline'}
               onClick={() => setFilter('public')}
+              size="sm"
+              className="text-xs"
             >
               Public
             </Button>
             <Button
               variant={filter === 'my' ? 'default' : 'outline'}
               onClick={() => setFilter('my')}
+              size="sm"
+              className="text-xs"
             >
               My Lists
             </Button>
@@ -198,7 +204,7 @@ export default function RunListsPage() {
 
         {/* Run Lists Grid */}
         {!loading && filteredRunLists.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {filteredRunLists.map((runList) => (
               <Card
                 key={runList.id}
@@ -227,7 +233,7 @@ export default function RunListsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3 text-sm text-muted-foreground">
+                  <div className="space-y-2 sm:space-y-3 text-sm text-muted-foreground">
                     <div
                       className="flex items-center justify-between gap-2 pb-3 border-b"
                       onClick={(e) => e.stopPropagation()}

@@ -188,22 +188,22 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="border border-border rounded-lg p-4 bg-muted/30">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="border border-border rounded-lg p-2.5 sm:p-4 bg-muted/30">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Clock className="h-4 w-4" />
             <span className="text-xs font-mono uppercase">Pending</span>
           </div>
           <p className="text-3xl font-bold text-chart-4">{pendingUsers.length}</p>
         </div>
-        <div className="border border-border rounded-lg p-4 bg-muted/30">
+        <div className="border border-border rounded-lg p-2.5 sm:p-4 bg-muted/30">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <User className="h-4 w-4" />
             <span className="text-xs font-mono uppercase">Active</span>
           </div>
           <p className="text-3xl font-bold text-accent">{activeUsers.length}</p>
         </div>
-        <div className="border border-border rounded-lg p-4 bg-muted/30">
+        <div className="border border-border rounded-lg p-2.5 sm:p-4 bg-muted/30">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Shield className="h-4 w-4" />
             <span className="text-xs font-mono uppercase">Admins</span>
@@ -231,19 +231,18 @@ export default function AdminUsersPage() {
         ) : (
           <div className="space-y-3">
             {pendingUsers.map(user => (
-              <div key={user.id} className="border border-border rounded-lg p-4 flex items-center justify-between gap-4 flex-wrap">
+              <div key={user.id} className="border border-border rounded-lg p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
                 <div className="space-y-1">
-                  <p className="font-semibold font-mono">{user.email}</p>
+                  <p className="font-semibold font-mono text-sm break-all">{user.email}</p>
                   <p className="text-sm text-muted-foreground">
                     Requested: {new Date(user.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Button
                     onClick={() => updateUserRole(user.id, 'USER')}
-                    size="sm"
-                    className="bg-accent hover:bg-accent/80"
                     disabled={processingId === user.id}
+                    className="w-full sm:w-auto min-h-[44px] bg-accent hover:bg-accent/80"
                   >
                     {processingId === user.id && processingAction === 'approve' ? (
                       <>
@@ -259,9 +258,9 @@ export default function AdminUsersPage() {
                   </Button>
                   <Button
                     onClick={() => openDeleteDialog(user)}
-                    size="sm"
                     variant="destructive"
                     disabled={processingId === user.id}
+                    className="w-full sm:w-auto min-h-[44px]"
                   >
                     <UserX className="h-4 w-4 mr-2" />
                     Reject
@@ -292,19 +291,19 @@ export default function AdminUsersPage() {
         ) : (
           <div className="space-y-3">
             {activeUsers.map(user => (
-              <div key={user.id} className="border border-border rounded-lg p-4 flex items-center justify-between gap-4 flex-wrap">
+              <div key={user.id} className="border border-border rounded-lg p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
                 <div className="space-y-1">
-                  <p className="font-semibold font-mono">{user.email}</p>
+                  <p className="font-semibold font-mono text-sm break-all">{user.email}</p>
                   <p className="text-sm text-muted-foreground">
                     Member since: {new Date(user.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Button
                     onClick={() => updateUserRole(user.id, 'ADMIN')}
-                    size="sm"
                     variant="outline"
                     disabled={processingId === user.id}
+                    className="w-full sm:w-auto min-h-[44px]"
                   >
                     {processingId === user.id && processingAction === 'approve' ? (
                       <>
@@ -320,9 +319,9 @@ export default function AdminUsersPage() {
                   </Button>
                   <Button
                     onClick={() => openDeleteDialog(user)}
-                    size="sm"
                     variant="ghost"
                     disabled={processingId === user.id}
+                    className="w-full sm:w-auto min-h-[44px]"
                   >
                     <UserX className="h-4 w-4 mr-2" />
                     Remove

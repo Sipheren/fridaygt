@@ -187,7 +187,7 @@ export default function BuildsPage() {
             <div
               key={build.id}
               onClick={() => router.push(`/builds/${build.id}`)}
-              className="border border-border rounded-lg p-6 hover:bg-accent/5 hover:border-accent/30 hover:shadow-sm hover:shadow-accent/10 transition-all cursor-pointer group space-y-4"
+              className="border border-border rounded-lg p-4 sm:p-6 hover:bg-accent/5 hover:border-accent/30 hover:shadow-sm hover:shadow-accent/10 transition-all cursor-pointer group space-y-4"
             >
               {/* Build Header */}
               <div className="space-y-2">
@@ -201,12 +201,12 @@ export default function BuildsPage() {
                   >
                     {build.isPublic ? (
                       <>
-                        <Globe className="h-3 w-3" />
+                        <Globe className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />
                         Public
                       </>
                     ) : (
                       <>
-                        <Lock className="h-3 w-3" />
+                        <Lock className="h-3.5 w-3.5 sm:h-3 sm:w-3 mr-1" />
                         Private
                       </>
                     )}
@@ -232,7 +232,7 @@ export default function BuildsPage() {
               </div>
 
               {/* Creator & Date */}
-              <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs text-muted-foreground font-mono">
                 <div className="flex items-center gap-1">
                   <User className="h-3 w-3" />
                   {build.user.name || build.user.email}

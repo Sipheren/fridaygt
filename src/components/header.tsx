@@ -54,7 +54,7 @@ export function Header({ user }: HeaderProps) {
               alt="FridayGT"
               width={600}
               height={196}
-              className="h-10 w-auto"
+              className="h-8 w-auto sm:h-10"
               priority
               unoptimized
             />
@@ -89,7 +89,7 @@ export function Header({ user }: HeaderProps) {
             variant="ghost"
             size="icon"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="h-9 w-9"
+            className="h-11 w-11 sm:h-9 sm:w-9"
           >
             <Moon className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Sun className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -101,8 +101,8 @@ export function Header({ user }: HeaderProps) {
               {/* Mobile Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild className="md:hidden">
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-5 w-5" />
+                  <Button variant="ghost" size="icon" className="h-11 w-11 md:hidden">
+                    <Menu className="h-6 w-6" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -135,7 +135,7 @@ export function Header({ user }: HeaderProps) {
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Button variant="ghost" className="relative h-11 w-11 rounded-full sm:h-9 sm:w-9">
                     <Avatar className="h-9 w-9">
                       <AvatarFallback>
                         {user.email?.charAt(0).toUpperCase() || 'U'}

@@ -66,14 +66,14 @@ export default async function Home() {
       )}
 
       {/* Quick Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-primary bg-card/50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Tracks</CardTitle>
             <Map className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold tabular-nums">118</div>
+            <div className="text-3xl font-bold tabular-nums sm:text-4xl">118</div>
             <p className="text-xs text-muted-foreground mt-1 font-mono">ALL GT7 CIRCUITS</p>
           </CardContent>
         </Card>
@@ -84,7 +84,7 @@ export default async function Home() {
             <Car className="h-5 w-5 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold tabular-nums">552</div>
+            <div className="text-3xl font-bold tabular-nums sm:text-4xl">552</div>
             <p className="text-xs text-muted-foreground mt-1 font-mono">COMPLETE ROSTER</p>
           </CardContent>
         </Card>
@@ -95,7 +95,7 @@ export default async function Home() {
             <Clock className="h-5 w-5 text-secondary" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold tabular-nums">{lapTimeCount}</div>
+            <div className="text-3xl font-bold tabular-nums sm:text-4xl">{lapTimeCount}</div>
             <p className="text-xs text-muted-foreground mt-1 font-mono">RECORDED LAPS</p>
           </CardContent>
         </Card>
@@ -106,7 +106,7 @@ export default async function Home() {
             <ListChecks className="h-5 w-5 text-chart-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold tabular-nums">0</div>
+            <div className="text-3xl font-bold tabular-nums sm:text-4xl">0</div>
             <p className="text-xs text-muted-foreground mt-1 font-mono">ACTIVE SESSIONS</p>
           </CardContent>
         </Card>
@@ -118,8 +118,8 @@ export default async function Home() {
           <Card className="h-full gt-card-shine transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/20 border-l-4 border-l-primary bg-card/50 backdrop-blur">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="p-2.5 bg-primary/15 border border-primary/20">
-                  <Map className="h-6 w-6 text-primary" />
+                <div className="p-2 sm:p-2.5 bg-primary/15 border border-primary/20">
+                  <Map className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-lg mb-1 uppercase tracking-tight group-hover:text-primary transition-colors">Tracks</h3>
@@ -134,8 +134,8 @@ export default async function Home() {
           <Card className="h-full gt-card-shine transition-all hover:border-accent hover:shadow-lg hover:shadow-accent/20 border-l-4 border-l-accent bg-card/50 backdrop-blur">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="p-2.5 bg-accent/15 border border-accent/20">
-                  <Car className="h-6 w-6 text-accent" />
+                <div className="p-2 sm:p-2.5 bg-accent/15 border border-accent/20">
+                  <Car className="h-5 w-5 sm:h-6 sm:w-6 text-accent" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-lg mb-1 uppercase tracking-tight group-hover:text-accent transition-colors">Cars</h3>
@@ -150,8 +150,8 @@ export default async function Home() {
           <Card className="h-full gt-card-shine transition-all hover:border-secondary hover:shadow-lg hover:shadow-secondary/20 border-l-4 border-l-secondary bg-card/50 backdrop-blur">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="p-2.5 bg-secondary/15 border border-secondary/20">
-                  <Clock className="h-6 w-6 text-secondary" />
+                <div className="p-2 sm:p-2.5 bg-secondary/15 border border-secondary/20">
+                  <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-secondary" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-lg mb-1 uppercase tracking-tight group-hover:text-secondary transition-colors">Times</h3>
@@ -166,8 +166,8 @@ export default async function Home() {
           <Card className="h-full gt-card-shine transition-all hover:border-chart-4 hover:shadow-lg hover:shadow-chart-4/20 border-l-4 border-l-chart-4 bg-card/50 backdrop-blur">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="p-2.5 bg-chart-4/15 border border-chart-4/20">
-                  <ListChecks className="h-6 w-6 text-chart-4" />
+                <div className="p-2 sm:p-2.5 bg-chart-4/15 border border-chart-4/20">
+                  <ListChecks className="h-5 w-5 sm:h-6 sm:w-6 text-chart-4" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-lg mb-1 uppercase tracking-tight group-hover:text-chart-4 transition-colors">Sessions</h3>
