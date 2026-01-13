@@ -69,7 +69,7 @@ interface Race {
     name: string | null
     email: string
   }
-  raceCars: RaceCar[]
+  RaceCar: RaceCar[]
 }
 
 interface LeaderboardEntry {
@@ -209,7 +209,7 @@ export default function RaceDetailPage() {
         <div className="space-y-4">
           {/* Race Name */}
           <h1 className="text-3xl font-bold">
-            {race.name || `${race.track.name} - ${race.raceCars.length} car${race.raceCars.length > 1 ? 's' : ''}`}
+            {race.name || `${race.track.name} - ${race.RaceCar.length} car${race.RaceCar.length > 1 ? 's' : ''}`}
           </h1>
 
           {/* Track Info */}
@@ -242,12 +242,12 @@ export default function RaceDetailPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Car className="h-5 w-5" />
-            Cars ({race.raceCars.length})
+            Cars ({race.RaceCar.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {race.raceCars.map((raceCar) => {
+            {race.RaceCar.map((raceCar) => {
               const car = raceCar.car
               return (
                 <Link key={raceCar.id} href={`/cars/${car.slug}`} className="block h-full">
