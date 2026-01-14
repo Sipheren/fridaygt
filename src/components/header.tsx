@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Menu, User, LogOut, Moon, Sun, Radio } from 'lucide-react'
+import { Menu, User, LogOut, Moon, Sun, Radio, Settings } from 'lucide-react'
 
 interface HeaderProps {
   user?: {
@@ -151,8 +151,15 @@ export function Header({ user }: HeaderProps) {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
                   {adminItems.length > 0 && (
                     <>
+                      <DropdownMenuSeparator />
                       {adminItems.map((item) => (
                         <DropdownMenuItem key={item.href} asChild>
                           <Link href={item.href}>{item.label}</Link>
