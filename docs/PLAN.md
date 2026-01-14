@@ -972,6 +972,25 @@ Example 2: Navigating from run list to combo
 - ✅ `/src/app/globals.css` - Loading animation CSS (tire-spin, smoke-rise keyframes)
 - ✅ `/src/app/test-loading/page.tsx` - Loading animation demo page
 
+**Part 5: RLS Security Fixes ✅ COMPLETED**
+- [x] Enable RLS on next_auth schema tables (users, accounts, sessions, verification_tokens)
+- [x] Enable RLS on RunListEntryCar table
+- [x] Create comprehensive RLS policies for next_auth tables
+- [x] Protect sensitive columns (access_token, refresh_token, token)
+- [x] Verify no code changes needed (service role bypass for admin operations)
+- [x] Update documentation (SESSION-LOG, DATABASE-SCHEMA, PLAN)
+
+**Security Improvements**:
+- Users can only view their own authentication data via API
+- Service role (NextAuth adapter) bypasses RLS for auth operations
+- RunListEntryCar follows same ownership model as RunListEntry
+- Defense-in-depth security layer without affecting application flow
+
+**Critical Files**:
+- ✅ `supabase/migrations/20260114_enable_next_auth_rls.sql` - RLS policies migration
+- ✅ `docs/SESSION-LOG.md` - Session documentation
+- ✅ `docs/DATABASE-SCHEMA.md` - RLS policy documentation
+
 **Deliverable**: Polished, fast, mobile-optimized app with consistent UI/UX
 
 ---
@@ -1008,6 +1027,7 @@ Example 2: Navigating from run list to combo
 - Phase 6: Run Lists & Sessions (Parts 1-3 complete - run lists and sessions fully functional)
 - Phase 8: Mobile Optimization (COMPLETE - all pages mobile-optimized)
 - Phase 8: UI Consistency Fixes (COMPLETE - hover colors, auth pages, forms)
+- Phase 8: RLS Security Fixes (COMPLETE - next_auth and RunListEntryCar RLS enabled)
 
 **🚧 Remaining**:
 - Phase 3: Images for Cars & Tracks (pending)
@@ -1187,6 +1207,37 @@ Example 2: Navigating from run list to combo
 - UI consistency: Achieved across all listing and detail pages
 - Touch targets: Meeting WCAG standards site-wide
 - Text overflow: Resolved with truncation patterns
+
+**🎉 Latest Updates (2026-01-14 Part 2)**:
+
+**RLS Security Fixes - COMPLETE ✅**:
+- ✅ Enabled RLS on all next_auth schema tables (users, accounts, sessions, verification_tokens)
+- ✅ Enabled RLS on RunListEntryCar table
+- ✅ Created comprehensive RLS policies for authentication data protection
+- ✅ Fixed Supabase security advisories:
+  - next_auth.users: Users can SELECT/UPDATE own records, service role can INSERT
+  - next_auth.accounts: Users can SELECT own accounts, service role full access (protects tokens)
+  - next_auth.sessions: Users can SELECT own sessions, service role full access
+  - next_auth.verification_tokens: Service role full access only (protects magic link tokens)
+  - RunListEntryCar: Viewable if parent run list is viewable, manageable by owner
+- ✅ Sensitive columns protected by RLS (access_token, refresh_token, token)
+- ✅ Type casting fixed: `auth.uid()::text = id::text` for compatibility
+- ✅ No code changes required - defense-in-depth security layer added
+- ✅ Documentation updated (SESSION-LOG, DATABASE-SCHEMA, PLAN)
+- ✅ Migration created: `20260114_enable_next_auth_rls.sql`
+
+**Security Model**:
+- Users can only access their own authentication data via API
+- Service role (NextAuth adapter) bypasses RLS for auth operations
+- Admin operations use `createServiceRoleClient()` which bypasses RLS
+- Regular user operations continue to work with existing authorization checks
+- RLS provides additional protection against unauthorized database access
+
+**Current Status**:
+- RLS policies: FULLY IMPLEMENTED ✅
+- Security advisories: RESOLVED ✅
+- Code compatibility: VERIFIED ✅
+- Documentation: UPDATED ✅
 
 **🔍 Recent Testing Feedback (2026-01-08 - UPDATED 2026-01-14)**:
 

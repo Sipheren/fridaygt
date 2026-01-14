@@ -1,5 +1,234 @@
 # FridayGT Development Session Log
 
+## Session: 2026-01-15 #8 - Security Audit & Headers Implementation
+
+### Overview
+Comprehensive security audit conducted across the entire FridayGT codebase, focusing on authentication, API routes, database queries, frontend security, and environment variable handling.
+
+### Security Audit Findings
+
+**Critical Issues:**
+1. ✅ **RESOLVED**: Production secrets in `.env.local` - Created `.env.local.example` template
+   - Verified `.gitignore` properly configured (`.env*` and `.env*.local` patterns present)
+   - Confirmed `.env.local` never committed to git history
+   - Documented proper environment variable setup for new developers
+
+**High Priority Issues:**
+2. ✅ **RESOLVED**: Missing security headers - Implemented comprehensive CSP and security headers
+   - Added Content-Security-Policy, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+   - Configured in `next.config.ts` with async headers function
+   - Tested thoroughly - zero CSP violations detected
+
+3. ⚠️ **IDENTIFIED**: Email HTML injection vulnerability
+   - Location: `src/lib/auth.ts:86-122`
+   - Issue: User email/name interpolated directly into HTML email template
+   - Risk: Malicious users could inject HTML/JavaScript in display name
+   - Recommendation: Use React Email components with automatic escaping
+
+4. ⚠️ **IDENTIFIED**: No rate limiting on auth endpoints
+   - Location: `/api/auth/[...nextauth]`
+   - Risk: Email enumeration, DoS attacks, brute force attempts
+   - Recommendation: Implement rate limiting with Vercel `@vercel/ratelimit` or NextAuth built-in
+
+**Medium Priority Issues:**
+5. ⚠️ **IDENTIFIED**: Authorization type inconsistencies
+   - Some routes use `(session.user as any)?.role` type assertion
+   - Recommendation: Define proper TypeScript types for session user
+
+6. ⚠️ **IDENTIFIED**: No Content Security Policy previously configured
+   - ✅ RESOLVED: Added comprehensive CSP in next.config.ts
+
+### Security Audit Score: 6.5/10
+
+| Category | Score | Notes |
+|----------|-------|-------|
+| Authentication | 8/10 | Good NextAuth setup, needs rate limiting |
+| Authorization | 7/10 | Proper role checks, some type safety issues |
+| Input Validation | 7/10 | Good validation, email injection risk |
+| Database Security | 8/10 | Excellent RLS, safe queries |
+| Secret Management | 10/10 | ✅ Fixed - proper .env setup documented |
+| XSS Protection | 7/10 | React escaping helps, email risk exists |
+| CSRF Protection | 8/10 | NextAuth handles this well |
+| Security Headers | 9/10 | ✅ Fixed - comprehensive headers added |
+
+### Implementation: Security Headers
+
+**Added to `next.config.ts`:**
+- **Content-Security-Policy**: Restricts resource loading (scripts, styles, images, connections)
+  - Allows `self` sources
+  - Includes Supabase domains (`*.supabase.co`)
+  - Includes Vercel scripts (`*.vercel-scripts.com`)
+  - Allows data URLs for images and fonts
+  - Blocks object embedding
+- **Strict-Transport-Security**: max-age=63072000; includeSubDomains; preload
+- **X-Frame-Options**: SAMEORIGIN (prevents clickjacking)
+- **X-Content-Type-Options**: nosniff (prevents MIME-sniffing)
+- **Referrer-Policy**: strict-origin-when-cross-origin
+- **Permissions-Policy**: camera=(), microphone=(), geolocation=()
+- **X-DNS-Prefetch-Control**: on
+
+### Testing Results
+
+**Comprehensive testing completed:**
+1. ✅ Headers applied to next.config.ts
+2. ✅ Dev server restarted successfully
+3. ✅ Browser console checked - **zero CSP violations**
+4. ✅ Authentication flow tested - working correctly
+5. ✅ API calls to Supabase tested - all successful
+6. ✅ Images and static assets tested - loading without issues
+7. ✅ Multiple pages tested: Home, Profile, Tracks, Lap Times
+8. ✅ All fonts, styles, JavaScript loading correctly
+
+**Pages Tested:**
+- Home page (`/`) - Loaded, no CSP issues
+- Profile page (`/profile`) - Auth working, user data loaded
+- Tracks page (`/tracks`) - 118 tracks loaded from Supabase
+- Lap Times page (`/lap-times`) - 2 lap times displayed
+
+**Assets Verified:**
+- Images: `logo-fgt.png` loading successfully
+- Fonts: Custom fonts loading successfully
+- CSS: Stylesheets loading without issues
+- JavaScript: All chunks loading correctly
+
+### Files Created
+
+**Created:**
+- `.env.local.example` - Environment variable template for new developers
+- `next.config.ts` - Updated with security headers
+
+**Modified:**
+- `docs/SESSION-LOG.md` - This session log
+
+### Recommendations (Not Implemented)
+
+**Immediate (Within 24 hours):**
+- ~~Rotate all secrets in .env.local~~ (User confirmed secrets are safe)
+
+**Short Term (Within 1 week):**
+- Implement rate limiting on auth endpoints
+- Fix email HTML injection in admin notifications
+- Create proper TypeScript types for session user
+
+**Long Term (Within 1 month):**
+- Implement security audit logging
+- Add API request monitoring/alerting
+- Consider implementing 2FA for admin accounts
+- Set up automated security scanning (Dependabot, npm audit)
+
+### Security Audit Report
+
+Full security audit documented separately with:
+- Critical, high, medium, and low priority issues
+- Detailed explanations of each finding
+- Code references and recommendations
+- Security score breakdown by category
+
+### Status
+✅ **COMPLETE** - Security headers implemented and tested
+- ✅ Security headers added to next.config.ts
+- ✅ Environment variable template created (.env.local.example)
+- ✅ Comprehensive testing completed - zero CSP violations
+- ✅ Application fully functional with security headers in place
+- ✅ Security audit report generated
+
+### Remaining Work
+- Email HTML injection fix (medium priority)
+- Rate limiting implementation (high priority)
+- TypeScript type improvements (medium priority)
+
+### Related Sessions
+- 2026-01-14 #7: RLS Security Advisory Fixes
+- 2026-01-13 #6: User Approval System Implementation
+
+---
+
+## Session: 2026-01-14 #7 - RLS Security Advisory Fixes
+
+### Problem Report
+Supabase database security advisories detected RLS (Row Level Security) issues:
+1. `next_auth` schema tables (users, accounts, sessions, verification_tokens) had RLS disabled
+2. `RunListEntryCar` table had RLS disabled
+3. Sensitive columns exposed: access_token, refresh_token in accounts table; token in verification_tokens
+
+### Investigation Process
+
+**1. Reviewed existing RLS setup**
+   - Found comprehensive RLS policies in `enable-rls-v3.sql` for public schema tables
+   - Discovered policies only applied to `public` schema tables (User, Account, Session, etc.)
+   - NextAuth adapter uses separate `next_auth` schema with lowercase table names
+
+**2. Identified missing tables**
+   - `next_auth.users` - No RLS enabled
+   - `next_auth.accounts` - No RLS enabled (contains sensitive tokens)
+   - `next_auth.sessions` - No RLS enabled
+   - `next_auth.verification_tokens` - No RLS enabled (contains sensitive tokens)
+   - `RunListEntryCar` - Created in multiple cars migration but RLS never enabled
+
+### Implementation
+
+**Created migration: `20260114_enable_next_auth_rls.sql`**
+
+**next_auth schema RLS policies:**
+- **users**: Users can SELECT/UPDATE own records, service role can INSERT
+- **accounts**: Users can SELECT own accounts, service role full access (protects tokens)
+- **sessions**: Users can SELECT own sessions, service role full access
+- **verification_tokens**: Service role full access only (protects tokens)
+
+**RunListEntryCar RLS policies:**
+- **SELECT**: Viewable if parent run list is viewable (public or owned)
+- **ALL**: Users can manage entries for their own run lists
+
+### Technical Details
+
+**Type casting issue:**
+- Initial error: `operator does not exist: text = uuid`
+- Fix: Cast both sides to text: `auth.uid()::text = id::text`
+- Required because auth.uid() returns uuid but next_auth.id columns are text
+
+**Security model:**
+- Users can only view their own authentication data via API
+- Service role (NextAuth adapter) bypasses RLS for auth operations
+- RunListEntryCar follows same ownership model as RunListEntry
+- Sensitive columns (access_token, refresh_token, token) protected by RLS
+
+### Code Review
+
+**Verified no code changes needed:**
+1. Admin operations use `createServiceRoleClient()` which bypasses RLS
+2. Regular user operations already have authorization checks
+3. NextAuth adapter uses service role for auth table management
+4. RLS adds defense-in-depth without affecting application flow
+
+### Files Created
+
+**Created:**
+- `supabase/migrations/20260114_enable_next_auth_rls.sql` - RLS policies for next_auth and RunListEntryCar
+
+**Modified:**
+- `docs/SESSION-LOG.md` - This session log
+- `docs/DATABASE-SCHEMA.md` - Added RLS policy documentation for next_auth tables and RunListEntryCar
+- `docs/PLAN.md` - Updated Phase 8 status with RLS security improvements
+
+### Commits Created
+
+1. **Enable RLS on next_auth schema tables and RunListEntryCar**
+
+### Status
+✅ **COMPLETE** - All security advisories resolved
+- ✅ RLS enabled on all next_auth schema tables
+- ✅ RLS enabled on RunListEntryCar table
+- ✅ Sensitive columns protected by RLS policies
+- ✅ Users can only access own authentication data
+- ✅ Service role bypass for NextAuth adapter
+- ✅ No code changes required - defense-in-depth security layer added
+
+### Related Sessions
+- 2026-01-13 #6: User approval system implementation
+- Earlier RLS setup: Phase 1, enable-rls-v3.sql migration
+
+---
+
 ## Session: 2026-01-13 #6 - User Approval System Implementation
 
 ### Problem Report

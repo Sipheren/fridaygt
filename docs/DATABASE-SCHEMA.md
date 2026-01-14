@@ -1,6 +1,6 @@
 # FridayGT Database Schema
 
-**Date:** 2026-01-12
+**Date:** 2026-01-14
 **Source:** Live Supabase database export
 
 ---
@@ -29,6 +29,12 @@
 | createdAt | timestamp | NO | CURRENT_TIMESTAMP | Creation time |
 | updatedAt | timestamp | NO | - | Last update |
 
+**Note:** NextAuth adapter also creates a `next_auth.users` table (separate from public.User)
+- Managed by NextAuth SupabaseAdapter
+- Contains basic user authentication data
+- Synced with public.User via database trigger
+- RLS Policies: Users can SELECT/UPDATE own records, service role can INSERT
+
 ### Account (NextAuth)
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
@@ -45,6 +51,11 @@
 | id_token | text | YES | - | OAuth ID token |
 | session_state | text | YES | - | Session state |
 
+**RLS Policies:**
+- Users can SELECT own accounts (userId matches auth.uid())
+- Service role has full access (INSERT/UPDATE/DELETE for NextAuth adapter)
+- Sensitive columns (access_token, refresh_token) protected by RLS
+
 ### Session (NextAuth)
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
@@ -53,12 +64,20 @@
 | userId | text | NO | - | FK → User |
 | expires | timestamp | NO | - | Expiration time |
 
+**RLS Policies:**
+- Users can SELECT own sessions (userId matches auth.uid())
+- Service role has full access (INSERT/UPDATE/DELETE for NextAuth adapter)
+
 ### VerificationToken
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
 | identifier | text | NO | - | Email identifier |
 | token | text | NO | - | Verification token (unique) |
 | expires | timestamp | NO | - | Token expiration |
+
+**RLS Policies:**
+- Service role has full access only (NextAuth adapter manages magic links)
+- Sensitive column (token) protected by RLS
 
 ---
 
@@ -159,6 +178,11 @@
 
 **Constraints:** UNIQUE (runListEntryId, carId)
 **Indexes:** runListEntryId, carId
+
+**RLS Policies:**
+- SELECT: Viewable if parent run list is viewable (isPublic=true OR user owns run list)
+- ALL: Users can manage entries for their own run lists
+- Follows same security model as RunListEntry table
 
 ### RunSession
 | Column | Type | Nullable | Default | Description |
