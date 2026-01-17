@@ -24,7 +24,48 @@ Building a web application for a racing group that's been doing Friday racing fo
 
 ---
 
-## 🔗 SYSTEM INTEGRATION OVERVIEW
+## 🚨 BRANCH: buildfocussed - BUILD-CENTRIC ARCHITECTURE PIVOT
+
+**Date**: 2026-01-17
+**Branch**: `buildfocussed` (experimental)
+**Base**: `main` branch at commit `d057566`
+
+### ⚠️ ARCHITECTURE CHANGE IN PROGRESS
+
+This document describes the **original architecture** (main branch). The `buildfocussed` branch is implementing a **build-centric pivot** where:
+
+**Main Branch Architecture (Original)**:
+- Combo/Race (car+track) is the central hub
+- Builds are optional attachments to cars
+- Lap times can exist independently
+- Flow: Select car → select track → record lap time → optionally attach build
+
+**Buildfocussed Branch Architecture (New)**:
+- **Build becomes the primary entity and central hub**
+- Every lap time must be associated with a build
+- Tracks and cars are organized by the builds that use them
+- Flow: Select build → select track → record lap time
+- Build detail page shows: all lap times, all tracks, run lists, statistics
+
+### Key Changes on buildfocussed Branch
+
+1. **Database**: LapTime.buildId becomes REQUIRED (not optional)
+2. **UI**: Build detail page becomes the main dashboard
+3. **Navigation**: "Builds" becomes primary navigation
+4. **Homepage**: Centers on builds (recent, my builds, popular)
+5. **User Flow**: All activities start with build selection
+
+### Rollback
+If this approach doesn't work: `git checkout main` to return to original architecture.
+
+### Status
+✅ Branch created
+⏳ Documentation updated (this file)
+⏳ Implementation in progress
+
+---
+
+## 🔗 SYSTEM INTEGRATION OVERVIEW (main branch architecture)
 
 **Core Concept**: Everything in FridayGT revolves around **Car + Track Combinations (internally "Combos", user-facing "Races")**. The combo/race is the central hub that connects lap times, run lists, builds, and all other features.
 
@@ -1018,6 +1059,26 @@ Example 2: Navigating from run list to combo
 
 ## Current Status
 
+### 🚨 ACTIVE BRANCH: buildfocussed (Build-Centric Architecture Pivot)
+
+**Date**: 2026-01-17
+**Branch**: `buildfocussed` (experimental)
+**Base**: `main` at commit `d057566`
+
+**Status**: ⏳ Architecture pivot in progress
+
+The `buildfocussed` branch is implementing a major architectural change:
+- Builds become the primary entity (not lap times or races)
+- All lap times must be associated with a build
+- Build detail page becomes the main dashboard
+- User flow: Select build → record lap times → view performance
+
+**To return to main**: `git checkout main`
+
+---
+
+### Main Branch Status (Original Architecture)
+
 **✅ Completed**:
 - Phase 1: Foundation & Setup
 - Phase 2: Core Layout & UI Components
@@ -1029,12 +1090,14 @@ Example 2: Navigating from run list to combo
 - Phase 8: UI Consistency Fixes (COMPLETE - hover colors, auth pages, forms)
 - Phase 8: RLS Security Fixes (COMPLETE - next_auth and RunListEntryCar RLS enabled)
 
-**🚧 Remaining**:
+**🚧 Remaining** (on main branch):
 - Phase 3: Images for Cars & Tracks (pending)
 
-**🔜 Next Up**:
-1. **Phase 3: Images for Cars & Tracks**
-   - Image strategy and implementation for 552 cars and 118 tracks
+**🔜 Next Up** (on buildfocussed branch):
+1. **Database Changes**: Make LapTime.buildId required
+2. **UI Changes**: Redesign around builds as central hub
+3. **Navigation**: Reorganize to prioritize builds
+4. **Homepage**: Focus on recent builds and build activity
 
 **📊 Database Status**:
 - Users: Ready for signups

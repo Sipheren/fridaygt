@@ -1,6 +1,42 @@
 # FridayGT
 
+> **🚨 Active Development Branch**: `buildfocussed` - Build-centric architecture pivot in progress
+>
+> **Current Branch**: `buildfocussed` (experimental)
+> **Main Branch**: Original race-centric architecture
+> **Rollback**: `git checkout main` to return to stable version
+
 A GT7 lap time tracker and race management application built with Next.js, Supabase, and NextAuth.
+
+## 🚨 Architecture Pivot (buildfocussed branch)
+
+**Status**: Experimental branch testing build-centric architecture
+
+The `buildfocussed` branch is implementing a major architectural change:
+
+### Original Architecture (main branch)
+- **Central Entity**: Race/Combo (car + track combination)
+- **Builds**: Optional attachments to cars
+- **Lap Times**: Can exist independently, optionally linked to builds
+- **User Flow**: Select car → select track → record lap time → optionally attach build
+
+### New Architecture (buildfocussed branch)
+- **Central Entity**: **Build** (car setup/tuning configuration)
+- **Lap Times**: Must be associated with a build
+- **Tracks & Cars**: Organized by the builds that use them
+- **User Flow**: Select build → select track → record lap time
+
+### Key Changes
+1. Build detail page becomes the main dashboard
+2. All lap times require a buildId
+3. Homepage centers on builds (recent, my builds, popular)
+4. Navigation prioritizes builds
+
+**To switch between versions**:
+```bash
+git checkout main           # Original architecture
+git checkout buildfocussed  # Build-centric architecture
+```
 
 ## Features
 

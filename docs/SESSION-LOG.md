@@ -1,5 +1,90 @@
 # FridayGT Development Session Log
 
+## Session: 2026-01-17 #9 - Build-Centric Pivot (BRANCH: buildfocussed)
+
+### Overview
+**MAJOR ARCHITECTURAL PIVOT**: Created experimental branch `buildfocussed` to shift FridayGT from a lap time tracker with build support to a **build-centric platform** where builds are the primary entity, and lap times, tracks, and cars are attached to builds.
+
+### Rationale
+
+**Original Design (main branch):**
+- Builds were secondary - created optionally for cars
+- Lap times existed independently, optionally linked to builds
+- Run lists combined tracks + cars, optionally suggesting builds
+- User flow: Create lap time → optionally link to existing build
+
+**New Design (buildfocussed branch):**
+- Builds are the primary entity - the "source of truth"
+- Every activity revolves around a build
+- Lap times are recorded within the context of a build
+- Tracks and cars are organized by the builds that use them
+- User flow: Select build → record lap times → see performance for that build
+
+### Key Changes Planned
+
+**1. Build becomes the central hub**
+- Build detail page becomes the main dashboard
+- Shows all lap times recorded with this build
+- Shows all tracks driven with this build
+- Shows run lists where this build is used
+- Quick "Add Lap Time" pre-filled with build
+
+**2. Database Changes**
+- Build remains the core entity (CarBuild table)
+- LapTime.buildId becomes REQUIRED (not optional)
+- All lap times must be associated with a build
+- Consider adding "default build" concept for each car
+
+**3. UI/UX Changes**
+- Homepage focuses on builds (recent builds, my builds, popular builds)
+- Build cards become primary navigation (like track/car cards are now)
+- "My Builds" page becomes the main hub
+- Lap times page shows data grouped by build
+- Track pages show which builds are used there
+
+**4. User Flow Changes**
+- New user onboarding: Create a build first
+- Recording laps: Select build → select track → enter time
+- Run lists: Select builds for each entry (not just cars)
+
+### Implementation Plan
+
+**Phase 1: Database & API Changes**
+- Make LapTime.buildId required (add NOT NULL constraint)
+- Add migration for existing lap times without builds
+- Update API to require buildId
+- Add "default build" concept
+
+**Phase 2: UI Changes**
+- Redesign homepage to focus on builds
+- Enhance build detail page as main dashboard
+- Update lap time form to require build selection
+- Update track/car pages to organize by builds
+
+**Phase 3: Navigation & Information Architecture**
+- Reorganize header navigation (Builds first)
+- Update breadcrumbs and page hierarchy
+- Change search/filter to focus on builds
+
+### Rollback Plan
+
+If this approach doesn't work:
+- Checkout main branch: `git checkout main`
+- Delete experimental branch: `git branch -D buildfocussed`
+- All changes are isolated to this branch
+- Database can be reset if needed (no production data)
+
+### Status
+✅ Branch created: `buildfocussed`
+⏳ Documentation updated
+⏳ Implementation pending
+
+### Related Sessions
+- Previous: 2026-01-15 #8 - Security Audit & Headers Implementation
+- Previous: 2026-01-14 #7 - RLS Security Advisory Fixes
+
+---
+
 ## Session: 2026-01-15 #8 - Security Audit & Headers Implementation
 
 ### Overview
