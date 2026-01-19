@@ -197,7 +197,7 @@ export default function EditRacePage() {
         throw new Error(data.error || 'Failed to update race')
       }
 
-      router.push(`/races/${raceId}`)
+      router.replace(`/races/${raceId}`)
     } catch (err) {
       console.error('Error updating race:', err)
       setError(err instanceof Error ? err.message : 'Failed to update race')
