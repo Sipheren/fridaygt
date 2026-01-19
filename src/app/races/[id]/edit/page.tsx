@@ -361,7 +361,7 @@ export default function EditRacePage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push(`/races/${raceId}`)}
+              onClick={() => router.replace(`/races/${raceId}`)}
               disabled={saving}
             >
               Cancel
