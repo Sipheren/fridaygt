@@ -90,13 +90,15 @@ export function BuildSelector({
     selectedBuilds.includes(b.id)
   )
 
-  // Toggle build selection
+  // Toggle build selection and close dropdown
   const toggleBuild = (buildId: string) => {
     if (selectedBuilds.includes(buildId)) {
       onBuildsChange(selectedBuilds.filter((id) => id !== buildId))
     } else {
       onBuildsChange([...selectedBuilds, buildId])
     }
+    // Close dropdown after selection for better UX
+    setOpen(false)
   }
 
   // Remove build from selection
