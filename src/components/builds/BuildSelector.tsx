@@ -249,7 +249,7 @@ export function BuildSelector({
                           >
                             <Checkbox
                               checked={isSelected}
-                              onChange={() => toggleBuild(build.id)}
+                              onCheckedChange={() => toggleBuild(build.id)}
                             />
                             <div className="flex-1 min-w-0">
                               <div className="font-medium text-sm">
