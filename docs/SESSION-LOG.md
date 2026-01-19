@@ -5332,3 +5332,117 @@ The accent color in the theme is a green/teal shade, which was inconsistent with
 ### Next Steps
 None - all hover states now consistent across the application.
 
+
+## Session: 2026-01-19 #12 - Remove Run Lists & Implement Active Races
+
+### Overview
+**ARCHITECTURAL SIMPLIFICATION**: Removed the run lists concept and replaced it with a simpler active races system. The Tonight page now shows active races directly instead of using run list entries.
+
+### Major Changes
+
+**1. Database Schema - Race.isActive Field**
+- **Migration**: `supabase/migrations/20260119_add_race_active.sql`
+- **Changes**:
+  - Added `isActive BOOLEAN NOT NULL DEFAULT FALSE` column to Race table
+  - Created index on `isActive` for fast querying
+- **Note**: Migration must be run manually by user
+
+**2. Removed Run Lists from Navigation**
+- **File**: `src/components/header.tsx`
+- **Removed**: "Run Lists" from navigation
+- **Navigation now**: Tonight, Cars, Builds, Lap Times
+- **Result**: Simpler navigation, focused on core features
+
+**3. API Routes Updated**
+- **Files**:
+  - `src/app/api/races/route.ts`
+  - `src/app/api/races/[id]/route.ts`
+- **Changes**:
+  - Removed computed `isActive` from run list relationships
+  - POST now accepts `isActive` parameter (defaults to false)
+  - PATCH allows updating `isActive` field
+  - Select includes `isActive` in responses
+
+**4. Race Edit Page - Active Toggle**
+- **File**: `src/app/races/[id]/edit/page.tsx`
+- **Added**:
+  - `isActive: boolean` to RaceData interface
+  - `isActive` to form data state
+  - Switch component import
+  - Active Race toggle with prominent UI
+  - Submit `isActive` in PATCH request
+- **UI**: Toggle positioned after builds, before configuration
+- **Label**: "Show this race on the Tonight page"
+
+**5. Race List Page - Quick Toggle**
+- **File**: `src/app/races/page.tsx`
+- **Added**:
+  - `toggleActiveRace()` function
+  - Power button icon next to delete button
+  - Color-coded (primary when active, muted when inactive)
+  - Optimistic UI updates
+- **UX**: Quick toggle without navigating to edit page
+- **Existing**: Already had Active/Inactive filter buttons
+
+**6. Tonight Page - Complete Rewrite**
+- **File**: `src/app/tonight/page.tsx`
+- **Old System**: Showed active run list with drag-to-reorder entries
+- **New System**: Shows all races where `isActive = true`
+- **Features**:
+  - Fetches all races, filters by `isActive`
+  - Displays race cards with full details:
+    - Race name or generated name (Track + Car)
+    - Track with layout
+    - Cars with build links
+    - Configuration (laps, weather, length)
+    - Description
+  - Empty state with CTA to manage races
+  - Links to race detail pages
+  - Footer with "Manage races" link
+- **Removed**: Run list dependencies, drag-and-drop, progress tracking
+
+### User Workflow
+
+**Setting up Tonight's Races:**
+1. Go to Races page (/races)
+2. Click the Power button on races to activate them
+3. OR edit a race and toggle "Active Race" switch
+4. Go to Tonight page to see all active races
+
+**Benefits:**
+- No need to create run lists
+- Direct race-to-active workflow
+- Simpler mental model
+- Faster setup
+
+### Files Modified
+
+**Migrations**:
+- `supabase/migrations/20260119_add_race_active.sql` (new)
+
+**API Routes**:
+- `src/app/api/races/route.ts` - Handle isActive field
+- `src/app/api/races/[id]/route.ts` - PATCH isActive
+
+**Pages**:
+- `src/app/tonight/page.tsx` - Complete rewrite for active races
+- `src/app/races/page.tsx` - Add quick toggle button
+- `src/app/races/[id]/edit/page.tsx` - Add active toggle
+
+**Components**:
+- `src/components/header.tsx` - Remove Run Lists
+
+### Commits
+- `cafcbeb` - Remove run lists and implement active races system
+
+### Status
+- All run list references removed from navigation
+- Active races system fully implemented
+- Tonight page simplified and functional
+- Ready for user to run migration manually
+
+### Technical Notes
+- Run list tables still exist in DB (not removed)
+- Run list API routes still exist (not removed)
+- Only removed from UI and user workflow
+- Can be fully removed in future cleanup if needed
