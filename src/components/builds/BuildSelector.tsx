@@ -31,6 +31,8 @@ interface BuildSelectorProps {
   allowDuplicateCars?: boolean
   placeholder?: string
   disabled?: boolean
+  builds?: Build[]  // Optional: builds passed from parent (faster, no loading)
+  buildsLoading?: boolean  // Optional: loading state from parent
 }
 
 export function BuildSelector({
@@ -40,14 +42,22 @@ export function BuildSelector({
   allowDuplicateCars = true,
   placeholder = 'Select builds...',
   disabled = false,
+  builds: buildsProp,
+  buildsLoading: buildsLoadingProp = false,
 }: BuildSelectorProps) {
   const [builds, setBuilds] = useState<Build[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [open, setOpen] = useState(false)
 
-  // Fetch builds
+  // Use builds from props if available, otherwise fetch them
   useEffect(() => {
+    if (buildsProp) {
+      setBuilds(buildsProp)
+      setLoading(buildsLoadingProp)
+      return
+    }
+
     const fetchBuilds = async () => {
       try {
         setLoading(true)
@@ -63,7 +73,7 @@ export function BuildSelector({
     }
 
     fetchBuilds()
-  }, [])
+  }, [buildsProp, buildsLoadingProp])
 
   // Filter builds based on search
   const filteredBuilds = builds.filter((build) => {

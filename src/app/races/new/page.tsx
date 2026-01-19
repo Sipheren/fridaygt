@@ -31,6 +31,18 @@ interface Track {
   length: number | null
 }
 
+interface Build {
+  id: string
+  name: string
+  description: string | null
+  isPublic: boolean
+  car: {
+    id: string
+    name: string
+    manufacturer: string
+  }
+}
+
 type Step = 1 | 2 | 3
 
 export default function NewRacePage() {
@@ -39,6 +51,8 @@ export default function NewRacePage() {
   const [loading, setLoading] = useState(false)
   const [tracks, setTracks] = useState<Track[]>([])
   const [tracksLoading, setTracksLoading] = useState(false)
+  const [builds, setBuilds] = useState<Build[]>([])
+  const [buildsLoading, setBuildsLoading] = useState(false)
   const [showBuildModal, setShowBuildModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -52,24 +66,37 @@ export default function NewRacePage() {
     weather: '' as 'dry' | 'wet' | '',
   })
 
-  // Fetch tracks on mount
+  // Fetch tracks and builds on mount
   useEffect(() => {
-    const fetchTracks = async () => {
+    const fetchData = async () => {
       try {
         setTracksLoading(true)
-        const response = await fetch('/api/tracks')
-        if (!response.ok) throw new Error('Failed to fetch tracks')
-        const data = await response.json()
-        setTracks(data.tracks || [])
+        setBuildsLoading(true)
+
+        // Fetch both tracks and builds in parallel
+        const [tracksRes, buildsRes] = await Promise.all([
+          fetch('/api/tracks'),
+          fetch('/api/builds?myBuilds=true')
+        ])
+
+        if (!tracksRes.ok) throw new Error('Failed to fetch tracks')
+        if (!buildsRes.ok) throw new Error('Failed to fetch builds')
+
+        const tracksData = await tracksRes.json()
+        const buildsData = await buildsRes.json()
+
+        setTracks(tracksData.tracks || [])
+        setBuilds(buildsData.builds || [])
       } catch (err) {
-        console.error('Error fetching tracks:', err)
-        setError('Failed to load tracks')
+        console.error('Error fetching data:', err)
+        setError('Failed to load data')
       } finally {
         setTracksLoading(false)
+        setBuildsLoading(false)
       }
     }
 
-    fetchTracks()
+    fetchData()
   }, [])
 
   // Group tracks by category
@@ -88,7 +115,18 @@ export default function NewRacePage() {
   }
 
   // Handle build creation callback
-  const handleBuildCreated = (buildId: string) => {
+  const handleBuildCreated = async (buildId: string) => {
+    // Fetch the newly created build to add it to the list
+    try {
+      const response = await fetch(`/api/builds/${buildId}`)
+      if (response.ok) {
+        const newBuild = await response.json()
+        setBuilds((prev) => [...prev, newBuild])
+      }
+    } catch (err) {
+      console.error('Error fetching new build:', err)
+    }
+
     setFormData({
       ...formData,
       buildIds: [...formData.buildIds, buildId],
@@ -363,6 +401,8 @@ export default function NewRacePage() {
                         setFormData({ ...formData, buildIds })
                       }
                       onCreateNew={() => setShowBuildModal(true)}
+                      builds={builds}
+                      buildsLoading={buildsLoading}
                       allowDuplicateCars={true}
                       placeholder="Select builds..."
                     />

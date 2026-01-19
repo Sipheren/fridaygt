@@ -34,6 +34,19 @@ interface Build {
   name: string
   description: string | null
   car: Car
+  isPublic: boolean
+}
+
+interface AllBuild {
+  id: string
+  name: string
+  description: string | null
+  isPublic: boolean
+  car: {
+    id: string
+    name: string
+    manufacturer: string
+  }
 }
 
 interface Track {
@@ -71,6 +84,8 @@ export default function EditRacePage() {
   const [showBuildModal, setShowBuildModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [raceData, setRaceData] = useState<RaceData | null>(null)
+  const [allBuilds, setAllBuilds] = useState<AllBuild[]>([])
+  const [buildsLoading, setBuildsLoading] = useState(false)
 
   // Form data
   const [formData, setFormData] = useState({
@@ -81,36 +96,58 @@ export default function EditRacePage() {
     weather: '' as 'dry' | 'wet' | '',
   })
 
-  // Fetch race data on mount
+  // Fetch race data and builds on mount
   useEffect(() => {
-    const fetchRace = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`/api/races/${raceId}`)
-        if (!response.ok) throw new Error('Failed to fetch race')
-        const data = await response.json()
+        setBuildsLoading(true)
 
-        setRaceData(data.race)
+        const [raceRes, buildsRes] = await Promise.all([
+          fetch(`/api/races/${raceId}`),
+          fetch('/api/builds?myBuilds=true')
+        ])
+
+        if (!raceRes.ok) throw new Error('Failed to fetch race')
+        if (!buildsRes.ok) throw new Error('Failed to fetch builds')
+
+        const raceData = await raceRes.json()
+        const buildsData = await buildsRes.json()
+
+        setRaceData(raceData.race)
+        setAllBuilds(buildsData.builds || [])
         setFormData({
-          name: data.race.name || '',
-          description: data.race.description || '',
-          buildIds: data.race.raceCars?.map((rc: any) => rc.buildId) || [],
-          laps: data.race.laps?.toString() || '',
-          weather: data.race.weather || '',
+          name: raceData.race.name || '',
+          description: raceData.race.description || '',
+          buildIds: raceData.race.raceCars?.map((rc: any) => rc.buildId) || [],
+          laps: raceData.race.laps?.toString() || '',
+          weather: raceData.race.weather || '',
         })
       } catch (err) {
-        console.error('Error fetching race:', err)
-        setError('Failed to load race')
+        console.error('Error fetching data:', err)
+        setError('Failed to load data')
       } finally {
         setLoading(false)
+        setBuildsLoading(false)
       }
     }
 
-    fetchRace()
+    fetchData()
   }, [raceId])
 
   // Handle build creation callback
-  const handleBuildCreated = (buildId: string) => {
+  const handleBuildCreated = async (buildId: string) => {
+    // Fetch the newly created build to add it to the list
+    try {
+      const response = await fetch(`/api/builds/${buildId}`)
+      if (response.ok) {
+        const newBuild = await response.json()
+        setAllBuilds((prev) => [...prev, newBuild])
+      }
+    } catch (err) {
+      console.error('Error fetching new build:', err)
+    }
+
     setFormData({
       ...formData,
       buildIds: [...formData.buildIds, buildId],
@@ -277,6 +314,8 @@ export default function EditRacePage() {
                 setFormData({ ...formData, buildIds })
               }
               onCreateNew={() => setShowBuildModal(true)}
+              builds={allBuilds}
+              buildsLoading={buildsLoading}
               allowDuplicateCars={true}
               placeholder="Select builds..."
             />
