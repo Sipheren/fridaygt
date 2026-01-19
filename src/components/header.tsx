@@ -28,12 +28,9 @@ export function Header({ user }: HeaderProps) {
   const { theme, setTheme } = useTheme()
 
   const navItems = [
-    { href: '/', label: 'Home' },
     { href: '/tonight', label: 'Tonight' },
-    { href: '/tracks', label: 'Tracks' },
     { href: '/cars', label: 'Cars' },
     { href: '/builds', label: 'Builds' },
-    { href: '/races', label: 'Races' },
     { href: '/run-lists', label: 'Run Lists' },
     { href: '/lap-times', label: 'Lap Times' },
   ]
@@ -48,7 +45,7 @@ export function Header({ user }: HeaderProps) {
       <div className="absolute inset-x-0 top-0 h-0.5 bg-primary"></div>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center">
+          <Link href="/tonight" className="flex items-center">
             <Image
               src="/logo-fgt.png"
               alt="FridayGT"
