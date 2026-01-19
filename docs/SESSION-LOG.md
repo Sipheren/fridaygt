@@ -1,5 +1,133 @@
 # FridayGT Development Session Log
 
+## Session: 2026-01-19 #11 - Build-Centric Race System Polish & UX Improvements
+
+### Overview
+**BUILD SYSTEM REFINEMENT**: Fixed critical bugs and improved UX for the build-centric race system, including navigation issues, performance optimizations, and UI streamlining.
+
+### Bug Fixes
+
+**1. NextAuth v5 Import Errors**
+- **Issue**: API routes using old NextAuth v4 imports (`getServerSession`, `authOptions`)
+- **Files Affected**:
+  - `src/app/api/races/route.ts`
+  - `src/app/api/builds/quick/route.ts`
+- **Fix**: Changed to `import { auth } from '@/lib/auth'` and `const session = await auth()`
+- **Result**: Races page now loads without 500 errors
+
+**2. Build Selector Dropdown Covering Next Button**
+- **Issue**: Dropdown stayed open after selecting a build, covering the Next button
+- **File**: `src/components/builds/BuildSelector.tsx`
+- **Fix**: Added `setOpen(false)` to `toggleBuild` function
+- **Result**: Dropdown closes immediately after selection, Next button accessible
+
+**3. Race Edit Page Navigation Loop**
+- **Issue**: After saving/canceling edit, Back button returned to edit page instead of race list
+- **File**: `src/app/races/[id]/edit/page.tsx`
+- **Fix**: Changed both Save and Cancel buttons from `router.push()` to `router.replace()`
+- **Result**: Edit page is replaced in history, Back button correctly goes to race list
+
+**4. Cancel Button Still Using router.push()**
+- **Issue**: Only Save button was fixed, Cancel still had navigation issue
+- **File**: `src/app/races/[id]/edit/page.tsx`
+- **Fix**: Updated Cancel button onClick to use `router.replace()`
+- **Result**: Both Save and Cancel now work correctly
+
+**5. Race Edit Page Not Showing Selected Builds**
+- **Issue**: Build selector appeared empty when editing races
+- **Root Cause**: API returns `race.RaceCar` (capital R), frontend expected `race.raceCars` (lowercase r)
+- **File**: `src/app/races/[id]/edit/page.tsx`
+- **Fix**: Updated interface and data extraction to use correct casing `RaceCar`
+- **Result**: Selected builds now display correctly when editing
+
+### Performance Improvements
+
+**Build Selector Optimization**
+- **Problem**: Builds fetched on every dropdown open, causing slow loading
+- **Files Modified**:
+  - `src/app/races/new/page.tsx`
+  - `src/app/races/[id]/edit/page.tsx`
+  - `src/components/builds/BuildSelector.tsx`
+- **Solution**:
+  - Fetch builds at parent level when page mounts
+  - Use parallel requests (Promise.all) for tracks + builds
+  - Pass builds as props to BuildSelector
+  - Cache builds in component state
+  - Auto-refresh builds list after creating new build
+- **Result**:
+  - Instant dropdown opening
+  - Selected builds show immediately (no loading delay)
+  - Stepping back/forth is instant
+  - Overall page load time reduced
+
+### UI/UX Improvements
+
+**1. Simplified Race Detail Page Statistics**
+- **File**: `src/app/races/[id]/page.tsx`
+- **Removed**:
+  - Total Laps card
+  - Drivers card
+- **Kept**:
+  - Fastest Lap
+  - Average Time
+  - Leaderboard
+- **Result**: Cleaner page focusing on key performance metrics
+
+**2. Navigation Streamlining**
+- **File**: `src/components/header.tsx`
+- **Removed**: Home, Tracks, Races from navigation
+- **Kept**: Tonight, Cars, Builds, Run Lists, Lap Times
+- **Logo**: Now links to /tonight instead of /
+- **Result**: Simpler nav, focused on core functionality
+
+**3. Home Page Simplification**
+- **File**: `src/app/page.tsx`
+- **Changed**: From dashboard with stats → simple redirect to /tonight
+- **Result**: Faster load, focused landing on Tonight page
+
+### Files Modified This Session
+
+**API Routes**:
+- `src/app/api/races/route.ts` - Fixed NextAuth v5 imports
+- `src/app/api/builds/quick/route.ts` - Fixed NextAuth v5 imports
+
+**Components**:
+- `src/components/builds/BuildSelector.tsx` - Auto-close, props support, caching
+- `src/components/header.tsx` - Removed Home/Tracks/Races
+
+**Pages**:
+- `src/app/page.tsx` - Changed to redirect to /tonight
+- `src/app/races/[id]/page.tsx` - Simplified statistics
+- `src/app/races/[id]/edit/page.tsx` - Fixed navigation, build selection, data fetching
+- `src/app/races/new/page.tsx` - Added pre-loading of builds
+
+### Commits This Session
+1. `40b8ece` - Fix NextAuth v5 imports in races and builds API routes
+2. `7dfe432` - Fix build selector dropdown covering Next button
+3. `5b56dd8` - Improve build selector performance and UX
+4. `63c80e6` - Simplify race detail page statistics
+5. `ea499fa` - Fix race edit page navigation history
+6. `577b47b` - Fix Cancel button navigation in race edit page
+7. `bf3a691` - Fix race edit page not showing selected builds
+8. `9d32d21` - Simplify navigation and remove unused list pages
+
+### Status
+✅ All critical bugs fixed
+✅ Performance significantly improved
+✅ Navigation streamlined
+✅ Build-centric race system fully functional
+
+### Next Steps
+- Monitor user feedback on new navigation flow
+- Consider adding breadcrumbs for better orientation
+- Evaluate if any other pages need similar performance optimizations
+
+### Related Sessions
+- Previous: 2026-01-19 #10 - Build-Centric Race System Implementation
+- Previous: 2026-01-17 #9 - Build-Centric Pivot (Planning)
+
+---
+
 ## Session: 2026-01-19 #10 - Build-Centric Race System Implementation Complete
 
 ### Overview
