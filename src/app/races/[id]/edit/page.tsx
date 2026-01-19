@@ -66,7 +66,7 @@ interface RaceData {
   laps: number | null
   weather: string | null
   track: Track
-  raceCars: {
+  RaceCar: {
     id: string
     carId: string
     buildId: string
@@ -119,7 +119,7 @@ export default function EditRacePage() {
         setFormData({
           name: raceData.race.name || '',
           description: raceData.race.description || '',
-          buildIds: raceData.race.raceCars?.map((rc: any) => rc.buildId) || [],
+          buildIds: raceData.race.RaceCar?.map((rc: any) => rc.buildId) || [],
           laps: raceData.race.laps?.toString() || '',
           weather: raceData.race.weather || '',
         })
