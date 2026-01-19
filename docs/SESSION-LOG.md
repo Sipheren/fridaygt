@@ -5446,3 +5446,84 @@ None - all hover states now consistent across the application.
 - Run list API routes still exist (not removed)
 - Only removed from UI and user workflow
 - Can be fully removed in future cleanup if needed
+
+## Session: 2026-01-19 #13 - UI Consistency & Build-Centric Lap Times
+
+### Overview
+**UI POLISH**: Made builds page match races page layout and changed lap times to be build-centric.
+
+### Navigation Fix
+**File**: `src/components/header.tsx`
+- **Issue**: Previous session accidentally removed Races link and left Cars
+- **Fix**: Restored Races link, removed Cars
+- **Navigation now**: Tonight, Builds, Races, Lap Times
+- **Commit**: `bfc1114`
+
+### Builds Page Layout Update
+**File**: `src/app/builds/page.tsx`
+- **Changed**: From 2-column grid to full-width row layout
+- **Now matches**: Races page styling and structure
+- **Added**:
+  - Edit button (pencil icon) on each row
+  - Delete button with confirmation dialog
+  - Click anywhere on row to view build details
+- **Removed**: Card-based layout with hover effects
+- **Commit**: `0ec453c`
+
+### Lap Time Form Build-Centric Update
+**File**: `src/components/lap-times/LapTimeForm.tsx`
+- **Removed**: Car selection step
+- **Added**: 
+  - BuildSelector component (same as races)
+  - QuickBuildModal for inline build creation
+  - Loads all user's builds on mount
+- **Changed**: Form flow from Car → Build (optional) to Build (required)
+- **Validation**: Requires exactly 1 build per lap time
+- **API**: Extracts carId from selected build for submission
+- **Commit**: `4b5af4d`
+
+### Bug Fixes
+
+**Build Selector Checkbox Not Working**
+- **Issue**: Clicking checkbox didn't select build (text click worked)
+- **Root Cause**: Using `onChange` instead of `onCheckedChange` for shadcn/ui Checkbox
+- **File**: `src/components/builds/BuildSelector.tsx`
+- **Fix**: Changed `onChange={() => toggleBuild(build.id)}` to `onCheckedChange={() => toggleBuild(build.id)}`
+- **Commit**: `5ce19b7`
+
+### User Flow Improvements
+
+**Adding Lap Times (New)**:
+1. Go to Lap Times → Add Lap Time
+2. Select track
+3. Select build from dropdown (or create new inline)
+4. Enter lap time
+5. Save
+
+**Benefits**:
+- Consistent with race creation workflow
+- No need to remember car → build relationship
+- Builds are the primary entity
+- Can create builds on-the-fly
+
+### Files Modified
+
+**Pages**:
+- `src/app/builds/page.tsx` - Layout update to match races
+- `src/components/lap-times/LapTimeForm.tsx` - Build-centric workflow
+
+**Components**:
+- `src/components/header.tsx` - Navigation fix
+- `src/components/builds/BuildSelector.tsx` - Checkbox fix
+
+### Commits
+- `bfc1114` - Fix navigation - restore Races link, remove Cars
+- `0ec453c` - Update builds page layout to match races page
+- `4b5af4d` - Change lap time form to use builds instead of cars
+- `5ce19b7` - Fix build selector checkbox - use onCheckedChange instead of onChange
+
+### Status
+- Navigation corrected
+- UI consistent across pages
+- Lap times now build-centric
+- All selection components working properly
