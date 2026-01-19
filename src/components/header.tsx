@@ -29,8 +29,8 @@ export function Header({ user }: HeaderProps) {
 
   const navItems = [
     { href: '/tonight', label: 'Tonight' },
-    { href: '/cars', label: 'Cars' },
     { href: '/builds', label: 'Builds' },
+    { href: '/races', label: 'Races' },
     { href: '/lap-times', label: 'Lap Times' },
   ]
 
