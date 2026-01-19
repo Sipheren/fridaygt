@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -60,6 +61,7 @@ interface Race {
 }
 
 export default function TonightPage() {
+  const router = useRouter()
   const [races, setRaces] = useState<Race[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -237,14 +239,16 @@ export default function TonightPage() {
                                   {rc.build && (
                                     <>
                                       <span className="text-muted-foreground">•</span>
-                                      <Link
-                                        href={`/builds/${rc.build.id}`}
-                                        className="text-primary hover:text-primary/80 font-medium flex items-center gap-1 transition-colors"
-                                        onClick={(e) => e.stopPropagation()}
+                                      <span
+                                        className="text-primary hover:text-primary/80 font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          router.push(`/builds/${rc.build.id}`)
+                                        }}
                                       >
                                         {rc.build.name}
                                         <ChevronRight className="h-3 w-3" />
-                                      </Link>
+                                      </span>
                                     </>
                                   )}
                                 </div>
@@ -293,15 +297,9 @@ export default function TonightPage() {
                     )}
 
                     {/* View Details CTA */}
-                    <div className="pt-4 border-t">
-                      <Button
-                        variant="ghost"
-                        className="w-full group-hover:bg-primary/10 transition-colors"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        View Race Details
-                        <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                      </Button>
+                    <div className="pt-4 border-t flex items-center justify-center text-sm text-muted-foreground font-medium">
+                      View Race Details
+                      <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
                 </CardContent>
