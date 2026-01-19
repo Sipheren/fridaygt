@@ -1,0 +1,119 @@
+Country,Course Name,Category,Length
+Australia,Mount Panorama Motor Racing Circuit,circuit,6213
+Austria,Red Bull Ring,circuit,4318
+Austria,Red Bull Ring Short Track,circuit,2336
+Belgium,Circuit de Spa-Francorchamps,circuit,7004
+Belgium,Spa 24h Layout,circuit,7004
+Brazil,Autodromo de Interlagos,circuit,4309
+Canada,Lake Louise Long Track,snow_dirt,3694.0
+Canada,Lake Louise Long Track Reverse,snow_dirt,3694.0
+Canada,Lake Louise Short Track,snow_dirt,2577.0
+Canada,Lake Louise Short Track Reverse,snow_dirt,2577.0
+Canada,Lake Louise Tri-Oval,snow_dirt,3068.0
+Canada,Lake Louise Tri-Oval Reverse,snow_dirt,3068.0
+Croatia,Dragon Trail - Gardens,original,4352
+Croatia,Dragon Trail - Gardens Reverse,original,4352
+Croatia,Dragon Trail - Seaside,original,5209
+Croatia,Dragon Trail - Seaside Reverse,original,5209
+France,24 Heures du Mans Racing Circuit,circuit,13629
+France,24 Heures du Mans Racing Circuit No Chicane,circuit,13567
+France,Alsace - Test Course,original,2118
+France,Alsace - Test Course Reverse,original,2118
+France,Alsace - Village,original,5423
+France,Alsace - Village Reverse,original,5423
+France,Circuit de Sainte-Croix - A,original,9477
+France,Circuit de Sainte-Croix - A Reverse,original,9477
+France,Circuit de Sainte-Croix - B,original,7062
+France,Circuit de Sainte-Croix - B Reverse,original,7062
+France,Circuit de Sainte-Croix - C,original,10825
+France,Circuit de Sainte-Croix - C Reverse,original,10825
+Germany,Nurburgring 24h,circuit,25378
+Germany,Nurburgring Endurance,circuit,23864
+Germany,Nurburgring GP,circuit,5148
+Germany,Nurburgring Nordschleife,circuit,20832
+Germany,Nurburgring Nordschleife Tourist Layout,circuit,20832
+Germany,Nurburgring Sprint,circuit,3629
+Italy,Autodrome Lago Maggiore - Centre,original,1706
+Italy,Autodrome Lago Maggiore - Centre Reverse,original,1706
+Italy,Autodrome Lago Maggiore - East,original,3643
+Italy,Autodrome Lago Maggiore - East End,original,2010
+Italy,Autodrome Lago Maggiore - East End Reverse,original,2010
+Italy,Autodrome Lago Maggiore - East Reverse,original,3643
+Italy,Autodrome Lago Maggiore - Full Course,original,5809
+Italy,Autodrome Lago Maggiore - Full Course Reverse,original,5809
+Italy,Autodrome Lago Maggiore - West,original,4168
+Italy,Autodrome Lago Maggiore - West End,original,2444
+Italy,Autodrome Lago Maggiore - West End Reverse,original,2444
+Italy,Autodrome Lago Maggiore - West Reverse,original,4168
+Italy,Autodromo Nazionale Monza,circuit,5793
+Italy,Autodromo Nazionale Monza No Chicane,circuit,5755
+Italy,Sardegna - Road Track - A,original,5113
+Italy,Sardegna - Road Track - A Reverse,original,5113
+Italy,Sardegna - Road Track - B,original,3893
+Italy,Sardegna - Road Track - B Reverse,original,3893
+Italy,Sardegna - Road Track - C,original,2661
+Italy,Sardegna - Road Track - C Reverse,original,2661
+Italy,Sardegna - Windmills,snow_dirt,3310
+Italy,Sardegna - Windmills Reverse,snow_dirt,3310
+Japan,Autopolis International Racing Course,circuit,4674
+Japan,Autopolis International Racing Course - Short Course,circuit,3022
+Japan,BB Raceway,original,1665
+Japan,BB Raceway Reverse,original,1665
+Japan,Fuji International Speedway,circuit,4563
+Japan,Fuji International Speedway (Short),circuit,4526
+Japan,High Speed Ring,original,4345
+Japan,High Speed Ring Reverse,original,4345
+Japan,Kyoto Driving Park - Miyabi,original,1953
+Japan,Kyoto Driving Park - Yamagiwa,original,4912
+Japan,Kyoto Driving Park - Yamagiwa Reverse,original,4912
+Japan,Kyoto Driving Park - Yamagiwa+Miyabi,original,6846
+Japan,Kyoto Driving Park - Yamagiwa+Miyabi Reverse,original,6846
+Japan,Suzuka Circuit,circuit,5807
+Japan,Suzuka Circuit East Course,circuit,2243
+Japan,Tokyo Expressway - Central Clockwise,city,4405
+Japan,Tokyo Expressway - Central Counterclockwise,city,4369
+Japan,Tokyo Expressway - East Clockwise,city,7301
+Japan,Tokyo Expressway - East Counterclockwise,city,7192
+Japan,Tokyo Expressway - South Clockwise,city,5201
+Japan,Tokyo Expressway - South Counterclockwise,city,6560
+Japan,Tsukuba Circuit,circuit,2045
+Spain,Circuit de Barcelona-Catalunya GP Layout No Chicane,circuit,4730.0
+Spain,Circuit de Barcelona-Catalunya Grand Prix Layout,circuit,4655
+Spain,Circuit de Barcelona-Catalunya National,circuit,2977.0
+Spain,Circuit de Barcelona-Catalunya Rallycross,snow_dirt,1133.0
+Switzerland,Deep Forest Raceway,original,4253
+Switzerland,Deep Forest Raceway Reverse,original,4253
+United Kingdom,Brands Hatch Grand Prix Circuit,circuit,3946
+United Kingdom,Brands Hatch Indy Circuit,circuit,1944
+United Kingdom,Goodwood Motor Circuit,circuit,3809
+United States,Blue Moon Bay Speedway,original,3200
+United States,Blue Moon Bay Speedway - Infield A,original,3350
+United States,Blue Moon Bay Speedway - Infield A Reverse,original,3350
+United States,Blue Moon Bay Speedway - Infield B,original,2860
+United States,Blue Moon Bay Speedway - Infield B Reverse,original,2860
+United States,Blue Moon Bay Speedway Reverse,original,3200
+United States,Colorado Springs - Lake,snow_dirt,2990
+United States,Colorado Springs - Lake Reverse,snow_dirt,2990
+United States,Daytona Road Course,circuit,5729
+United States,Daytona Tri-Oval,circuit,4023
+United States,Fishermans Ranch,snow_dirt,6893
+United States,Fishermans Ranch Reverse,snow_dirt,6893
+United States,Grand Valley - Highway 1,circuit,5099
+United States,Grand Valley - Highway 1 Reverse,circuit,5099
+United States,Grand Valley - South,circuit,3076
+United States,Grand Valley - South Reverse,circuit,3076
+United States,Michelin Raceway Road Atlanta,circuit,4088
+United States,Northern Isle Speedway,original,900
+United States,Special Stage Route X,original,30283
+United States,Special Stage Route X 1000,original,30283
+United States,Special Stage Route X 400,original,30283
+United States,Trial Mountain Circuit,original,5434
+United States,Trial Mountain Circuit - Reverse,original,5434
+United States,Watkins Glen Long Course,circuit,5423.0
+United States,Watkins Glen Short Course,circuit,3942.0
+United States,WeatherTech Raceway Laguna Seca,circuit,3602
+United States,Willow Springs International Raceway: Big Willow,circuit,3951
+United States,Willow Springs International Raceway: Horse Thief Mile,circuit,1624
+United States,Willow Springs International Raceway: Horse Thief Mile Reverse,circuit,1624
+United States,Willow Springs International Raceway: Streets of Willow Springs,circuit,2675
+United States,Willow Springs International Raceway: Streets of Willow Springs Reverse,circuit,2675

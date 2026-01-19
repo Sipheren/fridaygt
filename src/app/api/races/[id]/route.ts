@@ -55,9 +55,9 @@ export async function GET(
     ;(race as any).createdBy = createdBy
     ;(race as any).RaceCar = raceCars || []
 
-    // Get all lap times for this race (any car in this race at this track)
+    // Get all lap times for this race (ONLY from builds in this race at this track)
     const trackId = track?.id || race.trackId
-    const carIds = raceCars?.map((rc: any) => rc.carId) || []
+    const buildIds = raceCars?.map((rc: any) => rc.buildId) || []
 
     const { data: lapTimes } = await supabase
       .from('LapTime')
@@ -74,7 +74,7 @@ export async function GET(
         build:CarBuild(id, name, description, isPublic)
       `)
       .eq('trackId', trackId)
-      .in('carId', carIds)
+      .in('buildId', buildIds)  // Filter to ONLY builds in this race
       .order('timeMs', { ascending: true })
 
     // Calculate leaderboard (best time per user per car per build)
@@ -211,7 +211,7 @@ export async function GET(
   }
 }
 
-// PATCH /api/races/[id] - Update a race
+// PATCH /api/races/[id] - Update a race (build-centric)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -224,7 +224,7 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { name, description, trackId, cars } = body
+    const { name, description, buildIds, laps, weather } = body
 
     const supabase = createServiceRoleClient()
 
@@ -261,17 +261,19 @@ export async function PATCH(
       )
     }
 
-    // If trackId is being changed, verify it exists
-    if (trackId !== undefined) {
-      const { data: track } = await supabase
-        .from('Track')
-        .select('id')
-        .eq('id', trackId)
-        .single()
+    // Validation
+    if (weather !== undefined && !['dry', 'wet'].includes(weather)) {
+      return NextResponse.json(
+        { error: 'weather must be either "dry" or "wet"' },
+        { status: 400 }
+      )
+    }
 
-      if (!track) {
-        return NextResponse.json({ error: 'Track not found' }, { status: 404 })
-      }
+    if (laps !== undefined && (typeof laps !== 'number' || laps < 1)) {
+      return NextResponse.json(
+        { error: 'laps must be a positive number' },
+        { status: 400 }
+      )
     }
 
     const now = new Date().toISOString()
@@ -281,7 +283,9 @@ export async function PATCH(
 
     if (name !== undefined) updates.name = name || null
     if (description !== undefined) updates.description = description || null
-    if (trackId !== undefined) updates.trackId = trackId
+    if (laps !== undefined) updates.laps = laps || null
+    if (weather !== undefined) updates.weather = weather || null
+    // Note: trackId is NOT updatable - track is immutable for races
 
     // Update race basic info
     const { data: race, error: raceError } = await supabase
@@ -292,6 +296,8 @@ export async function PATCH(
         id,
         name,
         description,
+        laps,
+        weather,
         createdAt,
         updatedAt,
         track:Track(id, name, slug, location, length, category, layout),
@@ -307,35 +313,27 @@ export async function PATCH(
       )
     }
 
-    // If cars are being updated, handle that
-    if (cars && Array.isArray(cars)) {
-      console.log('Updating cars for race:', id, 'cars:', cars)
+    // If buildIds are being updated, handle that
+    if (buildIds && Array.isArray(buildIds)) {
+      // Verify all builds exist
+      const { data: builds } = await supabase
+        .from('CarBuild')
+        .select('id, carId')
+        .in('id', buildIds)
 
-      // Verify all cars exist
-      const carIds = cars.map((c: any) => c.carId)
-      console.log('Car IDs to verify:', carIds)
-
-      const { data: carsData } = await supabase
-        .from('Car')
-        .select('id')
-        .in('id', carIds)
-
-      console.log('Found cars:', carsData)
-
-      if (!carsData || carsData.length !== carIds.length) {
-        console.error('One or more cars not found. Looking for:', carIds, 'found:', carsData)
-        return NextResponse.json({ error: 'One or more cars not found' }, { status: 404 })
+      if (!builds || builds.length !== buildIds.length) {
+        return NextResponse.json({ error: 'One or more builds not found' }, { status: 404 })
       }
 
       // Delete existing race cars
       await supabase.from('RaceCar').delete().eq('raceId', id)
 
-      // Create new race car entries
-      const raceCarsToInsert = cars.map((c: any) => ({
+      // Create new race car entries (one per build)
+      const raceCarsToInsert = builds.map((build: any) => ({
         id: crypto.randomUUID(),
         raceId: id,
-        carId: c.carId,
-        buildId: c.buildId || null,
+        carId: build.carId,
+        buildId: build.id,
         createdAt: now,
         updatedAt: now,
       }))
@@ -347,7 +345,7 @@ export async function PATCH(
       if (carsError) {
         console.error('Error updating race cars:', carsError)
         return NextResponse.json(
-          { error: 'Failed to update cars in race', details: carsError.message },
+          { error: 'Failed to update builds in race', details: carsError.message },
           { status: 500 }
         )
       }

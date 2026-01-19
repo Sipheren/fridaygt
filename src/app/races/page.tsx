@@ -49,6 +49,8 @@ interface Race {
   id: string
   name: string | null
   description: string | null
+  laps: number | null
+  weather: string | null
   createdAt: string
   updatedAt: string
   track: Track
@@ -162,6 +164,12 @@ export default function RacesPage() {
             {races.length} {races.length === 1 ? 'race' : 'races'} across run lists
           </p>
         </div>
+        <Button asChild className="gap-2 min-h-[44px]">
+          <Link href="/races/new">
+            <Plus className="h-4 w-4" />
+            Create Race
+          </Link>
+        </Button>
       </div>
 
       {/* Search and Filters */}
@@ -276,8 +284,8 @@ export default function RacesPage() {
                       )}
                     </div>
 
-                    {/* Status Badge */}
-                    <div className="flex items-center gap-2">
+                    {/* Status Badge and Configuration */}
+                    <div className="flex items-center gap-2 flex-wrap">
                       {race.isActive ? (
                         <Badge variant="default" className="text-xs">
                           Active
@@ -285,6 +293,16 @@ export default function RacesPage() {
                       ) : (
                         <Badge variant="secondary" className="text-xs">
                           Inactive
+                        </Badge>
+                      )}
+                      {race.laps && (
+                        <Badge variant="outline" className="text-xs">
+                          {race.laps} laps
+                        </Badge>
+                      )}
+                      {race.weather && (
+                        <Badge variant="outline" className="text-xs">
+                          {race.weather}
                         </Badge>
                       )}
                     </div>

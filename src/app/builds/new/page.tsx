@@ -7,8 +7,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Slider } from '@/components/ui/slider'
 import {
   Select,
   SelectContent,
@@ -30,8 +28,8 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { ArrowLeft, Save, Wrench, Settings } from 'lucide-react'
-import upgradesData from '@/data/gt7-upgrades.json'
-import tuningData from '@/data/gt7-tuning.json'
+import { BuildUpgradesTab } from '@/components/builds/BuildUpgradesTab'
+import { BuildTuningTab } from '@/components/builds/BuildTuningTab'
 import { LoadingSection } from '@/components/ui/loading'
 
 interface Car {
@@ -44,11 +42,10 @@ interface Car {
 interface SelectedUpgrade {
   category: string
   part: string
-  value: string | null
 }
 
 interface SelectedSetting {
-  category: string
+  section: string
   setting: string
   value: string
 }
@@ -66,7 +63,7 @@ export default function NewBuildPage() {
   const [description, setDescription] = useState('')
   const [isPublic, setIsPublic] = useState(false)
   const [selectedUpgrades, setSelectedUpgrades] = useState<Record<string, boolean>>({})
-  const [tuningSettings, setTuningSettings] = useState<Record<string, number>>({})
+  const [tuningSettings, setTuningSettings] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchCars()
@@ -98,8 +95,8 @@ export default function NewBuildPage() {
     }))
   }
 
-  const handleTuningSetting = (category: string, settingId: string, value: number) => {
-    const key = `${category}:${settingId}`
+  const handleTuningSetting = (section: string, setting: string, value: string) => {
+    const key = `${section}:${setting}`
     setTuningSettings((prev) => ({
       ...prev,
       [key]: value,
@@ -122,14 +119,15 @@ export default function NewBuildPage() {
         .filter(([_, selected]) => selected)
         .map(([key]) => {
           const [category, part] = key.split(':')
-          return { category, part, value: null }
+          return { category, part }
         })
 
       // Convert tuning settings to array
       const settings: SelectedSetting[] = Object.entries(tuningSettings)
+        .filter(([_, value]) => value.trim() !== '')
         .map(([key, value]) => {
-          const [category, setting] = key.split(':')
-          return { category, setting, value: String(value) }
+          const [section, setting] = key.split(':')
+          return { section, setting, value }
         })
 
       const response = await fetch('/api/builds', {
@@ -268,89 +266,19 @@ export default function NewBuildPage() {
         </TabsList>
 
         {/* Upgrades Tab */}
-        <TabsContent value="upgrades" className="space-y-4">
-          {Object.entries(upgradesData.upgradeCategories).map(([categoryKey, category]) => (
-            <Card key={categoryKey}>
-              <CardHeader>
-                <CardTitle className="text-lg">{category.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {category.parts.map((part) => {
-                    const key = `${categoryKey}:${part.name}`
-                    return (
-                      <div
-                        key={part.id}
-                        className="flex items-center space-x-2 border border-border rounded-lg p-3 hover:bg-accent/5 transition-colors min-h-[44px]"
-                      >
-                        <Checkbox
-                          id={part.id}
-                          checked={selectedUpgrades[key] || false}
-                          onCheckedChange={() =>
-                            handleUpgradeToggle(categoryKey, part.name)
-                          }
-                          className="min-h-[24px] min-w-[44px]"
-                        />
-                        <Label
-                          htmlFor={part.id}
-                          className="flex-1 cursor-pointer text-sm"
-                        >
-                          {part.name}
-                        </Label>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <TabsContent value="upgrades">
+          <BuildUpgradesTab
+            selectedUpgrades={selectedUpgrades}
+            onUpgradeToggle={handleUpgradeToggle}
+          />
         </TabsContent>
 
         {/* Tuning Tab */}
-        <TabsContent value="tuning" className="space-y-4">
-          {Object.entries(tuningData.tuningCategories).map(([categoryKey, category]) => (
-            <Card key={categoryKey}>
-              <CardHeader>
-                <CardTitle className="text-lg">{category.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {category.settings.map((setting) => {
-                  const key = `${categoryKey}:${setting.id}`
-                  const currentValue = tuningSettings[key] ?? setting.default
-
-                  return (
-                    <div key={setting.id} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor={setting.id} className="text-sm font-medium">
-                          {setting.name}
-                        </Label>
-                        <span className="text-sm font-mono text-primary">
-                          {currentValue}
-                          {setting.unit && ` ${setting.unit}`}
-                        </span>
-                      </div>
-                      <Slider
-                        id={setting.id}
-                        min={setting.min}
-                        max={setting.max}
-                        step={setting.step}
-                        value={[currentValue]}
-                        onValueChange={([value]) =>
-                          handleTuningSetting(categoryKey, setting.id, value)
-                        }
-                        className="w-full"
-                      />
-                      {setting.description && (
-                        <p className="text-xs text-muted-foreground">
-                          {setting.description}
-                        </p>
-                      )}
-                    </div>
-                  )
-                })}
-              </CardContent>
-            </Card>
-          ))}
+        <TabsContent value="tuning">
+          <BuildTuningTab
+            tuningSettings={tuningSettings}
+            onSettingChange={handleTuningSetting}
+          />
         </TabsContent>
       </Tabs>
 

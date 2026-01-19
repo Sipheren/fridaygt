@@ -161,7 +161,6 @@ export async function POST(request: NextRequest) {
         buildId,
         category: upgrade.category,
         part: upgrade.part,
-        value: upgrade.value || null,
       }))
 
       const { error: upgradesError } = await supabase
@@ -178,7 +177,7 @@ export async function POST(request: NextRequest) {
       const settingRecords = settings.map(setting => ({
         id: nanoid(),
         buildId,
-        category: setting.category,
+        category: setting.section,
         setting: setting.setting,
         value: setting.value,
       }))

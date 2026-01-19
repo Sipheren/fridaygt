@@ -71,8 +71,15 @@ export async function GET(
       uniqueTracks: new Set(lapTimes?.map(lt => lt.trackId)).size,
     }
 
+    // Transform settings to use 'section' instead of 'category' for frontend
+    const transformedSettings = build.settings?.map((setting: any) => ({
+      ...setting,
+      section: setting.category,
+    })) || []
+
     return NextResponse.json({
       ...build,
+      settings: transformedSettings,
       statistics,
     })
   } catch (error) {
@@ -176,7 +183,6 @@ export async function PATCH(
           buildId: id,
           category: upgrade.category,
           part: upgrade.part,
-          value: upgrade.value || null,
         }))
 
         await supabase
@@ -198,7 +204,7 @@ export async function PATCH(
         const settingRecords = settings.map(setting => ({
           id: nanoid(),
           buildId: id,
-          category: setting.category,
+          category: setting.section,
           setting: setting.setting,
           value: setting.value,
         }))

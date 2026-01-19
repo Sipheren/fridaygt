@@ -1,5 +1,216 @@
 # FridayGT Development Session Log
 
+## Session: 2026-01-19 #10 - Build-Centric Race System Implementation Complete
+
+### Overview
+**COMPLETED BUILD-CENTRIC RACE SYSTEM**: Successfully implemented a complete build-centric race management system with inline build creation, race-specific leaderboards, and support for multiple builds per car in a single race.
+
+### Implementation Summary
+
+**Complete Data Reset**:
+- Executed comprehensive data reset (keeping only User accounts)
+- Clean slate for build-centric architecture
+- Successfully re-imported 552 cars from gt7_cars_combined.csv
+- Successfully re-imported 118 tracks from gt7_courses_combined.csv
+
+**Database Schema Changes**:
+1. **Race Configuration Added** (`20260119_race_configuration.sql`):
+   - Added `laps` INTEGER column to Race table
+   - Added `weather` VARCHAR(20) column to Race table (values: 'dry', 'wet')
+   - Made RaceCar.buildId NOT NULL (builds now required)
+   - Removed unique constraint on (raceId, carId) to allow duplicate cars
+   - Added unique constraint on (raceId, buildId) to prevent duplicate builds
+
+2. **Data Reset** (`20260119_complete_data_reset.sql`):
+   - Deleted all data from Race, CarBuild, LapTime, RunList tables
+   - Preserved all User accounts
+   - Verified only users remain
+
+**API Changes**:
+1. **POST /api/races** - NEW Create race endpoint:
+   - Accepts: `{ trackId, buildIds[], name?, description?, laps?, weather? }`
+   - Validates: trackId required, buildIds min 1, weather in ['dry','wet']
+   - Creates Race + RaceCar entries (one per build)
+   - Returns complete race with builds
+
+2. **PATCH /api/races/[id]** - UPDATED:
+   - Removed trackId update (track is now immutable)
+   - Added buildIds array support
+   - Added laps and weather updates
+   - Deletes/recreates RaceCar entries with new buildIds
+
+3. **GET /api/races/[id]** - ENHANCED:
+   - Race-specific leaderboard (filtered to builds in this race only)
+   - Shows laps and weather configuration
+   - Displays all builds in race
+
+4. **POST /api/builds/quick** - NEW Quick build creation:
+   - Inline build creation for modal
+   - Accepts: `{ carId, name, description? }`
+   - Returns created build (no upgrades/settings initially)
+
+**UI Components Created**:
+1. **BuildSelector.tsx**:
+   - Multi-select component with search functionality
+   - "Create New Build" button triggers inline modal
+   - Supports duplicate cars (no filtering)
+   - Shows selected builds as removable chips
+
+2. **QuickBuildModal.tsx**:
+   - Inline build creation without leaving race flow
+   - Car selector (searchable dropdown)
+   - Build name input (required)
+   - Description textarea (optional)
+   - Success callback adds buildId to selection
+
+3. **Bug Fixes**:
+   - Added `type="button"` to BuildUpgradesTab category buttons
+   - Added `type="button"` to BuildTuningTab section buttons
+   - Added `type="button"` to TabsTrigger components
+   - Fixed form submission issue when clicking tabs
+
+**Pages Created**:
+1. **/races/new** - Race creation wizard:
+   - Step 1: Select track from grid
+   - Step 2: Select builds with inline creation
+   - Step 3: Configure (name, description, laps, weather)
+
+2. **/races/[id]/edit** - Race editing:
+   - Track immutable (not editable)
+   - Build selector with current builds selected
+   - Same inline build creation modal
+   - Update laps and weather
+
+**Pages Updated**:
+1. **/races/[id]/page.tsx**:
+   - Added "Edit Race" button in header
+   - Display laps badge and weather icon
+   - Changed "Cars in this race" to "Builds in this race"
+   - Updated leaderboard subtitle to "Race-specific"
+
+2. **/races/page.tsx**:
+   - Added "Create Race" button
+   - Display laps and weather badges
+
+**Data Import Scripts**:
+1. **scripts/import-cars-combined.ts**:
+   - Imports from gt7_cars_combined.csv
+   - Fixed slug generation (removes duplicate make names, adds year suffix)
+   - Fixed category enum (removed invalid ROAD_CAR, N_CLASS)
+   - Deletes existing cars before import
+   - Result: 552 cars imported successfully
+
+2. **scripts/import-tracks-combined.ts**:
+   - Imports from gt7_courses_combined.csv
+   - Fixed category enum (ORIGINAL → CIRCUIT, city → CITY_COURSE)
+   - Fixed duplicate name constraint (keeps full course name with layout)
+   - Deletes existing tracks before import
+   - Result: 118 tracks imported successfully
+
+**Data Files Created**:
+- `src/data/builds/parts-shop.ts` - Parts shop categories and parts
+- `src/data/builds/tuning-settings.ts` - Tuning settings sections
+- `gt7data/gt7_parts_shop.csv` - Parts shop data
+- `gt7data/gt7_tuning_settings.csv` - Tuning settings data
+
+### Issues Resolved
+
+1. **Migration Error - RunSessionAttendance table**:
+   - Fixed: Removed references to non-existent tables
+   - User feedback: "the delete part didnt work"
+
+2. **Migration Error - Column casing**:
+   - Fixed: Changed to camelCase (raceId, buildId not raceid, buildid)
+   - User feedback: "the race change one didnt work either"
+
+3. **Car Import - Duplicate slug constraint**:
+   - Fixed: Improved slug generation (remove duplicate makes, add year suffix)
+   - Result: All 552 cars imported successfully
+
+4. **Track Import - Invalid enum**:
+   - Fixed: Mapped ORIGINAL → CIRCUIT, city → CITY_COURSE
+   - Fixed: Keep full course name with layout to avoid duplicate constraint
+   - Result: All 118 tracks imported successfully
+
+5. **Build Edit Page - Form submission on tab click**:
+   - User feedback: "clicking a tab seems to trigger a save"
+   - Clarified: Wrong tabs - category buttons in BuildUpgradesTab/BuildTuningTab
+   - Fixed: Added `type="button"` to all buttons inside forms
+   - Result: Can now click categories and switch tabs without form submission
+
+### Files Modified
+
+**Database Migrations**:
+- `supabase/migrations/20260119_complete_data_reset.sql` (NEW)
+- `supabase/migrations/20260119_race_configuration.sql` (NEW)
+
+**API Routes**:
+- `src/app/api/races/route.ts` (MODIFIED - Added POST)
+- `src/app/api/races/[id]/route.ts` (MODIFIED - Updated PATCH, enhanced GET)
+- `src/app/api/builds/quick/route.ts` (NEW)
+
+**Pages**:
+- `src/app/races/new/page.tsx` (NEW - 3-step wizard)
+- `src/app/races/[id]/edit/page.tsx` (NEW - Edit race)
+- `src/app/races/[id]/page.tsx` (MODIFIED - Config display, edit button)
+- `src/app/races/page.tsx` (MODIFIED - Create button, badges)
+- `src/app/builds/[id]/edit/page.tsx` (MODIFIED - Fixed form submission bug)
+
+**Components**:
+- `src/components/builds/BuildSelector.tsx` (NEW)
+- `src/components/builds/QuickBuildModal.tsx` (NEW)
+- `src/components/builds/BuildUpgradesTab.tsx` (NEW - Fixed bug)
+- `src/components/builds/BuildTuningTab.tsx` (NEW - Fixed bug)
+
+**Data Files**:
+- `src/data/builds/parts-shop.ts` (NEW)
+- `src/data/builds/tuning-settings.ts` (NEW)
+- `gt7data/gt7_parts_shop.csv` (NEW)
+- `gt7data/gt7_tuning_settings.csv` (NEW)
+- `gt7data/gt7_cars_combined.csv` (NEW)
+- `gt7data/gt7_courses_combined.csv` (NEW)
+
+**Scripts**:
+- `scripts/import-cars-combined.ts` (NEW)
+- `scripts/import-tracks-combined.ts` (NEW)
+
+**Documentation**:
+- `docs/PLAN.md` (UPDATED - Marked implementation complete)
+- `docs/SESSION-LOG.md` (UPDATED - This entry)
+
+### Status
+✅ **IMPLEMENTATION COMPLETE**
+
+All four phases completed:
+- ✅ Phase 1: Database Reset & Schema Changes
+- ✅ Phase 2: API Changes
+- ✅ Phase 3: UI/UX Changes
+- ✅ Phase 4: Data Import
+
+### Testing Results
+- ✅ Data reset successful (only users remain)
+- ✅ Schema updates applied correctly
+- ✅ All 552 cars imported without errors
+- ✅ All 118 tracks imported without errors
+- ✅ Build selector working with multi-select
+- ✅ Quick build modal functional
+- ✅ Race creation flow working end-to-end
+- ✅ Race editing flow working end-to-end
+- ✅ Race-specific leaderboard filtering correctly
+- ✅ Form submission bug fixed (tabs no longer trigger save)
+
+### Next Steps
+- Merge to main after user approval
+- Begin testing with real race scenarios
+- Collect user feedback on build-centric workflow
+- Consider additional features based on usage patterns
+
+### Related Sessions
+- Previous: 2026-01-17 #9 - Build-Centric Pivot (Planning)
+- Previous: 2026-01-15 #8 - Security Audit & Headers Implementation
+
+---
+
 ## Session: 2026-01-17 #9 - Build-Centric Pivot (BRANCH: buildfocussed)
 
 ### Overview

@@ -1,0 +1,61 @@
+Section,Setting
+Tyres,Front
+Tyres,Rear
+Suspension,Suspension
+Suspension,Body Height Adjustment
+Suspension,Anti-Roll Bar
+Suspension,Damping Ratio (Compression)
+Suspension,Damping Ratio (Expansion)
+Suspension,Natural Frequency
+Suspension,Negative Camber Angle
+Suspension,Toe Angle
+Differential Gear,Differential
+Differential Gear,Initial Torque
+Differential Gear,Acceleration Sensitivity
+Differential Gear,Braking Sensitivity
+Differential Gear,Torque-Vectoring Centre Differential
+Differential Gear,Front/Rear Torque Distribution
+Aerodynamics,Downforce
+ECU,ECU
+ECU,Output Adjustment
+Performance Adjustment,Ballast
+Performance Adjustment,Ballast Positioning
+Performance Adjustment,Power Restrictor
+Transmission,Transmission
+Transmission,Top Speed (Automatically Adjusted)
+Transmission,Manual Adjustment
+Nitrous/Overtake,Nitrous/Overtake
+Nitrous/Overtake,Output Adjustment
+Supercharger,Turbocharger
+Supercharger,Anti-Lag
+Supercharger,Anti-Lag System
+Supercharger,Intercooler
+Supercharger,Supercharger
+Intake & Exhaust,Air Cleaner
+Intake & Exhaust,Silencer
+Intake & Exhaust,Exhaust Manifold
+Brakes,Brake System
+Brakes,Brake Pads
+Brakes,Handbrake
+Brakes,Handbrake Torque
+Brakes,Brake Balance
+Brakes,Front/Rear Balance
+Steering,Steering Angle Kit
+Steering,4WS System
+Steering,Rear Steering Angle
+Drivetrain,Clutch & Flywheel
+Drivetrain,Propeller Shaft
+Engine Tuning,Bore Up
+Engine Tuning,Stroke Up
+Engine Tuning,Engine Balance Tuning
+Engine Tuning,Polish Ports
+Engine Tuning,High Lift Camshaft
+Engine Tuning,Titanium Connecting Rods & Pistons
+Engine Tuning,Racing Crank Shaft
+Engine Tuning,High Compression Pistons
+Bodywork,Weight Reduction: Stage 1
+Bodywork,Weight Reduction: Stage 2
+Bodywork,Weight Reduction: Stage 3
+Bodywork,Weight Reduction: Stage 4
+Bodywork,Weight Reduction: Stage 5
+Bodywork,Increase Body Rigidity

@@ -60,8 +60,16 @@ If this approach doesn't work: `git checkout main` to return to original archite
 
 ### Status
 ✅ Branch created
-⏳ Documentation updated (this file)
-⏳ Implementation in progress
+✅ Documentation updated (this file)
+✅ **IMPLEMENTATION COMPLETE** (2026-01-19)
+
+The build-centric race system has been fully implemented with:
+- ✅ Complete data reset (except users)
+- ✅ Build-centric race creation flow with inline build modal
+- ✅ Race-specific leaderboards (only builds in race)
+- ✅ Support for duplicate cars in races (multiple builds per car)
+- ✅ Race configuration (laps, weather)
+- ✅ All 552 cars and 118 tracks re-imported
 
 ---
 
@@ -1059,19 +1067,52 @@ Example 2: Navigating from run list to combo
 
 ## Current Status
 
-### 🚨 ACTIVE BRANCH: buildfocussed (Build-Centric Architecture Pivot)
+### 🎉 BUILD-CENTRIC RACE SYSTEM IMPLEMENTATION COMPLETE
 
-**Date**: 2026-01-17
-**Branch**: `buildfocussed` (experimental)
+**Date**: 2026-01-19
+**Branch**: `buildfocussed`
 **Base**: `main` at commit `d057566`
 
-**Status**: ⏳ Architecture pivot in progress
+**Status**: ✅ FULLY IMPLEMENTED
 
-The `buildfocussed` branch is implementing a major architectural change:
-- Builds become the primary entity (not lap times or races)
-- All lap times must be associated with a build
-- Build detail page becomes the main dashboard
-- User flow: Select build → record lap times → view performance
+The `buildfocussed` branch has successfully implemented a build-centric race management system:
+
+**Completed Implementation**:
+- ✅ Complete data reset (keeping only User accounts)
+- ✅ Race configuration (laps, weather) added
+- ✅ RaceCar.buildId made NOT NULL
+- ✅ Support for duplicate cars in races (multiple builds per car)
+- ✅ Build-centric race creation flow with inline build modal
+- ✅ Race-specific leaderboards (filtered to builds in race)
+- ✅ All 552 cars re-imported from gt7_cars_combined.csv
+- ✅ All 118 tracks re-imported from gt7_courses_combined.csv
+- ✅ Bug fixes (form submission prevention on tabs)
+
+**Database Changes**:
+- ✅ 20260119_complete_data_reset.sql - Cleared all data except users
+- ✅ 20260119_race_configuration.sql - Added laps/weather, made buildId NOT NULL
+- ✅ New unique constraint on RaceCar (raceId, buildId)
+- ✅ Removed old constraint allowing duplicate builds
+
+**New API Endpoints**:
+- ✅ POST /api/races - Create race with buildIds array
+- ✅ PATCH /api/races/[id] - Update race (builds, laps, weather)
+- ✅ GET /api/races/[id] - Enhanced with race-specific leaderboard
+- ✅ POST /api/builds/quick - Inline build creation
+
+**New UI Components**:
+- ✅ BuildSelector.tsx - Multi-select with search and create button
+- ✅ QuickBuildModal.tsx - Inline build creation modal
+- ✅ BuildUpgradesTab.tsx - Fixed form submission bug
+- ✅ BuildTuningTab.tsx - Fixed form submission bug
+
+**New Pages**:
+- ✅ /races/new - 3-step wizard (Track → Builds → Configure)
+- ✅ /races/[id]/edit - Edit race (track immutable)
+
+**Data Import Scripts**:
+- ✅ import-cars-combined.ts - Import from gt7_cars_combined.csv
+- ✅ import-tracks-combined.ts - Import from gt7_courses_combined.csv
 
 **To return to main**: `git checkout main`
 
@@ -1427,4 +1468,352 @@ The Race entity centralizes track + car combinations, allowing races to be reuse
 - `/src/app/races/[id]/page.tsx` - Race detail page (read-only)
 - `/src/app/api/races/[id]/route.ts` - Race API endpoints
 - `/src/app/run-lists/[id]/page.tsx` - Run list integration
+
+---
+
+## BUILD-CENTRIC RACE SYSTEM IMPLEMENTATION PLAN (2026-01-19)
+
+### Executive Summary
+
+**Complete data reset (except users)** and rebuild as a fully build-centric race management system where users create races with inline build creation, multiple builds per car, and race-specific leaderboards.
+
+### Important Decision Points
+
+1. **Inline Build Creation**: Users can create builds in a modal without leaving race creation flow
+2. **Allow Duplicate Cars**: Multiple builds from the same car can be added to one race
+3. **Race-Specific Leaderboard**: Track leaderboard shows fastest laps ONLY from builds in the current race
+4. **Clean Slate**: Clear ALL legacy data except user accounts, re-import cars/tracks with updated format
+
+### User Requirements
+
+1. **Build-Centric Flow**: Cars need builds permanently - select a car, create a build, use builds in races
+2. **Race Creation**: Go to Races → Create new race → Select track → Select builds (or create new inline) → Add multiple builds → Set laps/weather
+3. **Race Editing**: Open race → Edit → Add/remove builds, update laps/weather (track immutable)
+4. **Race-Specific Leaderboard**: Show top 10 lap times for that track **only from builds in this race**
+5. **Data Reset**: Clear all legacy data, keep only users, re-import car/track data
+
+---
+
+### Implementation Plan
+
+#### Phase 1: Database Reset & Schema Changes
+
+**File**: `supabase/migrations/20260119_complete_data_reset.sql` (NEW)
+
+```sql
+-- Migration: Complete Data Reset (Keep Users Only)
+-- WARNING: This will DELETE ALL DATA except User accounts
+
+SET session_replication_role = 'replica';
+
+DELETE FROM "Race";
+DELETE FROM "CarBuild";
+DELETE FROM "LapTime";
+DELETE FROM "RunList";
+
+SET session_replication_role = 'origin';
+
+-- Verify: Only users remain
+SELECT COUNT(*) as remaining_users FROM "User";
+```
+
+**File**: `supabase/migrations/20260119_add_race_configuration.sql` (NEW)
+
+```sql
+-- Add configuration columns to Race table
+ALTER TABLE "Race"
+  ADD COLUMN IF NOT EXISTS "laps" INTEGER,
+  ADD COLUMN IF NOT EXISTS "weather" VARCHAR(20);
+
+-- Make buildId NOT NULL (clean slate)
+ALTER TABLE "RaceCar"
+  ALTER COLUMN "buildId" SET NOT NULL;
+
+-- Remove unique constraint on carId (allow multiple builds from same car)
+ALTER TABLE "RaceCar" DROP CONSTRAINT IF EXISTS "RaceCar_raceid_carid_key";
+
+-- Add new constraint: One build per race
+CREATE UNIQUE INDEX IF NOT EXISTS "RaceCar_raceid_buildid_key" ON "RaceCar"("raceid", "buildid");
+
+CREATE INDEX IF NOT EXISTS "Race_laps_idx" ON "Race"("laps");
+CREATE INDEX IF NOT EXISTS "Race_weather_idx" ON "Race"("weather");
+```
+
+**Key Changes**:
+- `RaceCar.buildId` is now NOT NULL
+- Removed `RaceCar_raceid_carid_key` (allow duplicate cars)
+- Added `RaceCar_raceid_buildid_key` (each build once per race)
+
+---
+
+#### Phase 2: API Changes
+
+**POST /api/races** - Create Race
+- Request: `{ trackId, buildIds[], name?, description?, laps?, weather? }`
+- Validate: trackId required, buildIds min 1, weather in ['dry','wet']
+- Create Race + RaceCar entries (one per build)
+- Return complete race with builds
+
+**PATCH /api/races/[id]** - Update Race
+- Accept: `buildIds[]`, `laps`, `weather`
+- **Remove**: trackId update (track is immutable)
+- Delete/recreate RaceCar entries with new buildIds
+
+**GET /api/races/[id]** - Enhanced Response
+```typescript
+// Race-specific leaderboard (ONLY laps from builds in this race)
+const buildIds = raceCars.map(rc => rc.buildId)
+const trackLeaderboard = await supabase
+  .from('LapTime')
+  .select(`timeMs, user, car, build`)
+  .eq('trackId', trackId)
+  .in('buildId', buildIds)  // FILTERED to race builds only
+  .order('timeMs', { ascending: true })
+  .limit(10)
+```
+
+**POST /api/builds/quick** - Quick Build Creation (NEW)
+- Purpose: Inline build creation during race setup
+- Request: `{ carId, name, description? }`
+- Response: Created build (no upgrades/settings initially)
+- Use Case: Modal in race creation page
+
+---
+
+#### Phase 3: UI/UX Changes
+
+**New Race Creation Page** (`src/app/races/new/page.tsx`)
+
+3-Step Wizard:
+1. **Select Track**: Grid of all tracks with category badges
+2. **Select Builds**:
+   - Multi-select build list with search
+   - **"Create New Build" button opens inline modal**
+   - Modal: Car selector + build name + description
+   - After creation: Build added to selection automatically
+   - Multiple builds from same car allowed
+3. **Configure**: Race name, description, laps, weather (dry/wet)
+
+**Inline Build Modal** (`src/components/builds/QuickBuildModal.tsx` - NEW)
+- Car selection dropdown (searchable)
+- Build name input (required)
+- Description textarea (optional)
+- Create/Cancel buttons
+- On success: Callback to add buildId to selectedBuilds
+
+**Race Edit Page** (`src/app/races/[id]/edit/page.tsx` - NEW)
+- Pre-populate with existing race data
+- No track selection (immutable)
+- Build selector with current builds selected
+- Same inline build creation modal
+- Config editing (laps, weather)
+
+**Updated Race Detail Page** (`src/app/races/[id]/page.tsx`)
+- Add "Edit Race" button in header
+- Display race config (laps, weather) in card
+- Change "Cars in this race" to "Builds in this race"
+- Add **"Race Leaderboard - Top 10"** section
+- Subtitle: "Fastest laps from builds in this race at {track}"
+
+**Updated Race Listing** (`src/app/races/page.tsx`)
+- Add "Create Race" button
+- Display laps badge: `{race.laps} laps`
+- Display weather badge with icon
+
+**Build Selector Component** (`src/components/builds/BuildSelector.tsx` - NEW)
+```typescript
+interface BuildSelectorProps {
+  selectedBuilds: string[]
+  onBuildsChange: (buildIds: string[]) => void
+  onCreateNew?: () => void
+  allowDuplicateCars?: boolean
+}
+```
+- Multi-select with search
+- "Create New Build" button
+- Support duplicate cars (no filtering)
+
+---
+
+#### Phase 4: Data Reset & Import
+
+**Migration Steps**:
+1. Backup: Export all data
+2. Run Reset Migration: `20260119_complete_data_reset.sql`
+3. Verify: Only User table has data
+4. Re-import Cars: Use `gt7_cars_combined.csv`
+5. Re-import Tracks: Use `gt7_courses_combined.csv`
+
+**No Legacy Data Handling**: Clean slate, all build-centric from day 1
+
+---
+
+### Critical Files to Modify
+
+**Database Migrations**:
+- `supabase/migrations/20260119_complete_data_reset.sql` - NEW
+- `supabase/migrations/20260119_add_race_configuration.sql` - NEW
+
+**API Routes**:
+- `src/app/api/races/route.ts` - Add POST handler
+- `src/app/api/races/[id]/route.ts` - Update PATCH, enhance GET
+- `src/app/api/builds/quick/route.ts` - NEW
+
+**Pages**:
+- `src/app/races/new/page.tsx` - NEW (3-step wizard)
+- `src/app/races/[id]/edit/page.tsx` - NEW
+- `src/app/races/[id]/page.tsx` - Update (config, leaderboard, edit button)
+- `src/app/races/page.tsx` - Update (create button, badges)
+
+**Components**:
+- `src/components/builds/BuildSelector.tsx` - NEW
+- `src/components/builds/QuickBuildModal.tsx` - NEW
+
+**Data Import Scripts**:
+- `scripts/import-cars.ts` - NEW
+- `scripts/import-tracks.ts` - NEW
+
+---
+
+### Implementation Priority
+
+**Phase 1: Foundation & Data Reset (Week 1)**
+1. Database reset migration (1 day)
+2. Schema updates (1 day)
+3. Re-import cars & tracks (1 day)
+4. POST /api/races endpoint (2 days)
+
+**Phase 2: Core UI Features (Week 2)**
+5. BuildSelector component (2 days)
+6. QuickBuildModal component (2 days)
+7. Race creation page (2 days)
+8. POST /api/builds/quick (1 day)
+
+**Phase 3: Race Management (Week 3)**
+9. PATCH /api/races/[id] (2 days)
+10. Race edit page (2 days)
+11. Enhanced race detail page (1 day)
+
+**Phase 4: Leaderboard & Polish (Week 4)**
+12. Race-specific leaderboard API (1 day)
+13. Leaderboard UI (1 day)
+14. Update race listing page (1 day)
+15. Testing & bug fixes (2 days)
+
+---
+
+### Testing & Verification
+
+**End-to-End: Create Race**
+1. Navigate to /races/new
+2. Select track (e.g., "Nürburgring")
+3. Select 2 existing builds
+4. Click "Create New Build" → Modal opens
+5. Select car "Porsche 911 GT3"
+6. Enter build name "Nürburgring Setup"
+7. Create → Build added to selection
+8. Set laps to 10, weather to "wet"
+9. Create race → Redirect to detail
+10. Verify 3 builds shown (same car twice OK)
+11. Verify leaderboard shows "Fastest laps from builds in this race"
+
+**Race-Specific Leaderboard**:
+1. Create race at "Nürburgring" with builds A, B, C
+2. Add lap times with builds A, B, C, D (D not in race)
+3. View race detail → Leaderboard
+4. Verify only laps from A, B, C shown
+5. Add build D to race
+6. Verify D's laps now appear
+
+**Edge Cases**:
+- Create race without builds → 400 error
+- Invalid weather → 400 error
+- Same build twice → prevented by unique constraint
+- Edit race and change track → not allowed in UI
+- Multiple builds from same car → should work
+- Delete build referenced by race → cascade deletes RaceCar
+- Race with 0 builds after edit → should allow
+
+---
+
+### Deployment Strategy
+
+**Pre-Deployment**:
+1. Backup database (full export)
+2. Test migrations on staging
+3. Test race creation flow end-to-end
+4. Test leaderboard filtering
+
+**Deployment Steps (ORDER IS CRITICAL!)**:
+1. Data Reset (5 min downtime, WARNING: destructive)
+2. Schema Updates (2 min downtime)
+3. Re-import Data (5 min, no downtime)
+4. Deploy API (zero downtime)
+5. Deploy UI (zero downtime)
+6. Smoke Tests
+
+**Rollback Plan**:
+- Database: Restore from backup (can't easily rollback reset)
+- API/UI: Git revert + redeploy
+
+---
+
+### Success Metrics
+
+**Technical**:
+- Race creation <500ms
+- Race detail <500ms
+- 99.9% uptime
+- API response <200ms
+
+**User Adoption**:
+- 70% races created with inline build modal
+- 2-3 builds per race average
+- 30% races have duplicate cars
+- Leaderboard viewed on 90% pages
+- <5% support requests
+
+---
+
+## ✅ IMPLEMENTATION COMPLETE (2026-01-19)
+
+All phases of the BUILD-CENTRIC RACE SYSTEM have been successfully implemented:
+
+### Phase 1: Database Reset & Schema Changes ✅ COMPLETE
+- ✅ Complete data reset migration (all data except users deleted)
+- ✅ Race configuration added (laps, weather columns)
+- ✅ RaceCar.buildId made NOT NULL
+- ✅ Unique constraint updated to allow duplicate cars, prevent duplicate builds
+- ✅ Migrations applied successfully to database
+
+### Phase 2: API Changes ✅ COMPLETE
+- ✅ POST /api/races - Create race with buildIds array
+- ✅ PATCH /api/races/[id] - Update race (removed trackId, added buildIds/laps/weather)
+- ✅ GET /api/races/[id] - Enhanced with race-specific leaderboard filtering
+- ✅ POST /api/builds/quick - Inline build creation for modal
+
+### Phase 3: UI/UX Changes ✅ COMPLETE
+- ✅ BuildSelector component - Multi-select with search and create button
+- ✅ QuickBuildModal component - Inline build creation without leaving flow
+- ✅ /races/new page - 3-step wizard (Track → Builds → Configure)
+- ✅ /races/[id]/edit page - Edit races with inline build support
+- ✅ /races/[id]/page.tsx - Updated with config display and edit button
+- ✅ /races/page.tsx - Updated with create button and badges
+- ✅ Bug fix: Added type="button" to prevent form submission on tabs
+
+### Phase 4: Data Import ✅ COMPLETE
+- ✅ scripts/import-cars-combined.ts - Import 552 cars from gt7_cars_combined.csv
+  - Fixed slug generation to handle duplicate names
+  - Fixed category enum mapping
+  - All 552 cars imported successfully
+- ✅ scripts/import-tracks-combined.ts - Import 118 tracks from gt7_courses_combined.csv
+  - Fixed category enum mapping (ORIGINAL → CIRCUIT)
+  - Fixed duplicate name constraint handling
+  - All 118 tracks imported successfully
+
+### Summary
+**Total Implementation Time**: 1 day (2026-01-19)
+**Database State**: Clean slate with 552 cars, 118 tracks, ready for build-centric races
+**All Features**: Working as specified in implementation plan
+**Known Issues**: None - all functionality tested and working
 

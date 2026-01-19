@@ -52,6 +52,8 @@ interface Race {
   id: string
   name: string | null
   description: string | null
+  laps: number | null
+  weather: string | null
   createdAt: string
   updatedAt: string
   track: {
@@ -208,9 +210,16 @@ export default function RaceDetailPage() {
 
         <div className="space-y-4">
           {/* Race Name */}
-          <h1 className="text-3xl font-bold">
-            {race.name || `${race.track.name} - ${race.RaceCar.length} car${race.RaceCar.length > 1 ? 's' : ''}`}
-          </h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-3xl font-bold">
+              {race.name || `${race.track.name} - ${race.RaceCar.length} build${race.RaceCar.length > 1 ? 's' : ''}`}
+            </h1>
+            <Link href={`/races/${race.id}/edit`} className="shrink-0">
+              <Button variant="outline" size="sm">
+                Edit Race
+              </Button>
+            </Link>
+          </div>
 
           {/* Track Info */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
@@ -228,6 +237,13 @@ export default function RaceDetailPage() {
             {race.track.length && (
               <span>{race.track.length}m</span>
             )}
+            {/* Race Configuration Badges */}
+            {race.laps && (
+              <Badge variant="secondary">{race.laps} laps</Badge>
+            )}
+            {race.weather && (
+              <Badge variant="secondary">{race.weather}</Badge>
+            )}
           </div>
 
           {/* Description */}
@@ -237,12 +253,12 @@ export default function RaceDetailPage() {
         </div>
       </div>
 
-      {/* Cars in this race */}
+      {/* Builds in this race */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Car className="h-5 w-5" />
-            Cars ({race.RaceCar.length})
+            <Wrench className="h-5 w-5" />
+            Builds ({race.RaceCar.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -349,9 +365,9 @@ export default function RaceDetailPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5" />
-            Leaderboard
+            Race Leaderboard - Top 10
           </CardTitle>
-          <CardDescription>Best times per driver per car per build</CardDescription>
+          <CardDescription>Fastest laps from builds in this race at {race.track.name}</CardDescription>
         </CardHeader>
         <CardContent>
           {leaderboard.length === 0 ? (
