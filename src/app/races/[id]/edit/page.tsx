@@ -46,6 +46,7 @@ interface AllBuild {
   car: {
     id: string
     name: string
+    slug: string
     manufacturer: string
   }
 }

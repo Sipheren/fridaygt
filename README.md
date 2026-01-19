@@ -1,59 +1,43 @@
 # FridayGT
 
-> **🚨 Active Development Branch**: `buildfocussed` - Build-centric architecture pivot in progress
->
-> **Current Branch**: `buildfocussed` (experimental)
-> **Main Branch**: Original race-centric architecture
-> **Rollback**: `git checkout main` to return to stable version
+> **🏎️ Current Branch**: `buildfocussed` - Build-centric architecture
+> **Status**: Active development
 
 A GT7 lap time tracker and race management application built with Next.js, Supabase, and NextAuth.
 
-## 🚨 Architecture Pivot (buildfocussed branch)
+## 🎯 Project Overview
 
-**Status**: Experimental branch testing build-centric architecture
+FridayGT helps Gran Turismo 7 players track their racing performance with a **build-centric architecture** where car setups and tuning configurations are the central organizing principle.
 
-The `buildfocussed` branch is implementing a major architectural change:
+### Key Concepts
 
-### Original Architecture (main branch)
-- **Central Entity**: Race/Combo (car + track combination)
-- **Builds**: Optional attachments to cars
-- **Lap Times**: Can exist independently, optionally linked to builds
-- **User Flow**: Select car → select track → record lap time → optionally attach build
+**Builds are Central**
+- Every lap time is associated with a specific build (car setup/tuning)
+- Builds organize your performance data by car configuration
+- Easy to compare how different tunes perform on the same track
 
-### New Architecture (buildfocussed branch)
-- **Central Entity**: **Build** (car setup/tuning configuration)
-- **Lap Times**: Must be associated with a build
-- **Tracks & Cars**: Organized by the builds that use them
-- **User Flow**: Select build → select track → record lap time
-
-### Key Changes
-1. Build detail page becomes the main dashboard
-2. All lap times require a buildId
-3. Homepage centers on builds (recent, my builds, popular)
-4. Navigation prioritizes builds
-
-**To switch between versions**:
-```bash
-git checkout main           # Original architecture
-git checkout buildfocussed  # Build-centric architecture
-```
+**Active Races System**
+- Mark races as "active" to feature them on the Tonight page
+- Quick toggle from the race list or edit page
+- Tonight page shows all active races for upcoming sessions
 
 ## Features
 
-- 🚗 **Car Management** - Track your car collection and builds
-- 🛤️ **Track Database** - Comprehensive track information
-- ⏱️ **Lap Times** - Record and analyze your lap times
-- 🏁 **Run Lists** - Organize races into run lists
-- 🎮 **Sessions** - Host and manage racing sessions
-- 👥 **Multiplayer** - Attendance tracking and session management
+- 🏗️ **Build Management** - Create and manage car builds with tuning setups
+- 🚗 **Car Database** - Track your car collection
+- 🛤️ **Track Database** - Comprehensive track information and lap time records
+- ⏱️ **Lap Time Tracking** - Record and analyze lap times by build and track
+- 🏁 **Race Management** - Organize races and mark them as active for upcoming sessions
+- 📺 **Tonight Page** - Quick view of all active races for tonight's racing
+- 👤 **User Profiles** - Manage your account and preferences
 
 ## Tech Stack
 
-- **Frontend:** Next.js 14 (App Router), React, TypeScript
-- **Styling:** Tailwind CSS, shadcn/ui components
+- **Frontend:** Next.js 14 (App Router), React, TypeScript, Tailwind CSS
+- **UI Components:** shadcn/ui
 - **Backend:** Next.js API Routes
 - **Database:** Supabase (PostgreSQL)
-- **Auth:** NextAuth.js
+- **Authentication:** NextAuth.js v5
 - **State Management:** React hooks, Server Components
 
 ## Getting Started
@@ -76,6 +60,15 @@ cp .env.example .env
 # Update .env with your Supabase credentials
 ```
 
+### Required Environment Variables
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+```
+
 ### Development
 
 ```bash
@@ -89,19 +82,37 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ```
 fridaygt/
-├── src/                    # Next.js app source
-│   ├── app/               # App Router pages and API routes
-│   ├── components/        # React components
-│   └── lib/               # Utility libraries
-├── public/                # Static assets (images, fonts)
-├── docs/                  # Project documentation
+├── src/                         # Next.js app source
+│   ├── app/                      # App Router pages and API routes
+│   │   ├── admin/               # Admin pages
+│   │   ├── api/                 # API routes
+│   │   ├── auth/                # Authentication pages
+│   │   ├── builds/              # Build management pages
+│   │   ├── cars/                # Car database pages
+│   │   ├── lap-times/           # Lap time tracking pages
+│   │   ├── races/               # Race management pages
+│   │   ├── tracks/              # Track database pages
+│   │   └── tonight/             # Tonight's races page
+│   ├── components/              # React components
+│   │   ├── builds/              # Build-related components
+│   │   ├── lap-times/           # Lap time components
+│   │   └── ui/                  # shadcn/ui components
+│   ├── lib/                     # Utility libraries
+│   └── types/                   # TypeScript type definitions
+├── public/                      # Static assets
+├── docs/                        # Project documentation
 │   ├── DATABASE-SCHEMA.md       # Database structure
 │   ├── DESIGN-SYSTEM.md         # UI/UX design system
 │   ├── PLAN.md                  # Overall vision and roadmap
 │   └── SESSION-LOG.md           # Development log
-├── supabase/migrations/             # Database migration scripts
-├── scripts/                # Utility scripts
-└── supabase/              # Supabase configuration
+├── supabase/                    # Supabase configuration
+│   └── migrations/              # Database migration scripts
+├── gt7data/                     # GT7 game data
+│   ├── gt7_cars_combined.csv    # Car data
+│   ├── gt7_courses_combined.csv # Track/course data
+│   ├── gt7_parts_shop.csv       # Parts data
+│   └── gt7_tuning_settings.csv  # Tuning options
+└── scripts/                     # Utility scripts for data import
 ```
 
 ## Documentation
@@ -113,41 +124,71 @@ fridaygt/
 
 ## Database Migrations
 
-Database migrations are stored in the `supabase/migrations/` directory. To apply migrations:
+Database migrations are stored in the `supabase/migrations/` directory.
+
+### Applying Migrations
 
 1. Open Supabase Dashboard → SQL Editor
 2. Open the migration file from `supabase/migrations/`
 3. Run the SQL script
 
-**Latest Migration:** `fix-race-column-casing.sql` (2026-01-13)
+### Important Migrations
 
-## Development Scripts
+- `20260119_build_centric_pivot.sql` - Build-centric architecture changes
+- `20260119_add_race_active.sql` - Active races system
+
+## Available Scripts
 
 ```bash
-# Seed database with initial data
-npm run seed
+# Development
+npm run dev              # Start development server
 
-# Parse GT7 data files
-npm run parse-gt7-data
+# Build & Type Check
+npm run build            # Build for production
+npm run type-check       # Run TypeScript type checking
+npm run lint             # Run ESLint
 
-# Type checking
-npm run type-check
-
-# Linting
-npm run lint
+# Data Import
+npm run import-cars      # Import GT7 car data
+npm run import-tracks    # Import GT7 track data
 ```
 
 ## Deployment
 
 The application is deployed on Vercel and uses Supabase for the database.
 
-### Environment Variables
+### Environment Variables for Production
 
-Required environment variables:
-- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
-- `NEXTAUTH_SECRET` - NextAuth secret key
-- `NEXTAUTH_URL` - Your application URL
+Ensure these are set in your deployment environment:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXTAUTH_SECRET`
+- `NEXTAUTH_URL` (set to your production domain)
+
+## Architecture
+
+### Build-Centric Design
+
+The `buildfocussed` branch implements a build-centric architecture:
+
+```
+Build (car setup)
+  ├── Car (vehicle)
+  ├── Upgrades & Parts
+  ├── Tuning Settings
+  └── Lap Times (linked to tracks)
+      └── Track
+```
+
+This differs from traditional lap time trackers that organize by car or track first.
+
+### Active Races System
+
+Races can be marked as "active" which:
+- Displays them on the Tonight page
+- Indicates upcoming races for the group
+- Provides quick access from navigation
+- Can be toggled from race list or edit page
 
 ## Contributing
 

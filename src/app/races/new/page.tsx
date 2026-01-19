@@ -39,6 +39,7 @@ interface Build {
   car: {
     id: string
     name: string
+    slug: string
     manufacturer: string
   }
 }

@@ -30,14 +30,15 @@ export async function GET(req: NextRequest) {
           .eq('id', race.trackId)
           .single()
 
-        // Get race cars with car info
+        // Get race cars with car and build info
         const { data: raceCars } = await supabase
           .from('RaceCar')
           .select(`
             id,
             carId,
             buildId,
-            car:Car(id, name, slug, manufacturer)
+            car:Car(id, name, slug, manufacturer),
+            build:CarBuild(id, name, description)
           `)
           .eq('raceId', race.id)
 

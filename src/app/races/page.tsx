@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { MapPin, Car, Plus, List, Globe, Search, Trash2, Power } from 'lucide-react'
+import { MapPin, Car, Plus, List, Search, Trash2, Power } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 import Link from 'next/link'
 
@@ -40,12 +40,6 @@ interface Track {
   category: string
 }
 
-interface RunList {
-  id: string
-  name: string
-  isPublic: boolean
-}
-
 interface Race {
   id: string
   name: string | null
@@ -57,8 +51,6 @@ interface Race {
   track: Track
   RaceCar: RaceCar[]
   isActive: boolean
-  runLists: RunList[]
-  runListCount: number
 }
 
 type FilterType = 'all' | 'active' | 'inactive'
@@ -186,7 +178,7 @@ export default function RacesPage() {
             RACES
           </h1>
           <p className="text-muted-foreground mt-1">
-            {races.length} {races.length === 1 ? 'race' : 'races'} across run lists
+            {races.length} {races.length === 1 ? 'race' : 'races'} available
           </p>
         </div>
         <Button asChild className="gap-2 min-h-[44px]">
@@ -249,9 +241,9 @@ export default function RacesPage() {
           </p>
           {races.length === 0 && (
             <Button asChild className="mt-4">
-              <Link href="/run-lists">
+              <Link href="/races/new">
                 <Plus className="h-4 w-4 mr-2" />
-                Go to Run Lists
+                Create Your First Race
               </Link>
             </Button>
           )}
@@ -261,7 +253,7 @@ export default function RacesPage() {
           {filteredRaces.map((race) => (
             <div
               key={race.id}
-              className={`group relative flex items-start gap-2 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors ${
+              className={`group relative flex items-start gap-2 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer ${
                 !race.isActive ? 'opacity-50' : ''
               }`}
             >
@@ -331,39 +323,6 @@ export default function RacesPage() {
                         </Badge>
                       )}
                     </div>
-
-                    {/* Run Lists */}
-                    {race.runListCount > 0 && (
-                      <div className="pt-2 border-t">
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {race.runListCount === 1
-                            ? 'Used in 1 run list:'
-                            : `Used in ${race.runListCount} run lists:`}
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {race.runLists.slice(0, 3).map((rl) => (
-                            <Badge
-                              key={rl.id}
-                              variant="outline"
-                              className="text-xs"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                router.push(`/run-lists/${rl.id}`)
-                              }}
-                            >
-                              <Globe className="h-2.5 w-2.5 mr-1" />
-                              <span className="truncate max-w-[120px]">{rl.name}</span>
-                            </Badge>
-                          ))}
-                          {race.runListCount > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{race.runListCount - 3}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </Link>

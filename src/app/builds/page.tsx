@@ -226,7 +226,7 @@ export default function BuildsPage() {
           {filteredBuilds.map((build) => (
             <div
               key={build.id}
-              className="group relative flex items-start gap-2 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors"
+              className="group relative flex items-start gap-2 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer"
             >
               <Link href={`/builds/${build.id}`} className="flex-1 min-w-0">
                 <div className="flex items-start gap-3 w-full p-3 sm:p-4">

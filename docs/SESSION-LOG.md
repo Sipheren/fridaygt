@@ -5527,3 +5527,94 @@ None - all hover states now consistent across the application.
 - UI consistent across pages
 - Lap times now build-centric
 - All selection components working properly
+
+## Session: 2026-01-19 #14 - Project Cleanup & Tonight Page Redesign
+
+### Overview
+**CLEANUP & POLISH**: Removed unused features, fixed cursor pointers, mobile audit, redesigned Tonight page.
+
+### Cursor Pointer Audit
+**Files Modified**:
+- `src/components/ui/button.tsx` - Added `cursor-pointer` to base button class
+
+**Issue**: Links and buttons weren't showing pointer cursor on hover
+**Fix**: Added `cursor-pointer` to buttonVariants base class in button.tsx
+**Result**: All buttons now show hand cursor on hover
+
+### Project Cleanup
+**Removed Files**:
+- `src/app/run-lists/` - Run lists pages (3 files)
+- `src/app/sessions/` - Sessions pages (1 file)
+- `src/app/cars/` - Cars pages (not in navigation)
+- `src/app/tracks/` - Tracks pages (not in navigation)
+- `src/app/test-loading/` - Test page
+- `src/app/api/run-lists/` - Run lists API (6 files)
+- `src/app/api/sessions/` - Sessions API (4 files)
+- `src/app/api/cars/` - Cars API
+- `src/app/api/tracks/` - Tracks API
+- `seed-data/` - Old seed data directory
+- `scripts/parse-gt7-data.ts` - Unused script
+- `scripts/seed-database.ts.bak` - Backup file
+
+**Files Modified**:
+- `src/app/races/page.tsx` - Removed run-list references and UI
+- `src/app/races/[id]/edit/page.tsx` - Fixed AllBuild interface (added slug)
+- `src/app/races/new/page.tsx` - Fixed Build interface (added slug)
+- `src/components/lap-times/LapTimeForm.tsx` - Fixed Build interface (added slug)
+- `README.md` - Complete rewrite to reflect current state
+
+### Type Fixes
+**Issue**: TypeScript build errors for missing `slug` property on Car interface
+**Fix**: Added `slug: string` to car object in:
+- `src/app/races/[id]/edit/page.tsx` (AllBuild interface)
+- `src/app/races/new/page.tsx` (Build interface)
+- `src/components/lap-times/LapTimeForm.tsx` (Build interface)
+
+### Mobile UX Audit
+**Pages Tested**: Tonight, Builds, Races, Lap Times, Profile
+**Touch Targets**: 574 total, only 5 below 44px (acceptable)
+**Result**: All pages mobile-optimized and working correctly
+
+### Tonight Page Redesign
+**File**: `src/app/tonight/page.tsx`
+
+**Design Improvements**:
+- Hero section with gradient background and animated pattern overlay
+- Live badge with ping animation effect
+- Changed title from "Tonight's Racing" to "Race List"
+- 2-column grid changed to full-width list layout (max-w-4xl)
+- Enhanced race cards with gradient headers and numbered badges
+- Changed section header from "Cars" to "Builds"
+- Improved empty state with animated glow effect
+- Better footer with gradient and clear CTA
+- Weather icons (🔥 for Dry, 💧 for Wet)
+- Hover effects using gt-card-shine CSS class
+- Removed date/stats (shows only race count)
+
+**Mobile Optimization**:
+- Reduced padding: py-4 on mobile (was py-12)
+- Smaller heading: text-2xl on mobile (was text-4xl)
+- Smaller subtitle: text-base on mobile (was text-xl)
+- Hidden quick stats on mobile (only show on sm+)
+
+**API Fix**:
+- `src/app/api/races/route.ts` - Added `build:CarBuild(id, name, description)` to RaceCar query
+- Race cards now show: "Make Model • Build Name" with build name as clickable link
+
+### Commits
+- `95520f9` - Document build-centric architecture pivot on buildfocussed branch
+- `d057566` - Security audit and headers implementation
+- `9d1735c` - Add user profile page for account management
+- `a138879` - Update project documentation and security settings
+- `cfa76a7` - Update git author email
+- Session commits TBD
+
+### Status
+- All unused features removed from codebase
+- Navigation now: Tonight, Builds, Races, Lap Times
+- Tonight page redesigned and optimized
+- All cursor pointers working correctly
+- Mobile UX verified
+- Build-centric architecture fully implemented
+- Ready to merge to main and deploy
+
