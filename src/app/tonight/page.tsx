@@ -7,321 +7,111 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { LoadingSection } from '@/components/ui/loading'
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import {
-  Plus,
   CheckCircle2,
   Clock,
   MapPin,
   Car as CarIcon,
-  Wrench,
-  List,
-  GripVertical,
+  Radio,
+  Settings,
 } from 'lucide-react'
 
-interface RunList {
+interface Car {
   id: string
   name: string
+  slug: string
+  manufacturer: string
+}
+
+interface RaceCar {
+  id: string
+  carId: string
+  buildId: string
+  car: Car
+  build: {
+    id: string
+    name: string
+    description: string | null
+  }
+}
+
+interface Track {
+  id: string
+  name: string
+  slug: string
+  location: string | null
+  category: string
+  layout: string | null
+  length: number | null
+}
+
+interface Race {
+  id: string
+  name: string | null
   description: string | null
-  isPublic: boolean
+  laps: number | null
+  weather: string | null
   isActive: boolean
   createdAt: string
   updatedAt: string
-  createdBy: {
-    id: string
-    name: string | null
-    email: string
-  }
-  entries: Array<{
-    id: string
-    order: number
-    notes: string | null
-    track: {
-      id: string
-      name: string
-      slug: string
-      layout: string | null
-    }
-    cars: Array<{
-      id: string
-      carId: string
-      buildId: string | null
-      car: {
-        id: string
-        name: string
-        slug: string
-        manufacturer: string
-      }
-      build: {
-        id: string
-        name: string
-        description: string | null
-      } | null
-    }>
-  }>
-}
-
-interface SortableRaceItemProps {
-  entry: RunList['entries'][0]
-  index: number
-  isCurrent: boolean
-  isCompleted: boolean
-  onClick: () => void
-}
-
-function SortableRaceItem({ entry, index, isCurrent, isCompleted, onClick }: SortableRaceItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: entry.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition: transition || 'transform 150ms ease',
-    opacity: isDragging ? 0.5 : 1,
-  }
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      onClick={onClick}
-      className={`relative border-2 rounded-xl transition-all cursor-pointer ${
-        isCurrent
-          ? 'border-destructive bg-destructive/5 shadow-lg scale-[1.02]'
-          : isCompleted
-          ? 'border-secondary/50 bg-secondary/5'
-          : 'border-border hover:border-primary/30 bg-card'
-      }`}
-    >
-      {/* Drag Handle */}
-      <div
-        {...attributes}
-        {...listeners}
-        className="absolute left-2 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing touch-none p-2 rounded-lg hover:bg-muted/50"
-      >
-        <GripVertical className="h-5 w-5 text-muted-foreground" />
-      </div>
-
-      {/* Content */}
-      <div className="pl-12 pr-4 py-4">
-        {/* Race Number Badge */}
-        <div className="flex items-start justify-between mb-3">
-          <Badge
-            variant={isCurrent ? 'destructive' : isCompleted ? 'secondary' : 'outline'}
-            className="text-sm px-3 py-1"
-          >
-            {isCurrent ? 'Current Race' : isCompleted ? 'Completed' : `Upcoming • Race ${index}`}
-          </Badge>
-          {isCompleted && <CheckCircle2 className="h-5 w-5 text-secondary" />}
-        </div>
-
-        {/* Track and Car Info */}
-        <div className="space-y-3">
-          {/* Track */}
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <span className={`font-bold ${isCurrent ? 'text-xl' : 'text-lg'}`}>
-              {entry.track.name}
-              {entry.track.layout && ` - ${entry.track.layout}`}
-            </span>
-          </div>
-
-          {/* Cars */}
-          <div className="flex items-start gap-2">
-            <CarIcon className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
-            <div className="flex-1 space-y-2">
-              {entry.cars && entry.cars.length > 0 ? (
-                entry.cars.map((carEntry) => (
-                  <div key={carEntry.id} className="flex items-baseline gap-2 flex-wrap">
-                    <span className={`font-semibold ${isCurrent ? 'text-lg' : 'text-base'}`}>
-                      {carEntry.car.manufacturer} {carEntry.car.name}
-                    </span>
-                    {carEntry.build ? (
-                      <>
-                        <span className="text-muted-foreground">•</span>
-                        <Link
-                          href={`/builds/${carEntry.build.id}`}
-                          className="text-sm text-primary hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {carEntry.build.name}
-                        </Link>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-muted-foreground">•</span>
-                        <Button
-                          asChild
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 px-2 text-xs"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Link href="/builds/new">
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add build
-                          </Link>
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <span className="text-muted-foreground">Any Car</span>
-              )}
-            </div>
-          </div>
-
-          {/* Notes */}
-          {entry.notes && (
-            <div className="pt-2 border-t border-border/50">
-              <p className="text-sm text-muted-foreground">{entry.notes}</p>
-            </div>
-          )}
-
-          {/* Action Buttons - Only show on current race */}
-          {isCurrent && (
-            <div className="flex flex-col gap-2 pt-3">
-              <Button asChild size="sm" className="w-full">
-                <Link href="/lap-times/new" onClick={(e) => e.stopPropagation()}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Lap Time
-                </Link>
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
+  track: Track
+  RaceCar: RaceCar[]
 }
 
 export default function TonightPage() {
-  const [runList, setRunList] = useState<RunList | null>(null)
+  const [races, setRaces] = useState<Race[]>([])
   const [loading, setLoading] = useState(true)
-  const [currentRaceIndex, setCurrentRaceIndex] = useState(0)
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
 
   useEffect(() => {
-    fetchActiveRunList()
+    fetchActiveRaces()
   }, [])
 
-  useEffect(() => {
-    if (runList) {
-      const saved = localStorage.getItem(`runlist-${runList.id}-position`)
-      if (saved) {
-        setCurrentRaceIndex(parseInt(saved, 10))
-      }
-    }
-  }, [runList?.id])
-
-  const fetchActiveRunList = async () => {
+  const fetchActiveRaces = async () => {
     try {
-      const res = await fetch('/api/run-lists/active')
+      const res = await fetch('/api/races')
       const data = await res.json()
 
-      setRunList(data.runList || null)
+      // Filter to only active races
+      const activeRaces = (data.races || []).filter((race: Race) => race.isActive)
+      setRaces(activeRaces)
     } catch (error) {
-      console.error('Error fetching active run list:', error)
+      console.error('Error fetching active races:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event
+  const getDisplayName = (race: Race): string => {
+    if (race.name) return race.name
 
-    if (!over || active.id === over.id || !runList) {
-      return
-    }
+    const trackName = race.track?.name || 'Unknown Track'
+    const firstCar = race.RaceCar?.[0]?.car
+    const carName = firstCar ? `${firstCar.manufacturer} ${firstCar.name}` : 'Unknown Car'
 
-    const oldIndex = runList.entries.findIndex((e) => e.id === active.id)
-    const newIndex = runList.entries.findIndex((e) => e.id === over.id)
-
-    if (oldIndex === -1 || newIndex === -1) return
-
-    // Optimistically update UI
-    const newEntries = arrayMove(runList.entries, oldIndex, newIndex)
-    setRunList({ ...runList, entries: newEntries })
-
-    try {
-      // Update order on server (fire and forget)
-      fetch(`/api/run-lists/${runList.id}/reorder`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          entryId: active.id,
-          newOrder: newIndex + 1,
-        }),
-      }).then(async (res) => {
-        if (!res.ok) {
-          console.error('Failed to reorder races')
-          fetchActiveRunList()
-        }
-      }).catch((error) => {
-        console.error('Error reordering races:', error)
-        fetchActiveRunList()
-      })
-    } catch (error) {
-      console.error('Error reordering races:', error)
-      fetchActiveRunList()
-    }
-  }
-
-  const goToRace = (index: number) => {
-    if (!runList) return
-    setCurrentRaceIndex(index)
-    localStorage.setItem(`runlist-${runList.id}-position`, index.toString())
+    return `${trackName} + ${carName}`
   }
 
   if (loading) {
     return <LoadingSection text="Loading tonight's races..." />
   }
 
-  if (!runList) {
+  if (races.length === 0) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <Card className="border-dashed max-w-2xl w-full mx-4">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4">
-              <Clock className="h-16 w-16 text-muted-foreground" />
+              <Radio className="h-16 w-16 text-muted-foreground" />
             </div>
-            <CardTitle className="text-2xl">No Active Run List</CardTitle>
+            <CardTitle className="text-2xl">No Active Races</CardTitle>
             <CardDescription className="text-base">
-              Set a run list as active to use it for tonight's racing!
+              Set races as active to see them here for tonight's racing!
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <Button asChild size="lg">
-              <Link href="/run-lists">
-                <List className="h-4 w-4 mr-2" />
-                View Run Lists
+              <Link href="/races">
+                <Settings className="h-4 w-4 mr-2" />
+                Manage Races
               </Link>
             </Button>
           </CardContent>
@@ -330,85 +120,137 @@ export default function TonightPage() {
     )
   }
 
-  const totalRaces = runList.entries.length
-  const progress = {
-    total: totalRaces,
-    completed: currentRaceIndex,
-    remaining: totalRaces - currentRaceIndex,
-  }
-
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      {/* Run List Header - Nicer Design */}
+      {/* Header */}
       <Card className="border-primary/30 bg-gradient-to-br from-card to-primary/5">
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <CardTitle className="text-3xl">{runList.name}</CardTitle>
-              <CardDescription className="text-base">{runList.description}</CardDescription>
+              <CardTitle className="text-3xl">Tonight's Races</CardTitle>
+              <CardDescription className="text-base">
+                {races.length} {races.length === 1 ? 'race' : 'races'} scheduled
+              </CardDescription>
             </div>
             <Badge variant="destructive" className="text-sm px-3 py-1">
-              Active
+              <Radio className="h-3 w-3 mr-1" />
+              Live
             </Badge>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-secondary" />
-              <span className="font-medium">{progress.completed} completed</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary" />
-              <span className="font-medium">{progress.remaining} remaining</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <List className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{progress.total} total</span>
-            </div>
-          </div>
-        </CardContent>
       </Card>
 
-      {/* Races List - Drag to Reorder */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Race Schedule</CardTitle>
-          <CardDescription>Drag to reorder • Tap to set as current</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {runList.entries.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No races in this run list</p>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={runList.entries.map((e) => e.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-3">
-                  {runList.entries.map((entry, index) => {
-                    const isCurrent = index === currentRaceIndex
-                    const isCompleted = index < currentRaceIndex
+      {/* Races List */}
+      <div className="space-y-4">
+        {races.map((race, index) => (
+          <Link
+            key={race.id}
+            href={`/races/${race.id}`}
+            className="block"
+          >
+            <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  {/* Race Number Badge */}
+                  <div className="shrink-0">
+                    <Badge variant="destructive" className="text-sm px-3 py-1 h-10 flex items-center justify-center">
+                      Race {index + 1}
+                    </Badge>
+                  </div>
 
-                    return (
-                      <SortableRaceItem
-                        key={entry.id}
-                        entry={entry}
-                        index={index + 1}
-                        isCurrent={isCurrent}
-                        isCompleted={isCompleted}
-                        onClick={() => goToRace(index)}
-                      />
-                    )
-                  })}
+                  {/* Race Details */}
+                  <div className="flex-1 space-y-3">
+                    {/* Race Name */}
+                    <h3 className="text-xl font-bold">{getDisplayName(race)}</h3>
+
+                    {/* Track */}
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span className="font-medium">{race.track.name}</span>
+                      {race.track.layout && (
+                        <span className="text-sm">({race.track.layout})</span>
+                      )}
+                    </div>
+
+                    {/* Cars */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <CarIcon className="h-4 w-4" />
+                        <span>
+                          {race.RaceCar.length === 0
+                            ? 'No cars'
+                            : race.RaceCar.length === 1
+                            ? '1 car'
+                            : `${race.RaceCar.length} cars`}
+                        </span>
+                      </div>
+                      {race.RaceCar.length > 0 && (
+                        <div className="pl-6 space-y-1 text-sm">
+                          {race.RaceCar.map((rc) => (
+                            <div key={rc.id} className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {rc.car.manufacturer} {rc.car.name}
+                              </span>
+                              {rc.build && (
+                                <>
+                                  <span className="text-muted-foreground">•</span>
+                                  <Link
+                                    href={`/builds/${rc.build.id}`}
+                                    className="text-primary hover:underline"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {rc.build.name}
+                                  </Link>
+                                </>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Configuration */}
+                    <div className="flex items-center gap-2 flex-wrap pt-2">
+                      {race.laps && (
+                        <Badge variant="outline" className="text-xs">
+                          {race.laps} laps
+                        </Badge>
+                      )}
+                      {race.weather && (
+                        <Badge variant="outline" className="text-xs">
+                          {race.weather}
+                        </Badge>
+                      )}
+                      {race.track.length && (
+                        <Badge variant="outline" className="text-xs">
+                          {race.track.length}km
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Description */}
+                    {race.description && (
+                      <div className="pt-2 border-t">
+                        <p className="text-sm text-muted-foreground">{race.description}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </SortableContext>
-            </DndContext>
-          )}
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <Card className="bg-muted/50 border-dashed">
+        <CardContent className="p-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            Want to modify tonight's races?{' '}
+            <Link href="/races" className="text-primary hover:underline font-medium">
+              Manage races
+            </Link>
+          </p>
         </CardContent>
       </Card>
     </div>

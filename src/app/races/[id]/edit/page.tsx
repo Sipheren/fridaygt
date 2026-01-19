@@ -20,6 +20,7 @@ import { QuickBuildModal } from '@/components/builds/QuickBuildModal'
 import { ArrowLeft, Loader2, MapPin, Save } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 import Link from 'next/link'
+import { Switch } from '@/components/ui/switch'
 
 interface Car {
   id: string
@@ -65,6 +66,7 @@ interface RaceData {
   description: string | null
   laps: number | null
   weather: string | null
+  isActive: boolean
   track: Track
   RaceCar: {
     id: string
@@ -94,6 +96,7 @@ export default function EditRacePage() {
     buildIds: [] as string[],
     laps: '',
     weather: '' as 'dry' | 'wet' | '',
+    isActive: false,
   })
 
   // Fetch race data and builds on mount
@@ -122,6 +125,7 @@ export default function EditRacePage() {
           buildIds: raceData.race.RaceCar?.map((rc: any) => rc.buildId) || [],
           laps: raceData.race.laps?.toString() || '',
           weather: raceData.race.weather || '',
+          isActive: raceData.race.isActive || false,
         })
       } catch (err) {
         console.error('Error fetching data:', err)
@@ -189,6 +193,7 @@ export default function EditRacePage() {
           buildIds: formData.buildIds,
           laps: formData.laps ? parseInt(formData.laps) : null,
           weather: formData.weather || null,
+          isActive: formData.isActive,
         }),
       })
 
@@ -318,6 +323,25 @@ export default function EditRacePage() {
               buildsLoading={buildsLoading}
               allowDuplicateCars={true}
               placeholder="Select builds..."
+            />
+          </div>
+
+          {/* Active Race Toggle */}
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+            <div className="space-y-0.5">
+              <Label htmlFor="isActive" className="text-base font-semibold">
+                Active Race
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Show this race on the Tonight page
+              </p>
+            </div>
+            <Switch
+              id="isActive"
+              checked={formData.isActive}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, isActive: checked })
+              }
             />
           </div>
 

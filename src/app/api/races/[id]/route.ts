@@ -224,7 +224,7 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { name, description, buildIds, laps, weather } = body
+    const { name, description, buildIds, laps, weather, isActive } = body
 
     const supabase = createServiceRoleClient()
 
@@ -285,6 +285,7 @@ export async function PATCH(
     if (description !== undefined) updates.description = description || null
     if (laps !== undefined) updates.laps = laps || null
     if (weather !== undefined) updates.weather = weather || null
+    if (isActive !== undefined) updates.isActive = isActive
     // Note: trackId is NOT updatable - track is immutable for races
 
     // Update race basic info
@@ -298,6 +299,7 @@ export async function PATCH(
         description,
         laps,
         weather,
+        isActive,
         createdAt,
         updatedAt,
         track:Track(id, name, slug, location, length, category, layout),

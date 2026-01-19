@@ -63,7 +63,6 @@ export async function GET(req: NextRequest) {
           ...race,
           track,
           RaceCar: raceCars || [],
-          isActive: runLists.length > 0,
           runLists,
           runListCount: runLists.length
         }
@@ -111,7 +110,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { trackId, buildIds, name, description, laps, weather } = body
+    const { trackId, buildIds, name, description, laps, weather, isActive } = body
 
     // Validation
     if (!trackId) {
@@ -187,6 +186,7 @@ export async function POST(req: NextRequest) {
         createdById: session.user.id,
         laps: laps || null,
         weather: weather || null,
+        isActive: isActive || false,
       })
       .select()
       .single()

@@ -31,7 +31,6 @@ export function Header({ user }: HeaderProps) {
     { href: '/tonight', label: 'Tonight' },
     { href: '/cars', label: 'Cars' },
     { href: '/builds', label: 'Builds' },
-    { href: '/run-lists', label: 'Run Lists' },
     { href: '/lap-times', label: 'Lap Times' },
   ]
 

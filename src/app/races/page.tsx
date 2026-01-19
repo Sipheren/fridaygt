@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import {
   Dialog,
   DialogContent,
@@ -13,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { MapPin, Car, Plus, List, Globe, Search, Trash2 } from 'lucide-react'
+import { MapPin, Car, Plus, List, Globe, Search, Trash2, Power } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 import Link from 'next/link'
 
@@ -130,6 +131,30 @@ export default function RacesPage() {
     const carName = firstCar ? `${firstCar.manufacturer} ${firstCar.name}` : 'Unknown Car'
 
     return `${trackName} + ${carName}`
+  }
+
+  const toggleActiveRace = async (raceId: string, currentState: boolean) => {
+    try {
+      const res = await fetch(`/api/races/${raceId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !currentState }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        alert(data.error || 'Failed to update race')
+        return
+      }
+
+      // Optimistically update the UI
+      setRaces(races.map(race =>
+        race.id === raceId ? { ...race, isActive: !currentState } : race
+      ))
+    } catch (error) {
+      console.error('Error toggling race active status:', error)
+      alert('Failed to update race')
+    }
   }
 
   const filteredRaces = races.filter((race) => {
@@ -343,8 +368,28 @@ export default function RacesPage() {
                 </div>
               </Link>
 
-            {/* Delete Button */}
-            <div className="p-2 sm:p-4 shrink-0">
+            {/* Action Buttons */}
+            <div className="p-2 sm:p-4 shrink-0 flex gap-1">
+              {/* Active Toggle */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  toggleActiveRace(race.id, race.isActive)
+                }}
+                className={`shrink-0 h-11 w-11 sm:h-9 sm:w-9 ${
+                  race.isActive
+                    ? 'text-primary hover:text-primary hover:bg-primary/10'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title={race.isActive ? 'Deactivate race' : 'Activate race'}
+              >
+                <Power className="h-4 w-4" />
+              </Button>
+
+              {/* Delete Button */}
               <Button
                 variant="ghost"
                 size="icon"
