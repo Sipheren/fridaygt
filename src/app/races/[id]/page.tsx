@@ -312,28 +312,6 @@ export default function RaceDetailPage() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
-                <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-muted-foreground">Total Laps</p>
-                  <p className="text-xl sm:text-2xl font-bold">{statistics.totalLaps}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-muted-foreground">Drivers</p>
-                  <p className="text-xl sm:text-2xl font-bold">{statistics.uniqueDrivers}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
                 <Target className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500 shrink-0" />
                 <div className="min-w-0">
                   <p className="text-xs sm:text-sm text-muted-foreground">Fastest Lap</p>
