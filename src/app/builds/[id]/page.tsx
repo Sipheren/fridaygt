@@ -38,7 +38,7 @@ interface BuildUpgrade {
 
 interface BuildSetting {
   id: string
-  category: string
+  section: string
   setting: string
   value: string
 }
@@ -161,12 +161,12 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     return acc
   }, {} as Record<string, BuildUpgrade[]>) || {}
 
-  // Group settings by category
+  // Group settings by section
   const groupedSettings = build?.settings.reduce((acc, setting) => {
-    if (!acc[setting.category]) {
-      acc[setting.category] = []
+    if (!acc[setting.section]) {
+      acc[setting.section] = []
     }
-    acc[setting.category].push(setting)
+    acc[setting.section].push(setting)
     return acc
   }, {} as Record<string, BuildSetting[]>) || {}
 
@@ -239,20 +239,20 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Button
-              variant="outline"
+              variant="ghostBordered"
               size="sm"
               onClick={handleClone}
               disabled={cloning}
-              className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary w-full sm:w-auto min-h-[44px]"
+              className="w-full sm:w-auto min-h-[44px]"
             >
               <Copy className="h-4 w-4 mr-2" />
               {cloning ? 'Cloning...' : 'Clone'}
             </Button>
             <Button
-              variant="outline"
+              variant="ghostBordered"
               size="sm"
               onClick={() => router.push(`/builds/${id}/edit`)}
-              className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary w-full sm:w-auto min-h-[44px]"
+              className="w-full sm:w-auto min-h-[44px]"
             >
               <Edit className="h-4 w-4 mr-2" />
               Edit
@@ -278,7 +278,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
             <p className="text-muted-foreground font-mono text-xs">CAR</p>
             <Link
               href={`/cars/${build.car.slug}`}
-              className="font-semibold hover:text-primary transition-colors"
+              className="font-semibold hover:text-primary gt-hover-heading"
             >
               {build.car.manufacturer} {build.car.name}
             </Link>

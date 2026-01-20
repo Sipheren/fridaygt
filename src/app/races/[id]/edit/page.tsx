@@ -227,7 +227,7 @@ export default function EditRacePage() {
       <div className="container max-w-4xl mx-auto py-8 px-4">
         <div className="text-center py-12">
           <p className="text-muted-foreground">Race not found</p>
-          <Link href="/races" className="text-primary hover:underline">
+          <Link href="/races" className="gt-hover-text-link">
             Back to Races
           </Link>
         </div>
@@ -241,7 +241,7 @@ export default function EditRacePage() {
       <div className="mb-8">
         <Link
           href={`/races/${raceId}`}
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground gt-hover-text-link mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Race

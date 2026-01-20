@@ -9,16 +9,20 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:bg-primary",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-destructive text-white border border-border hover:bg-background hover:text-foreground focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "border bg-background shadow-xs hover:bg-primary/5 hover:text-primary-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "border bg-background shadow-xs hover:bg-destructive/5 hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-destructive/5",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-secondary text-secondary-foreground hover:bg-secondary",
         ghost:
-          "hover:bg-primary/5 hover:text-primary-foreground dark:hover:bg-primary/50",
+          "hover:bg-destructive/5 hover:text-accent-foreground dark:hover:bg-destructive/5",
         link: "text-primary underline-offset-4 hover:underline",
+        ghostBordered:
+          "border border-border hover:border-primary hover:bg-destructive/5 dark:hover:bg-destructive/5",
+        linkGlow:
+          "transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

@@ -206,7 +206,7 @@ export function TrackLapTimes({ trackSlug, trackName }: TrackLapTimesProps) {
 
                 {/* Quick Actions */}
                 <div className="flex flex-col gap-2">
-                  <Button asChild size="sm" className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary">
+                  <Button asChild variant="linkGlow" size="sm">
                     <Link href={`/cars/${car.slug}`}>
                       View Car Details
                     </Link>
@@ -232,7 +232,7 @@ export function TrackLapTimes({ trackSlug, trackName }: TrackLapTimesProps) {
 
       {/* Link to All Lap Times */}
       <div className="pt-4 border-t border-border">
-        <Button asChild variant="outline" className="w-full transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary">
+        <Button asChild variant="linkGlow" className="w-full">
           <Link href="/lap-times">
             <TrendingDown className="h-4 w-4 mr-2" />
             View All Your Lap Times

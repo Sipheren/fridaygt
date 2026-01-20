@@ -225,7 +225,7 @@ export default function RaceDetailPage() {
           <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <MapPin className="h-4 w-4 shrink-0" />
-              <Link href={`/tracks/${race.track.slug}`} className="hover:underline">
+              <Link href={`/tracks/${race.track.slug}`} className="gt-hover-text-link">
                 {race.track.name}
                 {race.track.layout && ` - ${race.track.layout}`}
               </Link>
@@ -267,7 +267,7 @@ export default function RaceDetailPage() {
               const car = raceCar.car
               return (
                 <Link key={raceCar.id} href={`/cars/${car.slug}`} className="block h-full">
-                  <Card className="hover:bg-accent/50 transition-colors cursor-pointer h-full min-h-[140px]">
+                  <Card className="gt-hover-card h-full min-h-[140px]">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         {car.imageUrl && (
@@ -355,7 +355,7 @@ export default function RaceDetailPage() {
               {leaderboard.map((entry) => (
                 <div
                   key={`${entry.userId}-${entry.carId}-${entry.buildId || 'none'}`}
-                  className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg hover:bg-accent/50"
+                  className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 gt-hover-card"
                 >
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 font-bold text-primary shrink-0">
                     {entry.position}
@@ -416,7 +416,7 @@ export default function RaceDetailPage() {
                 <p className="text-sm text-muted-foreground mb-2">Recent Laps</p>
                 <div className="space-y-1">
                   {userStats.recentLaps.slice(0, 5).map((lap) => (
-                    <div key={lap.id} className="flex items-center justify-between text-sm p-2 rounded hover:bg-accent/50">
+                    <div key={lap.id} className="flex items-center justify-between text-sm p-2 rounded gt-hover-card">
                       <div className="flex-1 min-w-0">
                         <span className="font-mono font-bold text-xs sm:text-sm">{formatLapTime(lap.timeMs)}</span>
                         {lap.build && (
@@ -455,7 +455,7 @@ export default function RaceDetailPage() {
                   href={`/run-lists/${ref.runList.id}`}
                   className="block"
                 >
-                  <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+                  <Card className="gt-hover-card">
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">

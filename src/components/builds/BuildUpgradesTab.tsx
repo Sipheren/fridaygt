@@ -33,7 +33,7 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeToggle }: BuildUpg
                 'justify-start min-h-[44px]',
                 activeCategory === category.name
                   ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-primary/5'
+                  : ''
               )}
               onClick={() => setActiveCategory(category.name)}
             >
@@ -65,7 +65,7 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeToggle }: BuildUpg
                     'flex items-center space-x-3 rounded-lg border p-3 transition-colors min-h-[44px]',
                     isChecked
                       ? 'bg-primary/10 border-primary/30'
-                      : 'border-border hover:bg-primary/5'
+                      : 'border-border gt-hover-card'
                   )}
                 >
                   <Checkbox

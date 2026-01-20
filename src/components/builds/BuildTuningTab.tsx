@@ -33,7 +33,7 @@ export function BuildTuningTab({ tuningSettings, onSettingChange }: BuildTuningT
                 'justify-start min-h-[44px]',
                 activeSection === section.name
                   ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-primary/5'
+                  : ''
               )}
               onClick={() => setActiveSection(section.name)}
             >

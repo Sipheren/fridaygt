@@ -137,7 +137,7 @@ export function TrackBuilds({ trackId, trackName }: TrackBuildsProps) {
           onClick={() => router.push('/builds')}
           size="sm"
           variant="outline"
-          className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary"
+          className="gt-hover-link-btn"
         >
           View All Builds
         </Button>
@@ -163,12 +163,12 @@ export function TrackBuilds({ trackId, trackName }: TrackBuildsProps) {
             <Link
               key={build.id}
               href={`/builds/${build.id}`}
-              className="border border-border rounded-lg p-4 space-y-3 hover:border-primary/50 transition-colors group"
+              className="border border-border rounded-lg p-4 space-y-3 gt-hover-card group"
             >
               {/* Build Header */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 space-y-1">
-                  <h3 className="text-lg font-bold group-hover:text-primary transition-colors">
+                  <h3 className="text-lg font-bold group-hover:text-primary gt-hover-heading">
                     {build.name}
                   </h3>
                   <p className="text-sm text-muted-foreground">

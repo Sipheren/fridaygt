@@ -135,7 +135,7 @@ export function CarLapTimes({ carSlug, carName }: CarLapTimesProps) {
             onClick={() => router.push('/lap-times')}
             size="sm"
             variant="outline"
-            className="transition-all hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary"
+            className="gt-hover-link-btn"
           >
             View All Your Lap Times
           </Button>
@@ -188,14 +188,14 @@ export function CarLapTimes({ carSlug, carName }: CarLapTimesProps) {
           {lapTimesByTrack.map((trackData) => (
             <div
               key={trackData.track.id}
-              className="border border-border rounded-lg p-4 space-y-3 hover:border-secondary/50 transition-colors"
+              className="border border-border rounded-lg p-4 space-y-3 gt-hover-card"
             >
               {/* Track Header */}
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="flex-1 space-y-1">
                   <Link
                     href={`/tracks/${trackData.track.slug}`}
-                    className="text-lg font-bold hover:text-secondary transition-colors"
+                    className="text-lg font-bold hover:text-secondary gt-hover-heading"
                   >
                     {trackData.track.name}
                   </Link>

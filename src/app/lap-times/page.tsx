@@ -201,7 +201,7 @@ export default function LapTimesPage() {
             return (
               <div
                 key={lap.id}
-                className="w-full h-auto p-4 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors"
+                className="w-full h-auto p-4 border border-border rounded-lg hover:border-primary gt-hover-card"
               >
                 <div className="flex items-start justify-between gap-4 w-full">
                     <div className="flex-1 space-y-2">
@@ -265,7 +265,7 @@ export default function LapTimesPage() {
                       size="sm"
                       onClick={() => openDeleteDialog(lap)}
                       disabled={deletingId === lap.id}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-11 w-11 sm:h-10 sm:w-auto sm:px-3"
+                      className="gt-hover-icon-btn-destructive h-11 w-11 sm:h-10 sm:w-auto sm:px-3"
                     >
                       {deletingId === lap.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />

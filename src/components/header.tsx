@@ -67,7 +67,7 @@ export function Header({ user }: HeaderProps) {
                     ? 'text-destructive hover:text-destructive/80 font-bold'
                     : pathname === item.href
                     ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-primary'
+                    : 'text-muted-foreground gt-hover-text-link'
                 }`}
               >
                 {item.label === 'Tonight' && (

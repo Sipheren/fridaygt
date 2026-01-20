@@ -242,7 +242,7 @@ export default function AdminUsersPage() {
                   <Button
                     onClick={() => updateUserRole(user.id, 'USER')}
                     disabled={processingId === user.id}
-                    className="w-full sm:w-auto min-h-[44px] bg-accent hover:bg-accent/80"
+                    className="w-full sm:w-auto min-h-[44px] bg-accent hover:bg-accent"
                   >
                     {processingId === user.id && processingAction === 'approve' ? (
                       <>

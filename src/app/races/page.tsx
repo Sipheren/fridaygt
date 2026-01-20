@@ -253,7 +253,7 @@ export default function RacesPage() {
           {filteredRaces.map((race) => (
             <div
               key={race.id}
-              className={`group relative flex items-start gap-2 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer ${
+              className={`group relative flex items-start gap-2 gt-hover-card ${
                 !race.isActive ? 'opacity-50' : ''
               }`}
             >
@@ -340,7 +340,7 @@ export default function RacesPage() {
                 }}
                 className={`shrink-0 h-11 w-11 sm:h-9 sm:w-9 ${
                   race.isActive
-                    ? 'text-primary hover:text-primary hover:bg-primary/10'
+                    ? 'gt-hover-icon-btn-primary'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
                 title={race.isActive ? 'Deactivate race' : 'Activate race'}
@@ -358,7 +358,7 @@ export default function RacesPage() {
                   deleteRace(race.id)
                 }}
                 disabled={deletingRaceId === race.id}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 h-11 w-11 sm:h-9 sm:w-9"
+                className="gt-hover-icon-btn-destructive shrink-0 h-11 w-11 sm:h-9 sm:w-9"
               >
                 {deletingRaceId === race.id ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />

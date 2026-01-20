@@ -140,7 +140,7 @@ export function BuildSelector({
               {!disabled && (
                 <button
                   onClick={() => removeBuild(build.id)}
-                  className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
+                  className="ml-1 gt-hover-icon-btn-destructive rounded-full p-0.5"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -242,7 +242,7 @@ export function BuildSelector({
                           <div
                             key={build.id}
                             className={cn(
-                              'flex items-start gap-3 px-2 py-2 rounded-md cursor-pointer hover:bg-accent transition-colors',
+                              'flex items-start gap-3 px-2 py-2 rounded-md cursor-pointer gt-hover-card',
                               isSelected && 'bg-accent'
                             )}
                             onClick={() => toggleBuild(build.id)}

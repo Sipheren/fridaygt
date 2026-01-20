@@ -226,7 +226,7 @@ export default function BuildsPage() {
           {filteredBuilds.map((build) => (
             <div
               key={build.id}
-              className="group relative flex items-start gap-2 border border-border rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer"
+              className="group relative flex items-start gap-2 gt-hover-card"
             >
               <Link href={`/builds/${build.id}`} className="flex-1 min-w-0">
                 <div className="flex items-start gap-3 w-full p-3 sm:p-4">
@@ -310,7 +310,7 @@ export default function BuildsPage() {
                     deleteBuild(build.id)
                   }}
                   disabled={deletingBuildId === build.id}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 h-11 w-11 sm:h-9 sm:w-9"
+                  className="gt-hover-icon-btn-destructive shrink-0 h-11 w-11 sm:h-9 sm:w-9"
                   title="Delete build"
                 >
                   {deletingBuildId === build.id ? (

@@ -222,7 +222,7 @@ export default function NewRacePage() {
       <div className="mb-8">
         <Link
           href="/races"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground gt-hover-text-link mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Races

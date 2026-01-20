@@ -156,6 +156,37 @@
     left: 100%;
   }
 
+  /* Global Hover Utilities */
+  .gt-hover-card {
+    @apply border border-border rounded-lg transition-colors cursor-pointer;
+    @apply hover:border-primary hover:bg-destructive/5;
+  }
+
+  .gt-hover-icon-btn-destructive {
+    @apply text-destructive transition-colors;
+    @apply hover:bg-destructive/5;
+  }
+
+  .gt-hover-icon-btn-primary {
+    @apply text-primary transition-colors;
+    @apply hover:bg-destructive/5;
+  }
+
+  .gt-hover-link-btn {
+    @apply transition-all;
+    @apply hover:shadow-lg hover:shadow-primary/30 hover:border-primary hover:text-primary;
+  }
+
+  .gt-hover-text-link {
+    @apply transition-colors;
+    @apply hover:text-primary hover:underline;
+  }
+
+  .gt-hover-heading {
+    @apply transition-colors;
+    @apply hover:text-primary;
+  }
+
   /* Racing wheel loading animation */
   @keyframes tire-spin {
     0% {
