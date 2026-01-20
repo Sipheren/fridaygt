@@ -1,5 +1,130 @@
 # FridayGT Development Session Log
 
+## Session: 2026-01-21 #12 - UI Consistency: Edit Page Unification & Hover Visibility Improvements
+
+### Overview
+**DESIGN SYSTEM POLISH**: Unified button styling across all detail/edit pages and fixed invisible hover states on buttons and tabs for better user feedback.
+
+---
+
+### Part 1: Edit Page Unification
+
+**Problem:**
+- Build detail and edit pages had consistent button styling
+- Race detail and edit pages used different button variants
+- Inconsistent visual language across similar page types
+- Some buttons missing proper touch targets (`min-h-[44px]`)
+
+**Solution:**
+Standardized all detail/edit page action buttons to use:
+- `variant="ghostBordered"` for secondary actions (Edit, Cancel)
+- `min-h-[44px]` for proper touch targets (WCAG 2.1 AAA compliance)
+- Consistent icon placement with text
+
+**Files Modified:**
+
+1. **Race Detail Page** (`src/app/races/[id]/page.tsx`)
+   - Added `Edit` icon to imports
+   - Updated Edit button (line 217-223):
+     - Changed `variant="outline"` → `variant="ghostBordered"`
+     - Added `<Edit className="h-4 w-4 mr-2" />` icon
+     - Added `min-h-[44px]` class
+
+2. **Race Edit Page** (`src/app/races/[id]/edit/page.tsx`)
+   - Updated Cancel button (line 386-394):
+     - Changed `variant="outline"` → `variant="ghostBordered"`
+     - Added `min-h-[44px]` class
+   - Updated Save button (line 395-404):
+     - Added `min-h-[44px]` class
+
+**Result:**
+All detail/edit pages now have uniform button styling:
+- Build Detail: Clone (ghostBordered) | Edit (ghostBordered) | Delete (destructive)
+- Build Edit: Save (default)
+- Race Detail: Edit (ghostBordered) ✨
+- Race Edit: Cancel (ghostBordered) | Save (default) ✨
+
+---
+
+### Part 2: Hover Visibility Improvements
+
+**Problem 1: Default Button Hover Invisible**
+- Buttons using `variant="default"` had `hover:bg-primary` (no change on hover)
+- No visual feedback when hovering over primary action buttons
+- Users couldn't tell if buttons were interactive
+- Example: "Create Build" button on builds list
+
+**Problem 2: Tab Triggers Had No Hover State**
+- TabsTrigger component had no `hover:` classes defined
+- Hovering over inactive tabs produced zero visual feedback
+- Users couldn't tell tabs were clickable
+- Used on: Build Edit page (Upgrades/Tuning tabs)
+
+**Solution:**
+
+1. **Button Default Variant** (`src/components/ui/button.tsx:12`)
+   - Changed `hover:bg-primary` → `hover:bg-primary/80`
+   - Creates visible 20% darkening effect on hover
+   - Applies to all primary action buttons site-wide
+
+2. **Tabs Triggers** (`src/components/ui/tabs.tsx:45`)
+   - Added `hover:bg-background/50` - semi-transparent background on hover
+   - Added `hover:border-border` - subtle border appears on hover
+   - Updated transition: `transition-[color,background-color,border-color,box-shadow]`
+   - Applies to all tab components site-wide
+
+**Visual Hierarchy Achieved:**
+
+**Tabs:**
+- Inactive: Transparent on muted gray background
+- Hover: 50% background + border → "I'm interactive!"
+- Active: 100% background + shadow → "I'm selected!"
+
+**Buttons:**
+- Normal: Solid primary color (100%)
+- Hover: 80% primary color (noticeable dim)
+- Clear interactive feedback
+
+**Files Modified:**
+- `src/components/ui/button.tsx`
+- `src/components/ui/tabs.tsx`
+- `src/app/races/[id]/page.tsx` (for Edit icon import)
+
+**Result:**
+- All primary buttons now have visible hover feedback
+- All tabs now show clear interactive state on hover
+- UI feels much more responsive and polished
+- Better accessibility (WCAG requires visible feedback for interactive elements)
+
+---
+
+### Files Modified This Session
+
+**UI Components:**
+- `src/components/ui/button.tsx` - Default variant hover improved
+- `src/components/ui/tabs.tsx` - Added hover states
+
+**Pages:**
+- `src/app/races/[id]/page.tsx` - Edit button styling unified
+- `src/app/races/[id]/edit/page.tsx` - Action buttons styling unified
+
+---
+
+### Verification
+
+- ✅ Site builds successfully with no errors
+- ✅ All detail/edit pages have consistent button styling
+- ✅ All buttons show visible hover effect
+- ✅ All tabs show visible hover effect
+- ✅ Touch targets meet accessibility standards (44px minimum)
+
+---
+
+### Status
+**COMPLETED** - Edit pages unified, hover visibility improved globally
+
+---
+
 ## Session: 2026-01-19 #11 - Build-Centric Race System Polish & UX Improvements
 
 ### Overview

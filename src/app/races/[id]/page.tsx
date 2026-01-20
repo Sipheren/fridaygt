@@ -22,6 +22,7 @@ import {
   List,
   ChevronRight,
   Plus,
+  Edit,
 } from 'lucide-react'
 import Link from 'next/link'
 import { LoadingSection } from '@/components/ui/loading'
@@ -215,7 +216,8 @@ export default function RaceDetailPage() {
               {race.name || `${race.track.name} - ${race.RaceCar.length} build${race.RaceCar.length > 1 ? 's' : ''}`}
             </h1>
             <Link href={`/races/${race.id}/edit`} className="shrink-0">
-              <Button variant="outline" size="sm">
+              <Button variant="ghostBordered" size="sm" className="min-h-[44px]">
+                <Edit className="h-4 w-4 mr-2" />
                 Edit Race
               </Button>
             </Link>

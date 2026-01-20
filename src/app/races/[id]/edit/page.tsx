@@ -385,13 +385,19 @@ export default function EditRacePage() {
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button
               type="button"
-              variant="outline"
+              variant="ghostBordered"
               onClick={() => router.replace(`/races/${raceId}`)}
               disabled={saving}
+              className="min-h-[44px]"
             >
               Cancel
             </Button>
-            <Button type="button" onClick={handleSubmit} disabled={saving}>
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              disabled={saving}
+              className="min-h-[44px]"
+            >
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               <Save className="h-4 w-4 mr-2" />
               Save Changes
