@@ -67,6 +67,7 @@ FridayGT helps GT7 players track racing performance with a **build-centric archi
 - ✅ **Multiple Cars per Race** - Support for duplicate cars with different builds
 - ✅ **Row-Level Security** - RLS enabled on all user data tables
 - ✅ **Build-Centric Architecture** - Races require builds, leaderboards filter by race builds
+- ✅ **Project Cleanup** - Removed 16 unused dev scripts and legacy data files (data now in DB)
 
 ## Tech Stack
 
@@ -164,7 +165,7 @@ fridaygt/
 │   ├── gt7_courses_combined.csv # 118 tracks and layouts
 │   ├── gt7_parts_shop.csv       # 72 parts across 5 categories
 │   └── gt7_tuning_settings.csv  # 60 settings across 15 sections
-└── scripts/                     # Utility scripts
+└── scripts/                     # Data import utilities (4 scripts)
 ```
 
 ## Database Schema Highlights
