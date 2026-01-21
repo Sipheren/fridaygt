@@ -656,30 +656,15 @@ From Lap Time Form:
 - [x] Create JSON data files with all upgrade options per category
 - [x] Create JSON data files with all tuning setting ranges and defaults
 
-**Created Data Files**:
-- ✅ `/src/data/gt7-upgrades.json` - Comprehensive GT7 upgrade parts database
-  - Engine upgrades (air filters, ECU, intake, throttle, stages 1-5, bore/stroke)
-  - Turbo & Supercharger (low/medium/high/ultra-high RPM variants)
-  - Exhaust (mufflers, manifolds, catalytic converters)
-  - Transmission (clutches, propeller shafts, 5/6/7/8-speed transmissions)
-  - Suspension (sports soft/medium/hard, height-adjustable, racing, customizable)
-  - Brakes (pads, calipers, carbon ceramic)
-  - Drivetrain (LSD variants, torque vectoring)
-  - Weight reduction (stages 1-5, carbon parts)
-  - Body & rigidity (roll cage, wide body)
-  - Tires (comfort, sports, racing, wet, dirt, snow)
-  - Aerodynamics (splitters, wings, undertrays)
-  - Other (nitrous, ballast, power restrictor)
+**Data Files** (Originally static JSON, now migrated to database):
+- ~~`/src/data/gt7-upgrades.json`~~ - **REMOVED** (data now in Part table)
+  - Engine upgrades, Turbo & Supercharger, Exhaust, Transmission
+  - Suspension, Brakes, Drivetrain, Weight reduction
+  - Body & rigidity, Tires, Aerodynamics, Other (nitrous, ballast)
 
-- ✅ `/src/data/gt7-tuning.json` - Complete GT7 tuning settings database
-  - Power settings (power restrictor, ECU output, nitrous duration)
-  - Suspension (ride height, natural frequency, damping, anti-roll bars, camber, toe)
-  - LSD (initial torque, acceleration/braking sensitivity for front/rear)
-  - Transmission (final gear, top speed, individual gear ratios 1-8)
-  - Downforce (front/rear aerodynamic settings)
-  - Brakes (brake balance controller)
-  - Ballast (weight and position)
-  - Torque distribution (AWD front/rear split)
+- ~~`/src/data/gt7-tuning.json`~~ - **REMOVED** (data now in TuningSetting table)
+  - Power settings, Suspension, LSD, Transmission
+  - Downforce, Brakes, Ballast, Torque distribution
 
 **Part 2: Build Management API** ✅ COMPLETED
 - [x] Create car build API routes (POST, GET, PATCH, DELETE /api/builds)
@@ -762,8 +747,8 @@ From Lap Time Form:
 - ✅ `/src/app/builds/[id]/page.tsx` - Build detail/view page
 - ✅ `/src/app/builds/[id]/edit/page.tsx` - Build edit page
 - ✅ `/src/app/builds/new/page.tsx` - Create new build page (with carId pre-fill support)
-- ✅ `/src/data/gt7-upgrades.json` - GT7 upgrade parts data
-- ✅ `/src/data/gt7-tuning.json` - GT7 tuning settings data
+- ~~`/src/data/gt7-upgrades.json`~~ - **REMOVED** (data now in Part table via API)
+- ~~`/src/data/gt7-tuning.json`~~ - **REMOVED** (data now in TuningSetting table via API)
 - ✅ `/src/components/header.tsx` - Updated with Builds navigation link
 - ✅ `/src/components/ui/separator.tsx` - Added from shadcn
 - ✅ `/src/components/ui/tabs.tsx` - Added from shadcn
