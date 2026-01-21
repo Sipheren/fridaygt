@@ -36,8 +36,9 @@ export function Header({ user }: HeaderProps) {
 
   const adminItems = user?.role === 'ADMIN' ? [
     { href: '/admin/users', label: 'Manage Users' },
-    { href: '/admin/settings', label: 'Settings' },
   ] : []
+
+  const settingsItem = { href: '/settings', label: 'Settings' }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-primary/20 bg-background">
@@ -115,6 +116,10 @@ export function Header({ user }: HeaderProps) {
                       </Link>
                     </DropdownMenuItem>
                   ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href={settingsItem.href}>{settingsItem.label}</Link>
+                  </DropdownMenuItem>
                   {adminItems.length > 0 && (
                     <>
                       <DropdownMenuSeparator />
@@ -148,9 +153,9 @@ export function Header({ user }: HeaderProps) {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center gap-2">
+                    <Link href="/settings" className="flex items-center gap-2">
                       <Settings className="h-4 w-4" />
-                      Profile
+                      Settings
                     </Link>
                   </DropdownMenuItem>
                   {adminItems.length > 0 && (
@@ -161,9 +166,9 @@ export function Header({ user }: HeaderProps) {
                           <Link href={item.href}>{item.label}</Link>
                         </DropdownMenuItem>
                       ))}
-                      <DropdownMenuSeparator />
                     </>
                   )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="cursor-pointer"
                     onClick={() => signOut({ callbackUrl: '/' })}
