@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test-emails": "tsx send-test-emails.tsx"
+    "test-emails": "tsx send-test-emails.tsx",
+    "generate:parts": "tsx scripts/generate-parts-shop.ts"
   },
   "dependencies": {
     "@auth/supabase-adapter": "^1.11.1",
