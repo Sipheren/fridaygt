@@ -24,74 +24,47 @@ Building a web application for a racing group that's been doing Friday racing fo
 
 ---
 
-## 🚨 BRANCH: buildfocussed - BUILD-CENTRIC ARCHITECTURE PIVOT
+## ✅ BUILD-CENTRIC ARCHITECTURE (Current - Merged to Main)
 
-**Date**: 2026-01-17
-**Branch**: `buildfocussed` (experimental)
-**Base**: `main` branch at commit `d057566`
+**Original Implementation**: 2026-01-17 to 2026-01-19
+**Merged to Main**: 2026-01-19
+**Status**: ✅ COMPLETE - This is now the active architecture
 
-### ⚠️ ARCHITECTURE CHANGE IN PROGRESS
+### Current Architecture
 
-This document describes the **original architecture** (main branch). The `buildfocussed` branch is implementing a **build-centric pivot** where:
+FridayGT uses a **build-centric** approach where:
 
-**Main Branch Architecture (Original)**:
-- Combo/Race (car+track) is the central hub
-- Builds are optional attachments to cars
-- Lap times can exist independently
-- Flow: Select car → select track → record lap time → optionally attach build
-
-**Buildfocussed Branch Architecture (New)**:
-- **Build becomes the primary entity and central hub**
-- Every lap time must be associated with a build
+- **Build is the primary entity and central hub**
+- Every race must have builds (RaceCar.buildId is NOT NULL)
 - Tracks and cars are organized by the builds that use them
-- Flow: Select build → select track → record lap time
-- Build detail page shows: all lap times, all tracks, run lists, statistics
+- Flow: Select track → select builds (or create new) → record lap times
+- Race detail page shows: all builds, leaderboard, run lists
 
-### Key Changes on buildfocussed Branch
+### Key Architecture Points
 
-1. **Database**: LapTime.buildId becomes REQUIRED (not optional)
-2. **UI**: Build detail page becomes the main dashboard
-3. **Navigation**: "Builds" becomes primary navigation
-4. **Homepage**: Centers on builds (recent, my builds, popular)
-5. **User Flow**: All activities start with build selection
+1. **Database**: RaceCar.buildId is REQUIRED (NOT NULL)
+2. **UI**: Race creation requires build selection
+3. **Navigation**: Races and Builds are primary navigation
+4. **Homepage**: Tonight page shows active races
+5. **User Flow**: Create race → select builds → race night
 
-### Rollback
-If this approach doesn't work: `git checkout main` to return to original architecture.
+### Features Implemented
 
-### Status
-✅ Branch created
-✅ Documentation updated (this file)
-✅ **IMPLEMENTATION COMPLETE** (2026-01-19)
-✅ **POLISHED & OPTIMIZED** (2026-01-19)
-
-The build-centric race system has been fully implemented and refined with:
-- ✅ Complete data reset (except users)
 - ✅ Build-centric race creation flow with inline build modal
 - ✅ Race-specific leaderboards (only builds in race)
 - ✅ Support for duplicate cars in races (multiple builds per car)
 - ✅ Race configuration (laps, weather)
-- ✅ All 552 cars and 118 tracks re-imported
-- ✅ All critical bugs fixed (navigation, performance, UI issues)
 - ✅ Performance optimized (build pre-loading, caching, parallel requests)
-- ✅ Navigation streamlined (removed Home/Tracks/Races pages)
+- ✅ Navigation streamlined
 - ✅ UX improvements (auto-close dropdowns, simplified stats)
-
-**Recent Improvements (Session #11)**:
-- Fixed NextAuth v5 compatibility issues
-- Optimized build selector performance (instant loading)
-- Fixed navigation history issues (router.replace)
-- Fixed build selection display (casing fixes)
-- Simplified race detail statistics
-- Streamlined app navigation
-- Home page redirects to Tonight
 
 ---
 
-## 🔗 SYSTEM INTEGRATION OVERVIEW (main branch architecture)
+## 🔗 SYSTEM INTEGRATION OVERVIEW
 
-**Core Concept**: Everything in FridayGT revolves around **Car + Track Combinations (internally "Combos", user-facing "Races")**. The combo/race is the central hub that connects lap times, run lists, builds, and all other features.
+**Core Concept**: Everything in FridayGT revolves around **Races** (track + builds combinations). The race is the central hub that connects lap times, run lists, and builds.
 
-**Note**: As of 2026-01-11, the UI terminology has been updated from "combo" to "race" for better user-friendliness, while "combo" remains the technical term in code and documentation.
+**Terminology**: "Race" is used in both UI and code. Legacy "combo" terminology has been replaced.
 
 ### How Everything Connects
 
@@ -661,7 +634,7 @@ From Lap Time Form:
 
 ---
 
-## PHASE 5: Car Builds & Tuning ⚠️ IN PROGRESS
+## PHASE 5: Car Builds & Tuning ✅ COMPLETE
 
 **Goals**: Create, save, and share car builds/tunes with full GT7 upgrade and tuning settings
 
@@ -809,7 +782,7 @@ From Lap Time Form:
 
 ---
 
-## PHASE 6: Run Lists & Sessions ⚠️ IN PROGRESS
+## PHASE 6: Run Lists & Sessions ✅ COMPLETE
 
 **Goals**: Create night run lists, manage sessions, integrate with combos and builds
 
@@ -984,7 +957,7 @@ Example 2: Navigating from run list to combo
 
 ---
 
-## PHASE 8: Polish & Optimization ⚠️ IN PROGRESS
+## PHASE 8: Polish & Optimization ✅ COMPLETE
 
 **Goals**: Mobile optimization, performance, animations, UI consistency
 
@@ -1081,309 +1054,162 @@ Example 2: Navigating from run list to combo
 
 ## Current Status
 
-### 🎉 BUILD-CENTRIC RACE SYSTEM IMPLEMENTATION COMPLETE
+### 🎉 PROJECT STATUS: BUILD-CENTRIC ARCHITECTURE COMPLETE
 
-**Date**: 2026-01-19
-**Branch**: `buildfocussed`
-**Base**: `main` at commit `d057566`
+**Date**: 2026-01-21
+**Branch**: `main` (all features merged)
+**Last Commit**: `da88362 Fix parts and tuning system with foreign key relationships`
 
-**Status**: ✅ FULLY IMPLEMENTED
-
-The `buildfocussed` branch has successfully implemented a build-centric race management system:
-
-**Completed Implementation**:
-- ✅ Complete data reset (keeping only User accounts)
-- ✅ Race configuration (laps, weather) added
-- ✅ RaceCar.buildId made NOT NULL
-- ✅ Support for duplicate cars in races (multiple builds per car)
-- ✅ Build-centric race creation flow with inline build modal
-- ✅ Race-specific leaderboards (filtered to builds in race)
-- ✅ All 552 cars re-imported from gt7_cars_combined.csv
-- ✅ All 118 tracks re-imported from gt7_courses_combined.csv
-- ✅ Bug fixes (form submission prevention on tabs)
-
-**Database Changes**:
-- ✅ 20260119_complete_data_reset.sql - Cleared all data except users
-- ✅ 20260119_race_configuration.sql - Added laps/weather, made buildId NOT NULL
-- ✅ New unique constraint on RaceCar (raceId, buildId)
-- ✅ Removed old constraint allowing duplicate builds
-
-**New API Endpoints**:
-- ✅ POST /api/races - Create race with buildIds array
-- ✅ PATCH /api/races/[id] - Update race (builds, laps, weather)
-- ✅ GET /api/races/[id] - Enhanced with race-specific leaderboard
-- ✅ POST /api/builds/quick - Inline build creation
-
-**New UI Components**:
-- ✅ BuildSelector.tsx - Multi-select with search and create button
-- ✅ QuickBuildModal.tsx - Inline build creation modal
-- ✅ BuildUpgradesTab.tsx - Fixed form submission bug
-- ✅ BuildTuningTab.tsx - Fixed form submission bug
-
-**New Pages**:
-- ✅ /races/new - 3-step wizard (Track → Builds → Configure)
-- ✅ /races/[id]/edit - Edit race (track immutable)
-
-**Data Import Scripts**:
-- ✅ import-cars-combined.ts - Import from gt7_cars_combined.csv
-- ✅ import-tracks-combined.ts - Import from gt7_courses_combined.csv
-
-**To return to main**: `git checkout main`
+**Status**: ✅ CORE FEATURES COMPLETE
 
 ---
 
-### Main Branch Status (Original Architecture)
+### Latest Updates (2026-01-21)
 
-**✅ Completed**:
-- Phase 1: Foundation & Setup
-- Phase 2: Core Layout & UI Components
-- Phase 3: GT7 Data Browsing (Part 1 complete - browsing works, images pending)
-- Phase 4: Lap Time Tracking & Integration (Basic CRUD - create/delete only, edit not connected)
-- Phase 5: Car Builds & Tuning (Parts 1-5 complete - database, API, UI, and integrations all working)
-- Phase 6: Run Lists & Sessions (Parts 1-3 complete - run lists and sessions fully functional)
-- Phase 8: Mobile Optimization (COMPLETE - all pages mobile-optimized)
-- Phase 8: UI Consistency Fixes (COMPLETE - hover colors, auth pages, forms)
-- Phase 8: RLS Security Fixes (COMPLETE - next_auth and RunListEntryCar RLS enabled)
+**🔧 Parts & Tuning Database Migration - COMPLETE ✅**
 
-**🚧 Remaining** (on main branch):
-- Phase 3: Images for Cars & Tracks (pending)
+Migrated from static TypeScript files to database-driven system:
+- ✅ Created `PartCategory` table (5 categories)
+- ✅ Created `Part` table (72 parts with FK to categories)
+- ✅ Created `TuningSection` table (15 sections)
+- ✅ Created `TuningSetting` table (60 settings with FK to sections)
+- ✅ Added `partId` FK to `CarBuildUpgrade` table
+- ✅ Added `settingId` FK to `CarBuildSetting` table
+- ✅ Created API endpoints: `/api/parts`, `/api/parts/categories`, `/api/tuning-settings`, `/api/tuning-settings/sections`
+- ✅ Updated `BuildUpgradesTab` and `BuildTuningTab` to fetch from API
+- ✅ All foreign key validations working
+- ✅ Migration scripts: `migrate-parts-to-db.ts`, `generate-parts-shop.ts`
 
-**🔜 Next Up** (on buildfocussed branch):
-1. **Database Changes**: Make LapTime.buildId required
-2. **UI Changes**: Redesign around builds as central hub
-3. **Navigation**: Reorganize to prioritize builds
-4. **Homepage**: Focus on recent builds and build activity
+**🎨 UI Consistency Updates (Session #12) - COMPLETE ✅**
 
-**📊 Database Status**:
-- Users: Ready for signups
-- Tracks: 118 ✓
-- Cars: 552 ✓
-- Builds: Database ready, 1 test build ✓
-- Races: Database schema added (Race, RaceCar tables) ✓
+Edit page unification and hover visibility improvements:
+- ✅ Unified button styling across all detail/edit pages (`ghostBordered` variant)
+- ✅ All action buttons meet WCAG touch targets (44px minimum)
+- ✅ Fixed invisible hover on default buttons (`hover:bg-primary/80`)
+- ✅ Added hover states to tabs (`hover:bg-background/50`, `hover:border-border`)
+- ✅ Consistent visual hierarchy across all interactive elements
 
-**🔑 Admin Access**:
+---
+
+### ✅ Completed Features
+
+**Phase 1: Foundation & Setup** ✅
+- Next.js 15 + TypeScript + Tailwind
+- Supabase Postgres database
+- NextAuth.js v5 authentication
+- Resend email service
+
+**Phase 2: Core Layout & UI** ✅
+- GT-inspired design system
+- Responsive header with navigation
+- Dark/light mode support
+- shadcn/ui component library
+
+**Phase 3: GT7 Data Browsing** ⚠️ Partial
+- ✅ Track database (118 tracks) with browsing
+- ✅ Car database (552 cars) with browsing
+- ❌ Images for cars/tracks (pending)
+
+**Phase 4: Lap Time Tracking** ⚠️ Partial
+- ✅ Create/delete lap times
+- ✅ Build integration (lap times linked to builds)
+- ✅ Track/car integration
+- ❌ Edit lap times UI (endpoint exists, UI not connected)
+- ❌ Global leaderboards page
+
+**Phase 5: Car Builds & Tuning** ✅
+- ✅ Build CRUD (create, read, update, delete, clone)
+- ✅ Parts system (72 parts, 5 categories, database-driven)
+- ✅ Tuning system (60 settings, 15 sections, database-driven)
+- ✅ Build selector in lap time form
+- ✅ Quick build creation modal
+- ✅ Foreign key validation
+
+**Phase 6: Run Lists & Sessions** ✅
+- ✅ Run list CRUD
+- ✅ Run list entries with multiple cars
+- ✅ Tonight page with active races
+- ✅ Session management
+
+**Phase 7: Admin Features** ⚠️ Partial
+- ✅ User management page
+- ✅ Approval workflow
+- ❌ Admin dashboard statistics
+- ❌ Data management UI
+
+**Phase 8: Polish & Optimization** ✅
+- ✅ Mobile responsiveness (all pages)
+- ✅ RLS security policies
+- ✅ Hover states and visual feedback
+- ✅ Button/tab consistency
+
+**Phase 9: Deployment** ❌ Not Started
+
+---
+
+### 📊 Database Status
+
+| Table | Count | Status |
+|-------|-------|--------|
+| Users | Ready | ✅ |
+| Tracks | 118 | ✅ |
+| Cars | 552 | ✅ |
+| PartCategory | 5 | ✅ |
+| Part | 72 | ✅ |
+| TuningSection | 15 | ✅ |
+| TuningSetting | 60 | ✅ |
+| Race | - | ✅ Schema ready |
+| RaceCar | - | ✅ Schema ready |
+| CarBuild | - | ✅ Schema ready |
+| LapTime | - | ✅ Schema ready |
+| RunList | - | ✅ Schema ready |
+
+---
+
+### 🔜 Remaining Work
+
+**High Priority**:
+1. ❌ Connect lap time edit UI (endpoint exists at `/api/lap-times/[id]`)
+2. ❌ Images for cars and tracks (552 cars + 118 tracks)
+
+**Medium Priority**:
+3. ❌ Global leaderboards page
+4. ❌ Admin dashboard with statistics
+5. ❌ Build sharing features (share links, comparison)
+
+**Low Priority**:
+6. ❌ Production deployment to Vercel
+7. ❌ Build ratings/favorites
+8. ❌ Data visualizations (lap time progress charts)
+
+---
+
+### 🔑 Admin Access
 - Email: <no contact>
 - Auto-promoted to ADMIN on first signin
 
-**🎉 Latest Progress (Phase 5 - COMPLETED)**:
-- ✅ Database schema created for Car Builds
-- ✅ GT7 upgrades data file created (100+ parts across 10 categories)
-- ✅ GT7 tuning data file created (40+ settings across 7 categories)
-- ✅ Build Management API fully functional (CRUD + clone)
-- ✅ API tested successfully with sample build data
-- ✅ All builds UI pages created and functional
-- ✅ Builds listing page with filters (all/public/my builds)
-- ✅ Build detail page with statistics and actions
-- ✅ Build creation form with upgrades and tuning tabs
-- ✅ Build edit page with pre-populated data
-- ✅ Clone, edit, and delete functionality working
-- ✅ Added "Builds" navigation link to header
-- ✅ Builds integrated on car detail pages (shows all builds for that car)
-- ✅ Builds integrated on track detail pages (shows builds used on that track)
-- ✅ Builds integrated on combo pages (suggests builds used for that combo)
-- ✅ Build selector added to lap time form (optional field)
-- ✅ Build info displayed on lap time records
-- ✅ Lap times API updated to include build data
-- ✅ **User tested and approved implementation**
+---
 
-**Phase 5 Status**: Parts 1-5 COMPLETE ✅ | Part 6 PENDING (sharing features)
+### 📜 Historical Progress Summary
 
-**🎉 Latest Progress (Phase 6 - IN PROGRESS)**:
+For detailed session-by-session progress, see [`docs/SESSION-LOG.md`](SESSION-LOG.md).
 
-**API Layer - ✅ COMPLETE (16 endpoints)**:
-- ✅ All RunList CRUD endpoints (list, create, get, update, delete)
-- ✅ RunListEntry management (add, update, delete with auto-reordering)
-- ✅ RunSession CRUD endpoints (create, list, get, update, delete)
-- ✅ Special `/api/sessions/tonight` endpoint for active session
-- ✅ SessionAttendance endpoints (join, leave, list)
-- ✅ Authorization checks (owner-only operations)
-- ✅ Privacy controls (public/private run lists)
-- ✅ Full relation loading (tracks, cars, builds, lobby settings)
-- ✅ GT7 lobby settings data file (400+ lines)
+**Key Milestones**:
 
-**UI Layer - ✅ COMPLETE (all 5 pages)**:
-- ✅ Run lists listing page with search and filters
-- ✅ Run list creation form (/run-lists/new)
-- ✅ Run list detail/edit page (/run-lists/[id])
-- ✅ Tonight page (active session mobile display with drag-and-drop)
-- ✅ Session history page (/sessions/[id])
-
-**Phase 6 Status**: API Complete ✅ | UI Complete ✅ | Core Integrations Complete ✅ | Session Lap Time Integration Pending ⚠️
-
-**🎉 Latest Updates (2026-01-13)**:
-
-**Race Entity Implementation - COMPLETE ✅**:
-- ✅ Database schema updated with Race and RaceCar tables
-- ✅ RunListEntry.raceId column added for linking entries to races
-- ✅ API endpoints created (GET/PATCH/DELETE /api/races/[id])
-- ✅ Race listing page created (/races)
-  - Shows all race combinations across run lists
-  - Search and filter functionality (All/Active/Inactive)
-  - Table-style layout matching lap times page
-  - Displays track, cars, and run list associations
-  - Click to view race details
-- ✅ Race detail page created as read-only display (/races/[id])
-  - Shows race name, description, track info
-  - Lists all cars in the race with build information
-  - Displays statistics (total laps, drivers, fastest time, average time)
-  - Shows leaderboard (best times per driver per car per build)
-  - Shows user stats (position, best time, average time, recent laps)
-  - Lists which run lists use this race
-- ✅ Database column casing migration completed
-  - Fixed Race/RaceCar tables to use camelCase (createdAt, carId, etc.)
-  - All database tables now use consistent naming
-  - Queries working correctly without errors
-- ❌ Race editing functionality intentionally omitted
-  - Run lists handle race creation/editing via their own UI
-  - Simpler, more maintainable approach
-
-**Current Status**:
-- Race entity: FULLY FUNCTIONAL ✅
-- Races listing page: Complete with search and filters ✅
-- Race detail page: Stable, read-only display ✅
-- Database column naming: Consistent across all tables ✅
-- Race creation/editing: Handled through run lists (existing functionality)
-- API: Fully functional for integration with run lists
-
-**🎉 Latest Updates (2026-01-11 Part 3)**:
-
-**Race Detail Page Layout Consistency**:
-- ✅ Fixed layout inconsistency across different car/track combinations
-- ✅ "Your Performance" section now always renders (shows empty state when no data)
-- ✅ "Your Recent Laps" section now always renders (shows empty state when no data)
-- ✅ All race pages now have identical structure regardless of lap time data
-- ✅ Empty states styled consistently with populated sections
-- ✅ Eliminated confusion - only ONE race detail page for all navigation paths
-
-**Authentication Fixes**:
-- ✅ Fixed sign out functionality using proper NextAuth signOut() method
-- ✅ Sign out now properly clears session and redirects to home page
-
-**🎉 Previous Updates (2026-01-11 Part 2)**:
-
-**Race Detail Page Improvements**:
-- ✅ Updated terminology from "combo" to "race" throughout UI
-- ✅ Removed "Recent Activity" section to reduce clutter
-- ✅ Added "Create Build" button to builds section (pre-fills car)
-- ✅ Fixed run lists integration to support multiple cars per entry
-- ✅ Comprehensive design improvements:
-  - Enhanced car and track cards with gradient backgrounds and colored borders
-  - Improved statistics cards with gradients and larger text
-  - Enhanced user performance card with gradient and border-2
-  - Improved leaderboard styling with gradient header and enhanced rows
-  - Unified run lists and builds section styling with colored gradient headers
-  - Better spacing throughout (gap-6, p-4 padding)
-  - Enhanced hover effects with shadows
-  - Consistent design language with border-2 and opacity patterns
-
-**🎉 Latest Updates (2026-01-14)**:
-
-**Mobile Responsiveness - COMPLETE ✅**:
-- ✅ Comprehensive mobile optimization across all 12 pages
-- ✅ All pages now meet WCAG 44x44px touch target standards
-- ✅ Text truncation implemented to prevent overflow on all list pages
-- ✅ Consistent responsive patterns applied site-wide
-- ✅ Tracks and cars pages converted from table to card layout for better mobile UX
-- ✅ Fixed toggle switch styling (removed custom classes)
-- ✅ All filter buttons standardized with 44px minimum height
-- ✅ Hover colors unified (primary across all lists)
-
-**Pages Optimized:**
-- ✅ Home page (src/app/page.tsx)
-- ✅ Builds list (src/app/builds/page.tsx)
-- ✅ Build details (src/app/builds/[id]/page.tsx)
-- ✅ Build creation (src/app/builds/new/page.tsx)
-- ✅ Build editing (src/app/builds/[id]/edit/page.tsx)
-- ✅ Races list (src/app/races/page.tsx) - multiple iterations to fix
-- ✅ Race details (src/app/races/[id]/page.tsx)
-- ✅ Run lists (src/app/run-lists/page.tsx)
-- ✅ Lap times (src/app/lap-times/page.tsx)
-- ✅ Admin user management (src/app/admin/users/page.tsx)
-- ✅ Tracks list (src/app/tracks/page.tsx) - converted to card layout
-- ✅ Cars list (src/app/cars/page.tsx) - converted to card layout
-- ✅ Header component (src/components/header.tsx)
-
-**Mobile Design Patterns Established:**
-- **Touch Targets**: All interactive elements minimum 44x44px (WCAG standard)
-- **Responsive Breakpoints**: Mobile-first with `sm:` (640px) enhancements
-- **Text Truncation**: `truncate` class with parent `min-w-0` for overflow prevention
-- **Responsive Padding**: `p-3 sm:p-4` (tighter on mobile, more space on desktop)
-- **Responsive Text**: `text-base sm:text-lg`, `text-xs sm:text-sm`
-- **Full-width Buttons**: `w-full sm:w-auto` (stack on mobile, inline on desktop)
-- **Grid Layouts**: `grid-cols-1 sm:grid-cols-2` (single column mobile, multi-column desktop)
-- **Standardized Containers**: `max-w-7xl px-4 py-8 space-y-6` across all pages
-
-**Technical Notes:**
-- Races list required multiple iterations to fix layout and text overflow issues
-- Toggle switch custom styling removed for default appearance
-- Table layouts on tracks/cars replaced with card-based lists
-- All hover colors standardized to primary for consistency
-
-**Current Status**:
-- Mobile responsiveness: FULLY COMPLETE ✅
-- All pages tested and working on mobile viewports
-- UI consistency: Achieved across all listing and detail pages
-- Touch targets: Meeting WCAG standards site-wide
-- Text overflow: Resolved with truncation patterns
-
-**🎉 Latest Updates (2026-01-14 Part 2)**:
-
-**RLS Security Fixes - COMPLETE ✅**:
-- ✅ Enabled RLS on all next_auth schema tables (users, accounts, sessions, verification_tokens)
-- ✅ Enabled RLS on RunListEntryCar table
-- ✅ Created comprehensive RLS policies for authentication data protection
-- ✅ Fixed Supabase security advisories:
-  - next_auth.users: Users can SELECT/UPDATE own records, service role can INSERT
-  - next_auth.accounts: Users can SELECT own accounts, service role full access (protects tokens)
-  - next_auth.sessions: Users can SELECT own sessions, service role full access
-  - next_auth.verification_tokens: Service role full access only (protects magic link tokens)
-  - RunListEntryCar: Viewable if parent run list is viewable, manageable by owner
-- ✅ Sensitive columns protected by RLS (access_token, refresh_token, token)
-- ✅ Type casting fixed: `auth.uid()::text = id::text` for compatibility
-- ✅ No code changes required - defense-in-depth security layer added
-- ✅ Documentation updated (SESSION-LOG, DATABASE-SCHEMA, PLAN)
-- ✅ Migration created: `20260114_enable_next_auth_rls.sql`
+| Date | Session | Accomplishment |
+|------|---------|----------------|
+| 2026-01-21 | #12 | Parts & tuning DB migration, UI hover fixes |
+| 2026-01-19 | #11 | Build-centric race system polish, UX improvements |
+| 2026-01-14 | #10 | Mobile responsiveness, RLS security policies |
+| 2026-01-13 | #9 | Race entity implementation |
+| 2026-01-11 | #8 | Race detail page improvements, auth fixes |
+| 2026-01-08 | #7 | Run lists and sessions UI complete |
 
 **Security Model**:
+- Row Level Security (RLS) enabled on all user data tables
 - Users can only access their own authentication data via API
 - Service role (NextAuth adapter) bypasses RLS for auth operations
 - Admin operations use `createServiceRoleClient()` which bypasses RLS
-- Regular user operations continue to work with existing authorization checks
-- RLS provides additional protection against unauthorized database access
-
-**Current Status**:
-- RLS policies: FULLY IMPLEMENTED ✅
-- Security advisories: RESOLVED ✅
-- Code compatibility: VERIFIED ✅
-- Documentation: UPDATED ✅
-
-**🔍 Recent Testing Feedback (2026-01-08 - UPDATED 2026-01-14)**:
-
-**Previously Critical Issues - NOW FIXED ✅**:
-1. ✅ **Run Lists UI now complete** - All critical pages implemented
-   - ✅ Creation page (/run-lists/new)
-   - ✅ Detail/edit page (/run-lists/[id])
-   - ✅ Run lists feature fully functional
-2. ✅ **Mobile responsiveness complete** - All pages mobile-optimized
-   - ✅ WCAG 44x44px touch targets met
-   - ✅ Text truncation implemented
-   - ✅ Responsive layouts across all pages
-3. ✅ **Styling inconsistencies fixed** - Auth and form pages match site theme
-   - ✅ Sign in/sign up pages use GT-inspired dark theme
-   - ✅ Form pages standardized
-   - ✅ Hover colors unified to primary across all pages
-
-**Remaining Items**:
-1. ❌ **Images for Cars & Tracks** - Need to add images for 552 cars and 118 tracks
-
-**Positive Feedback**:
-- ✅ Database connection working perfectly
-- ✅ RLS policies configured correctly
-- ✅ Lap time creation, editing, and deletion work
-- ✅ Builds system fully functional
-- ✅ Run lists and sessions fully functional
-- ✅ API routes all working correctly
-- ✅ Mobile experience excellent
 
 ---
 
@@ -1485,11 +1311,13 @@ The Race entity centralizes track + car combinations, allowing races to be reuse
 
 ---
 
-## BUILD-CENTRIC RACE SYSTEM IMPLEMENTATION PLAN (2026-01-19)
+## BUILD-CENTRIC RACE SYSTEM - IMPLEMENTATION REFERENCE (Completed 2026-01-19)
+
+> **Status**: ✅ IMPLEMENTED - This section documents the completed build-centric architecture for reference.
 
 ### Executive Summary
 
-**Complete data reset (except users)** and rebuild as a fully build-centric race management system where users create races with inline build creation, multiple builds per car, and race-specific leaderboards.
+Build-centric race management system where users create races with inline build creation, multiple builds per car, and race-specific leaderboards.
 
 ### Important Decision Points
 
@@ -1830,4 +1658,30 @@ All phases of the BUILD-CENTRIC RACE SYSTEM have been successfully implemented:
 **Database State**: Clean slate with 552 cars, 118 tracks, ready for build-centric races
 **All Features**: Working as specified in implementation plan
 **Known Issues**: None - all functionality tested and working
+
+---
+
+## PARTS & TUNING DATABASE MIGRATION - IMPLEMENTATION REFERENCE (Completed 2026-01-21)
+
+> **Status**: ✅ IMPLEMENTED - Migrated from static TypeScript files to database-driven system.
+
+For full details, see [`docs/PARTS-TUNING-MIGRATION.md`](PARTS-TUNING-MIGRATION.md).
+
+### Summary
+- **PartCategory** table: 5 categories (Sports, Club Sports, Semi-Racing, Racing, Extreme)
+- **Part** table: 72 parts with FK to categories
+- **TuningSection** table: 15 sections (Suspension, ECU, Transmission, etc.)
+- **TuningSetting** table: 60 settings with FK to sections
+- **CarBuildUpgrade.partId**: FK to Part for validation
+- **CarBuildSetting.settingId**: FK to TuningSetting for validation
+- **API endpoints**: `/api/parts`, `/api/parts/categories`, `/api/tuning-settings`, `/api/tuning-settings/sections`
+- **Components updated**: `BuildUpgradesTab`, `BuildTuningTab` fetch from API
+- **Migration scripts**: `migrate-parts-to-db.ts`, `generate-parts-shop.ts`
+
+### Benefits Achieved
+- ✅ Foreign key validation prevents invalid parts/settings
+- ✅ Dynamic updates possible without code deployment
+- ✅ API-driven access for future mobile apps
+- ✅ Referential integrity maintained
+- ✅ All existing builds continue to work
 

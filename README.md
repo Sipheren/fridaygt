@@ -1,9 +1,27 @@
 # FridayGT
 
 > **🏎️ GT7 Lap Time Tracker & Race Management**
-> **Status**: Active Development | **Branch**: `main`
+> **Status**: Core Features Complete | **Branch**: `main` | **Last Updated**: 2026-01-21
 
 A comprehensive Gran Turismo 7 lap time tracker and race management application built with Next.js, Supabase, and NextAuth.
+
+## Development Status
+
+| Feature | Status |
+|---------|--------|
+| User Authentication | ✅ Complete |
+| Car Database (552 cars) | ✅ Complete |
+| Track Database (118 tracks) | ✅ Complete |
+| Build Management | ✅ Complete |
+| Parts System (72 parts) | ✅ Complete |
+| Tuning System (60 settings) | ✅ Complete |
+| Lap Time Tracking | ✅ Complete |
+| Race Management | ✅ Complete |
+| Run Lists & Sessions | ✅ Complete |
+| Tonight Page | ✅ Complete |
+| Mobile Responsiveness | ✅ Complete |
+| Car/Track Images | ❌ Pending |
+| Production Deployment | ❌ Pending |
 
 ## 🎯 Project Overview
 
@@ -35,13 +53,14 @@ FridayGT helps GT7 players track racing performance with a **build-centric archi
 - 📺 **Tonight Page** - Quick view of active races for tonight's racing
 - 👤 **User Profiles** - Manage account with gamertag support
 
-### Recent Enhancements (2026)
-- ✅ Database-driven parts and tuning settings (72 parts, 60 settings)
-- ✅ Foreign key validation for build components
-- ✅ Multiple cars per race entry support
-- ✅ Global hover system for consistent UI feedback
-- ✅ Unified button styling across all pages
-- ✅ Row-level security (RLS) for data protection
+### Recent Enhancements (2026-01-21)
+- ✅ **Parts & Tuning Migration** - Database-driven system with 72 parts and 60 tuning settings
+- ✅ **Foreign Key Validation** - All build components validated against master data
+- ✅ **UI Consistency** - Unified button styling, hover states, and visual feedback
+- ✅ **Mobile Optimization** - All pages responsive with WCAG-compliant touch targets
+- ✅ **Multiple Cars per Race** - Support for duplicate cars with different builds
+- ✅ **Row-Level Security** - RLS enabled on all user data tables
+- ✅ **Build-Centric Architecture** - Races require builds, leaderboards filter by race builds
 
 ## Tech Stack
 
@@ -127,16 +146,17 @@ fridaygt/
 │   └── types/                   # TypeScript definitions
 ├── public/                      # Static assets
 ├── docs/                        # Project documentation
+│   ├── PLAN.md                  # Roadmap and status
+│   ├── SESSION-LOG.md           # Development history
 │   ├── DATABASE-SCHEMA.md       # Database structure
 │   ├── DESIGN-SYSTEM.md         # UI/UX standards
-│   ├── PARTS-TUNING-MIGRATION.md # Migration docs
-│   └── PLAN.md                  # Roadmap
+│   └── PARTS-TUNING-MIGRATION.md # Migration docs
 ├── supabase/                    # Supabase configuration
 │   └── migrations/              # Database migrations
 │       └── done/                # Applied migrations
 ├── gt7data/                     # GT7 game data (CSV)
-│   ├── gt7_cars_combined.csv    # 350+ cars
-│   ├── gt7_courses_combined.csv # Tracks and layouts
+│   ├── gt7_cars_combined.csv    # 552 cars with specs
+│   ├── gt7_courses_combined.csv # 118 tracks and layouts
 │   ├── gt7_parts_shop.csv       # 72 parts across 5 categories
 │   └── gt7_tuning_settings.csv  # 60 settings across 15 sections
 └── scripts/                     # Utility scripts
@@ -146,8 +166,8 @@ fridaygt/
 
 ### Core Tables
 - **User** - User accounts with roles (PENDING/USER/ADMIN)
-- **Car** - GT7 car catalog (350+ cars)
-- **Track** - Track catalog with reverse layouts
+- **Car** - GT7 car catalog (552 cars)
+- **Track** - Track catalog with reverse layouts (118 tracks)
 - **CarBuild** - User car builds/tunes
 - **CarBuildUpgrade** - Installed parts (FK to Part)
 - **CarBuildSetting** - Tuning settings (FK to TuningSetting)
@@ -167,10 +187,11 @@ See [DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md) for complete schema.
 
 ## Documentation
 
+- **[PLAN.md](docs/PLAN.md)** - Project vision, roadmap, and current status
+- **[SESSION-LOG.md](docs/SESSION-LOG.md)** - Detailed development session history
 - **[DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md)** - Complete database structure
-- **[DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md)** - UI/UX design system
-- **[PLAN.md](docs/PLAN.md)** - Project vision and roadmap
-- **[PARTS-TUNING-MIGRATION.md](docs/PARTS-TUNING-MIGRATION.md)** - Database migration guide
+- **[DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md)** - UI/UX design system and patterns
+- **[PARTS-TUNING-MIGRATION.md](docs/PARTS-TUNING-MIGRATION.md)** - Parts/tuning migration guide
 
 ## Available Scripts
 
@@ -262,7 +283,7 @@ Required for production deployment:
 
 ### Deployment Platform
 
-Currently deployed on Vercel with Supabase as the backend.
+Designed for deployment on Vercel with Supabase as the backend. Production deployment pending.
 
 ## Contributing
 
