@@ -912,8 +912,8 @@ New users unable to set gamertag after signing in - getting "The result contains
 
 **2. Audited database state**
    - Created script: `map-auth-system.ts`
-   - Found next_auth.users: 2 records (david@sipheren.com, test@sipheren.com)
-   - Found public.User: 1 record (david@sipheren.com only)
+   - Found next_auth.users: 2 records (<no contact>, test@sipheren.com)
+   - Found public.User: 1 record (<no contact> only)
    - **Root cause identified**: User exists in next_auth but NOT in public.User
 
 **3. Traced the sign-in flow**
@@ -1104,7 +1104,7 @@ Continue with Phase 5 implementation plan - Car Builds & Tuning system
 **Test Steps**:
 1. Connect to database using Supabase client
 2. Fetch test car (Nissan 180SX Type X '96)
-3. Fetch admin user (david@sipheren.com)
+3. Fetch admin user (<no contact>)
 4. Create test build with:
    - 3 upgrades (Racing Air Filter, Racing Muffler, Fully Customizable Suspension)
    - 4 tuning settings (ride height front/rear, LSD initial torque, LSD acceleration)

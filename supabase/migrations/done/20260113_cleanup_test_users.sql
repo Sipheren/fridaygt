@@ -1,5 +1,5 @@
 -- Cleanup test users and sessions
--- Keeps only the default admin user (david@sipheren.com)
+-- Keeps only the default admin user (<no contact>)
 
 -- Delete all sessions first (foreign key dependency)
 DELETE FROM "next_auth"."sessions"
@@ -15,7 +15,7 @@ WHERE "userId" != '9932e1b2-b495-4a68-a5cb-367730342c68';
 -- Delete all users except the admin
 DELETE FROM "next_auth"."users"
 WHERE "id" != '9932e1b2-b495-4a68-a5cb-367730342c68'
-AND "email" != 'david@sipheren.com';
+AND "email" != '<no contact>';
 
 -- Verify cleanup
 SELECT 'next_auth.users' as table_name, count(*) as count FROM "next_auth"."users"

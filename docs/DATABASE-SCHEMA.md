@@ -1,6 +1,6 @@
 # FridayGT Database Schema
 
-**Date:** 2026-01-14
+**Date:** 2026-01-21
 **Source:** Live Supabase database export
 
 ---
@@ -10,7 +10,8 @@
 2. [Core GT7 Data](#core-gt7-data)
 3. [Run Lists & Sessions](#run-lists--sessions)
 4. [Lap Times & Builds](#lap-times--builds)
-5. [Race Entity (NEW)](#race-entity-new)
+5. [Parts & Tuning Data](#parts--tuning-data)
+6. [Race Entity](#race-entity)
 
 ---
 
@@ -262,18 +263,23 @@
 |--------|------|----------|---------|-------------|
 | id | text | NO | - | Primary key |
 | buildId | text | NO | - | FK → CarBuild |
-| category | varchar(50) | NO | - | Upgrade category |
-| part | varchar(100) | NO | - | Part name |
-| value | varchar(100) | YES | - | Part value |
+| category | varchar(50) | NO | - | Upgrade category (LEGACY - kept for compatibility) |
+| part | varchar(100) | NO | - | Part name (LEGACY - kept for compatibility) |
+| **partId** | uuid | NO | - | FK → Part (NEW - 2026-01-21) |
+
+**Note:** `partId` is now NOT NULL with foreign key constraint. Legacy columns kept for compatibility.
 
 ### CarBuildSetting
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
 | id | text | NO | - | Primary key |
 | buildId | text | NO | - | FK → CarBuild |
-| category | varchar(50) | NO | - | Setting category |
-| setting | varchar(100) | NO | - | Setting name |
+| category | varchar(50) | NO | - | Setting category (LEGACY - kept for compatibility) |
+| setting | varchar(100) | NO | - | Setting name (LEGACY - kept for compatibility) |
 | value | varchar(100) | NO | - | Setting value |
+| **settingId** | uuid | NO | - | FK → TuningSetting (NEW - 2026-01-21) |
+
+**Note:** `settingId` is now NOT NULL with foreign key constraint. Legacy columns kept for compatibility.
 
 ### LobbySettings
 | Column | Type | Nullable | Default | Description |
@@ -308,7 +314,70 @@
 
 ---
 
-## Race Entity (NEW - 2026-01-12)
+## Parts & Tuning Data (2026-01-21)
+
+**Status:** ✅ COMPLETE
+- Tables created
+- Data imported from CSV files (72 parts, 60 settings)
+- Foreign key columns added and finalized (NOT NULL with constraints)
+- Existing build data migrated (6 CarBuildUpgrade records)
+
+### PartCategory
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| id | uuid | NO | gen_random_uuid() | Primary key |
+| name | varchar(50) | NO | - | Category name (unique) |
+| displayOrder | integer | NO | - | Display order in UI |
+| createdAt | timestamp | NO | CURRENT_TIMESTAMP | - |
+| updatedAt | timestamp | NO | - | - |
+
+**Categories (5):** Sports, Club Sports, Semi-Racing, Racing, Extreme
+
+### Part
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| id | uuid | NO | gen_random_uuid() | Primary key |
+| categoryId | uuid | NO | - | FK → PartCategory |
+| name | varchar(100) | NO | - | Part name |
+| description | text | YES | - | Part description |
+| isActive | boolean | YES | true | Active/inactive |
+| createdAt | timestamp | NO | CURRENT_TIMESTAMP | - |
+| updatedAt | timestamp | NO | - | - |
+
+**Constraints:** UNIQUE (categoryId, name)
+**Indexes:** categoryId, name, isActive
+**Total Parts:** 72
+
+### TuningSection
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| id | uuid | NO | gen_random_uuid() | Primary key |
+| name | varchar(50) | NO | - | Section name (unique) |
+| displayOrder | integer | NO | - | Display order in UI |
+| createdAt | timestamp | NO | CURRENT_TIMESTAMP | - |
+| updatedAt | timestamp | NO | - | - |
+
+**Sections (15):** Tyres, Suspension, Differential Gear, Aerodynamics, ECU, Performance Adjustment, Transmission, Nitrous/Overtake, Supercharger, Intake & Exhaust, Brakes, Steering, Drivetrain, Engine Tuning, Bodywork
+
+### TuningSetting
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| id | uuid | NO | gen_random_uuid() | Primary key |
+| sectionId | uuid | NO | - | FK → TuningSection |
+| name | varchar(100) | NO | - | Setting name |
+| description | text | YES | - | Setting description |
+| defaultValue | varchar(100) | YES | - | Default value |
+| isActive | boolean | YES | true | Active/inactive |
+| createdAt | timestamp | NO | CURRENT_TIMESTAMP | - |
+| updatedAt | timestamp | NO | - | - |
+
+**Constraints:** UNIQUE (sectionId, name)
+**Indexes:** sectionId, name, isActive
+**Total Settings:** 60
+
+---
+
+## Race Entity (2026-01-12)
 
 **Status:** ✅ COMPLETE (2026-01-13)
 - Tables created with correct camelCase column naming
@@ -453,6 +522,11 @@ Race (1) ←→ (N) RaceCar (NEW)
 
 CarBuild (1) ←→ (N) CarBuildUpgrade
 CarBuild (1) ←→ (N) CarBuildSetting
+
+PartCategory (1) ←→ (N) Part
+Part (N) ←→ (N) CarBuildUpgrade (via partId)
+TuningSection (1) ←→ (N) TuningSetting
+TuningSetting (N) ←→ (N) CarBuildSetting (via settingId)
 ```
 
 ---
@@ -471,6 +545,11 @@ This allows backwards compatibility during the transition to the Race entity arc
 - `RunListEntryCar` uses `text` with `now()` default (inconsistent, to be fixed)
 
 ### Migration Status
-- **Completed:** Multiple cars per run list entry (RunListEntryCar)
-- **In Progress:** Race entity normalization
+- **Completed (2026-01-13):** Race entity normalization
+- **Completed (2026-01-13):** Multiple cars per run list entry (RunListEntryCar)
+- **Completed (2026-01-21):** Parts & Tuning Settings database migration
+  - Tables created, data imported (72 parts, 60 settings)
+  - Foreign keys added and finalized with NOT NULL constraints
+  - Existing build data migrated successfully
 - **Planned:** Remove legacy `carId`/`buildId` from RunListEntry after Race entity is fully deployed
+- **Planned:** Remove legacy `category`/`part`/`setting` columns from build tables (optional - kept for compatibility)

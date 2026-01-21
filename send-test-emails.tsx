@@ -63,7 +63,7 @@ async function sendTestEmails() {
     const removalHtml = await render(
       <UserRemovalEmail
         removedUserEmail="testuser@example.com"
-        removedBy="Admin (david@sipheren.com)"
+        removedBy="Admin (<no contact>)"
         removalTime={new Date().toLocaleString()}
       />
     )

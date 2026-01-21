@@ -1162,7 +1162,7 @@ The `buildfocussed` branch has successfully implemented a build-centric race man
 - Races: Database schema added (Race, RaceCar tables) ✓
 
 **🔑 Admin Access**:
-- Email: david@sipheren.com
+- Email: <no contact>
 - Auto-promoted to ADMIN on first signin
 
 **🎉 Latest Progress (Phase 5 - COMPLETED)**:
@@ -1404,7 +1404,7 @@ RESEND_API_KEY="re_..."
 EMAIL_FROM="noreply@sipheren.com"
 
 # Admin
-DEFAULT_ADMIN_EMAIL="david@sipheren.com"
+DEFAULT_ADMIN_EMAIL="<no contact>"
 ```
 
 ---
