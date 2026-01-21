@@ -1031,24 +1031,26 @@ Example 2: Navigating from run list to combo
 
 ---
 
-## PHASE 9: Deployment ❌ NOT STARTED
+## PHASE 9: Deployment ✅ COMPLETE
 
 **Goals**: Deploy to Vercel, production setup
 
-**Key Tasks**:
-- [ ] Configure production environment variables
-- [ ] Set up Vercel project
-- [ ] Connect Supabase production database
-- [ ] Run database migrations on production
-- [ ] Seed production database
-- [ ] Configure Resend for production emails
-- [ ] Set up custom domain (if desired)
-- [ ] Create admin user (david) with ADMIN role
-- [ ] Deploy to production
-- [ ] Test all features on production
-- [ ] Write README with setup instructions
+**Production URL**: https://fridaygt.vercel.app
 
-**Deliverable**: Live production app on Vercel
+**Key Tasks**:
+- [x] Configure production environment variables
+- [x] Set up Vercel project
+- [x] Connect Supabase production database
+- [x] Run database migrations on production
+- [x] Seed production database (552 cars, 118 tracks, 72 parts, 60 settings)
+- [x] Configure Resend for production emails
+- [x] Set up custom domain (fridaygt.vercel.app)
+- [x] Create admin user (david) with ADMIN role
+- [x] Deploy to production
+- [x] Test all features on production
+- [x] Write README with setup instructions
+
+**Deliverable**: ✅ Live production app on Vercel
 
 ---
 
@@ -1058,9 +1060,10 @@ Example 2: Navigating from run list to combo
 
 **Date**: 2026-01-21
 **Branch**: `main` (all features merged)
-**Last Commit**: `da88362 Fix parts and tuning system with foreign key relationships`
+**Last Commit**: `cf42a77 Add public settings page with live database stats`
+**Production URL**: https://fridaygt.vercel.app
 
-**Status**: ✅ CORE FEATURES COMPLETE
+**Status**: ✅ CORE FEATURES COMPLETE | ✅ PRODUCTION DEPLOYED
 
 ---
 
@@ -1143,7 +1146,7 @@ Edit page unification and hover visibility improvements:
 - ✅ Hover states and visual feedback
 - ✅ Button/tab consistency
 
-**Phase 9: Deployment** ❌ Not Started
+**Phase 9: Deployment** ✅ Complete
 
 ---
 
@@ -1178,9 +1181,8 @@ Edit page unification and hover visibility improvements:
 5. ❌ Build sharing features (share links, comparison)
 
 **Low Priority**:
-6. ❌ Production deployment to Vercel
-7. ❌ Build ratings/favorites
-8. ❌ Data visualizations (lap time progress charts)
+6. ❌ Build ratings/favorites
+7. ❌ Data visualizations (lap time progress charts)
 
 ---
 

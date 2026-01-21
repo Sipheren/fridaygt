@@ -5,6 +5,12 @@
 
 A comprehensive Gran Turismo 7 lap time tracker and race management application built with Next.js, Supabase, and NextAuth.
 
+## 🚀 Live Application
+
+**Production URL**: https://fridaygt.vercel.app
+
+The application is deployed and live in production. All core features are functional including user authentication, build management, lap time tracking, and race management.
+
 ## Development Status
 
 | Feature | Status |
@@ -21,7 +27,7 @@ A comprehensive Gran Turismo 7 lap time tracker and race management application 
 | Tonight Page | ✅ Complete |
 | Mobile Responsiveness | ✅ Complete |
 | Car/Track Images | ❌ Pending |
-| Production Deployment | ❌ Pending |
+| Production Deployment | ✅ Complete |
 
 ## 🎯 Project Overview
 
@@ -281,7 +287,9 @@ Required for production deployment:
 
 ### Deployment Platform
 
-Designed for deployment on Vercel with Supabase as the backend. Production deployment pending.
+**Live Production**: https://fridaygt.vercel.app
+
+The application is deployed on Vercel with Supabase as the backend database.
 
 ## Contributing
 
