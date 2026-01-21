@@ -29,17 +29,36 @@ import {
 import { formatLapTime } from '@/lib/time'
 import { LoadingSection } from '@/components/ui/loading'
 
+interface Part {
+  id: string
+  name: string
+  categoryId: string
+  description?: string
+  isActive: boolean
+}
+
 interface BuildUpgrade {
   id: string
   category: string
-  part: string
+  part: string | Part  // Can be string (legacy) or Part object (new)
+  partId?: string
   value: string | null
+}
+
+interface TuningSetting {
+  id: string
+  name: string
+  sectionId: string
+  description?: string
+  defaultValue?: string
+  isActive: boolean
 }
 
 interface BuildSetting {
   id: string
   section: string
-  setting: string
+  setting: string | TuningSetting  // Can be string (legacy) or TuningSetting object (new)
+  settingId?: string
   value: string
 }
 
@@ -177,8 +196,10 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       .join(' ')
   }
 
-  const formatSettingName = (settingId: string) => {
-    return settingId
+  const formatSettingName = (setting: string | TuningSetting) => {
+    // Handle both legacy string format and new object format
+    const settingName = typeof setting === 'string' ? setting : setting.name
+    return settingName
       .split('-')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ')
@@ -369,7 +390,9 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                       key={upgrade.id}
                       className="flex items-center justify-between px-3 py-2 border border-border rounded text-sm"
                     >
-                      <span className="truncate">{upgrade.part}</span>
+                      <span className="truncate">
+                        {typeof upgrade.part === 'string' ? upgrade.part : upgrade.part.name}
+                      </span>
                       {upgrade.value && (
                         <Badge variant="outline" className="text-xs shrink-0 ml-2">
                           {upgrade.value}

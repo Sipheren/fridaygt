@@ -89,7 +89,7 @@ async function migrateParts(): Promise<void> {
   console.log('🔧 Migrating Parts Shop data...')
 
   const csvContent = fs.readFileSync(PARTS_CSV_PATH, 'utf-8')
-  const rows = parseCSV(csvContent) as PartRow[]
+  const rows = parseCSV(csvContent) as unknown as PartRow[]
 
   console.log(`   Found ${rows.length} parts in CSV`)
 
@@ -191,7 +191,7 @@ async function migrateTuningSettings(): Promise<void> {
   console.log('⚙️  Migrating Tuning Settings data...')
 
   const csvContent = fs.readFileSync(TUNING_CSV_PATH, 'utf-8')
-  const rows = parseCSV(csvContent) as TuningRow[]
+  const rows = parseCSV(csvContent) as unknown as TuningRow[]
 
   console.log(`   Found ${rows.length} settings in CSV`)
 

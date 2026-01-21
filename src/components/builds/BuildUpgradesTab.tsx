@@ -1,32 +1,102 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { PARTS_SHOP_DATA } from '@/data/builds/parts-shop'
+import { Loader2 } from 'lucide-react'
+
+interface PartCategory {
+  id: string
+  name: string
+  displayOrder: number
+}
+
+interface Part {
+  id: string
+  categoryId: string
+  name: string
+  description?: string
+  isActive: boolean
+  category: PartCategory
+}
 
 interface BuildUpgradesTabProps {
   selectedUpgrades: Record<string, boolean>
-  onUpgradeToggle: (category: string, part: string) => void
+  onUpgradeToggle: (partId: string) => void
 }
 
 export function BuildUpgradesTab({ selectedUpgrades, onUpgradeToggle }: BuildUpgradesTabProps) {
-  const [activeCategory, setActiveCategory] = useState('Sports')
+  const [categories, setCategories] = useState<PartCategory[]>([])
+  const [parts, setParts] = useState<Part[]>([])
+  const [activeCategory, setActiveCategory] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const [categoriesRes, partsRes] = await Promise.all([
+          fetch('/api/parts/categories'),
+          fetch('/api/parts')
+        ])
+
+        if (!categoriesRes.ok) throw new Error('Failed to fetch categories')
+        if (!partsRes.ok) throw new Error('Failed to fetch parts')
+
+        const categoriesData = await categoriesRes.json()
+        const partsData = await partsRes.json()
+
+        setCategories(categoriesData.categories)
+        setParts(partsData.parts)
+
+        // Set first category as active if none selected
+        if (categoriesData.categories.length > 0) {
+          setActiveCategory(categoriesData.categories[0].name)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load parts data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, []) // Only fetch once on mount
 
   // Get the active category data
-  const activeCategoryData = PARTS_SHOP_DATA.find((c) => c.name === activeCategory)
+  const activeCategoryObj = categories.find((c) => c.name === activeCategory)
+  const activeCategoryParts = parts.filter((p) => p.categoryId === activeCategoryObj?.id)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[700px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[700px]">
+        <p className="text-destructive">Error: {error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 h-[700px]">
       {/* Category Tabs (Left Side) */}
       <Card className="w-full sm:w-64 p-2">
         <div className="flex flex-row sm:flex-col gap-1">
-          {PARTS_SHOP_DATA.map((category) => (
+          {categories.map((category) => (
             <Button
-              key={category.name}
+              key={category.id}
               type="button"
               variant={activeCategory === category.name ? 'default' : 'ghost'}
               className={cn(
@@ -48,19 +118,18 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeToggle }: BuildUpg
         <div className="mb-4">
           <h3 className="text-lg font-semibold">{activeCategory}</h3>
           <p className="text-sm text-muted-foreground">
-            {activeCategoryData?.parts.length || 0} parts available
+            {activeCategoryParts.length} parts available
           </p>
         </div>
 
         <div className="overflow-y-auto h-[580px] pr-4">
           <div className="space-y-2">
-            {activeCategoryData?.parts.map((part) => {
-              const key = `${activeCategory}:${part}`
-              const isChecked = selectedUpgrades[key] || false
+            {activeCategoryParts.map((part) => {
+              const isChecked = selectedUpgrades[part.id] || false
 
               return (
                 <div
-                  key={part}
+                  key={part.id}
                   className={cn(
                     'flex items-center space-x-3 rounded-lg border p-3 transition-colors min-h-[44px]',
                     isChecked
@@ -69,16 +138,16 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeToggle }: BuildUpg
                   )}
                 >
                   <Checkbox
-                    id={part}
+                    id={part.id}
                     checked={isChecked}
-                    onCheckedChange={() => onUpgradeToggle(activeCategory, part)}
+                    onCheckedChange={() => onUpgradeToggle(part.id)}
                     className="min-h-[24px] min-w-[44px]"
                   />
                   <Label
-                    htmlFor={part}
+                    htmlFor={part.id}
                     className="flex-1 cursor-pointer text-sm font-medium"
                   >
-                    {part}
+                    {part.name}
                   </Label>
                 </div>
               )

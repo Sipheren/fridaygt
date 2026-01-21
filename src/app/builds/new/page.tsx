@@ -39,17 +39,6 @@ interface Car {
   year: number | null
 }
 
-interface SelectedUpgrade {
-  category: string
-  part: string
-}
-
-interface SelectedSetting {
-  section: string
-  setting: string
-  value: string
-}
-
 export default function NewBuildPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -87,19 +76,17 @@ export default function NewBuildPage() {
     }
   }
 
-  const handleUpgradeToggle = (category: string, partName: string) => {
-    const key = `${category}:${partName}`
+  const handleUpgradeToggle = (partId: string) => {
     setSelectedUpgrades((prev) => ({
       ...prev,
-      [key]: !prev[key],
+      [partId]: !prev[partId],
     }))
   }
 
-  const handleTuningSetting = (section: string, setting: string, value: string) => {
-    const key = `${section}:${setting}`
+  const handleTuningSetting = (settingId: string, value: string) => {
     setTuningSettings((prev) => ({
       ...prev,
-      [key]: value,
+      [settingId]: value,
     }))
   }
 
@@ -114,21 +101,15 @@ export default function NewBuildPage() {
     setSaving(true)
 
     try {
-      // Convert selected upgrades to array
-      const upgrades: SelectedUpgrade[] = Object.entries(selectedUpgrades)
+      // Convert selected upgrades to array of partIds
+      const upgrades = Object.entries(selectedUpgrades)
         .filter(([_, selected]) => selected)
-        .map(([key]) => {
-          const [category, part] = key.split(':')
-          return { category, part }
-        })
+        .map(([partId]) => ({ partId }))
 
-      // Convert tuning settings to array
-      const settings: SelectedSetting[] = Object.entries(tuningSettings)
+      // Convert tuning settings to array of settingIds
+      const settings = Object.entries(tuningSettings)
         .filter(([_, value]) => value.trim() !== '')
-        .map(([key, value]) => {
-          const [section, setting] = key.split(':')
-          return { section, setting, value }
-        })
+        .map(([settingId, value]) => ({ settingId, value }))
 
       const response = await fetch('/api/builds', {
         method: 'POST',

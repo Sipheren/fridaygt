@@ -375,6 +375,42 @@
 **Indexes:** sectionId, name, isActive
 **Total Settings:** 60
 
+### API Endpoints (2026-01-21)
+
+**Status:** ✅ COMPLETE
+
+#### Parts API
+
+**GET /api/parts/categories**
+- Returns all part categories
+- Response: `{ categories: PartCategory[] }`
+- Ordered by `displayOrder`
+
+**GET /api/parts**
+- Returns all parts with category details
+- Query params:
+  - `categoryId?` - Filter by category UUID
+  - `active?` - Filter by active status (true/false)
+  - `includeInactive?` - Set to "true" to include inactive parts
+- Response: `{ parts: Part[] }` (each part includes `category:PartCategory`)
+- Defaults to active parts only
+
+#### Tuning Settings API
+
+**GET /api/tuning-settings/sections**
+- Returns all tuning sections
+- Response: `{ sections: TuningSection[] }`
+- Ordered by `displayOrder`
+
+**GET /api/tuning-settings**
+- Returns all settings with section details
+- Query params:
+  - `sectionId?` - Filter by section UUID
+  - `active?` - Filter by active status (true/false)
+  - `includeInactive?` - Set to "true" to include inactive settings
+- Response: `{ settings: TuningSetting[] }` (each setting includes `section:TuningSection`)
+- Defaults to active settings only
+
 ---
 
 ## Race Entity (2026-01-12)
@@ -547,9 +583,22 @@ This allows backwards compatibility during the transition to the Race entity arc
 ### Migration Status
 - **Completed (2026-01-13):** Race entity normalization
 - **Completed (2026-01-13):** Multiple cars per run list entry (RunListEntryCar)
-- **Completed (2026-01-21):** Parts & Tuning Settings database migration
+- **Completed (2026-01-21):** Parts & Tuning Settings database migration (Phase 1)
   - Tables created, data imported (72 parts, 60 settings)
   - Foreign keys added and finalized with NOT NULL constraints
   - Existing build data migrated successfully
+- **Completed (2026-01-21):** Parts & Tuning Settings API endpoints (Phase 2)
+  - GET /api/parts/categories
+  - GET /api/parts
+  - GET /api/tuning-settings/sections
+  - GET /api/tuning-settings
+- **Completed (2026-01-21):** Component updates to use API (Phase 3)
+  - BuildUpgradesTab now fetches from /api/parts
+  - BuildTuningTab now fetches from /api/tuning-settings
+  - Loading and error states added
+- **Completed (2026-01-21):** Build API validation and JOINs (Phase 4)
+  - GET /api/builds/[id] returns Part/PartCategory/TuningSetting/TuningSection details
+  - PATCH validates partId/settingId before inserting
+  - Foreign key constraints enforced
 - **Planned:** Remove legacy `carId`/`buildId` from RunListEntry after Race entity is fully deployed
 - **Planned:** Remove legacy `category`/`part`/`setting` columns from build tables (optional - kept for compatibility)

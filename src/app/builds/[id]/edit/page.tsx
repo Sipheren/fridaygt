@@ -25,10 +25,19 @@ import { BuildUpgradesTab } from '@/components/builds/BuildUpgradesTab'
 import { BuildTuningTab } from '@/components/builds/BuildTuningTab'
 import { LoadingSection } from '@/components/ui/loading'
 
+interface Part {
+  id: string
+  name: string
+  categoryId: string
+  description?: string
+  isActive: boolean
+}
+
 interface BuildUpgrade {
   id: string
   category: string
-  part: string
+  part: string | Part
+  partId?: string
 }
 
 interface BuildSetting {
@@ -36,6 +45,7 @@ interface BuildSetting {
   section: string
   setting: string
   value: string
+  settingId?: string
 }
 
 interface Build {
@@ -92,16 +102,20 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
       // Convert upgrades to checkbox state
       const upgradesMap: Record<string, boolean> = {}
       data.upgrades.forEach((upgrade) => {
-        const key = `${upgrade.category}:${upgrade.part}`
-        upgradesMap[key] = true
+        // Use partId if available, otherwise skip (for legacy data)
+        if (upgrade.partId) {
+          upgradesMap[upgrade.partId] = true
+        }
       })
       setSelectedUpgrades(upgradesMap)
 
       // Convert settings to input state
       const settingsMap: Record<string, string> = {}
       data.settings.forEach((setting) => {
-        const key = `${setting.section}:${setting.setting}`
-        settingsMap[key] = setting.value
+        // Use settingId if available, otherwise skip (for legacy data)
+        if (setting.settingId) {
+          settingsMap[setting.settingId] = setting.value
+        }
       })
       setTuningSettings(settingsMap)
     } catch (error) {
@@ -113,19 +127,17 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     }
   }
 
-  const handleUpgradeToggle = (category: string, partName: string) => {
-    const key = `${category}:${partName}`
+  const handleUpgradeToggle = (partId: string) => {
     setSelectedUpgrades((prev) => ({
       ...prev,
-      [key]: !prev[key],
+      [partId]: !prev[partId],
     }))
   }
 
-  const handleTuningSetting = (section: string, setting: string, value: string) => {
-    const key = `${section}:${setting}`
+  const handleTuningSetting = (settingId: string, value: string) => {
     setTuningSettings((prev) => ({
       ...prev,
-      [key]: value,
+      [settingId]: value,
     }))
   }
 
@@ -140,21 +152,15 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     setSaving(true)
 
     try {
-      // Convert selected upgrades to array
+      // Convert selected upgrades to array of partIds
       const upgrades = Object.entries(selectedUpgrades)
         .filter(([_, selected]) => selected)
-        .map(([key]) => {
-          const [category, part] = key.split(':')
-          return { category, part }
-        })
+        .map(([partId]) => ({ partId }))
 
-      // Convert tuning settings to array
+      // Convert tuning settings to array of settingIds
       const settings = Object.entries(tuningSettings)
         .filter(([_, value]) => value.trim() !== '')
-        .map(([key, value]) => {
-          const [section, setting] = key.split(':')
-          return { section, setting, value }
-        })
+        .map(([settingId, value]) => ({ settingId, value }))
 
       const response = await fetch(`/api/builds/${id}`, {
         method: 'PATCH',

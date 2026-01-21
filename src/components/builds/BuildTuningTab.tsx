@@ -1,32 +1,103 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { TUNING_SECTIONS } from '@/data/builds/tuning-settings'
+import { Loader2 } from 'lucide-react'
+
+interface TuningSection {
+  id: string
+  name: string
+  displayOrder: number
+}
+
+interface TuningSetting {
+  id: string
+  sectionId: string
+  name: string
+  description?: string
+  defaultValue?: string
+  isActive: boolean
+  section: TuningSection
+}
 
 interface BuildTuningTabProps {
   tuningSettings: Record<string, string>
-  onSettingChange: (section: string, setting: string, value: string) => void
+  onSettingChange: (settingId: string, value: string) => void
 }
 
 export function BuildTuningTab({ tuningSettings, onSettingChange }: BuildTuningTabProps) {
-  const [activeSection, setActiveSection] = useState('Suspension')
+  const [sections, setSections] = useState<TuningSection[]>([])
+  const [settings, setSettings] = useState<TuningSetting[]>([])
+  const [activeSection, setActiveSection] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const [sectionsRes, settingsRes] = await Promise.all([
+          fetch('/api/tuning-settings/sections'),
+          fetch('/api/tuning-settings')
+        ])
+
+        if (!sectionsRes.ok) throw new Error('Failed to fetch sections')
+        if (!settingsRes.ok) throw new Error('Failed to fetch settings')
+
+        const sectionsData = await sectionsRes.json()
+        const settingsData = await settingsRes.json()
+
+        setSections(sectionsData.sections)
+        setSettings(settingsData.settings)
+
+        // Set first section as active if none selected
+        if (sectionsData.sections.length > 0) {
+          setActiveSection(sectionsData.sections[0].name)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load tuning data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, []) // Only fetch once on mount
 
   // Get the active section data
-  const activeSectionData = TUNING_SECTIONS.find((s) => s.name === activeSection)
+  const activeSectionObj = sections.find((s) => s.name === activeSection)
+  const activeSectionSettings = settings.filter((s) => s.sectionId === activeSectionObj?.id)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[700px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[700px]">
+        <p className="text-destructive">Error: {error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 h-[700px]">
       {/* Section Tabs (Left Side) */}
       <Card className="w-full sm:w-64 p-2">
         <div className="flex flex-row sm:flex-col gap-1">
-          {TUNING_SECTIONS.map((section) => (
+          {sections.map((section) => (
             <Button
-              key={section.name}
+              key={section.id}
               type="button"
               variant={activeSection === section.name ? 'default' : 'ghost'}
               className={cn(
@@ -48,27 +119,26 @@ export function BuildTuningTab({ tuningSettings, onSettingChange }: BuildTuningT
         <div className="mb-4">
           <h3 className="text-lg font-semibold">{activeSection}</h3>
           <p className="text-sm text-muted-foreground">
-            {activeSectionData?.settings.length || 0} settings
+            {activeSectionSettings.length} settings
           </p>
         </div>
 
         <div className="overflow-y-auto h-[580px] pr-4">
           <div className="space-y-4">
-            {activeSectionData?.settings.map((setting) => {
-              const key = `${activeSection}:${setting}`
-              const currentValue = tuningSettings[key] || ''
+            {activeSectionSettings.map((setting) => {
+              const currentValue = tuningSettings[setting.id] || ''
 
               return (
-                <div key={setting} className="space-y-2">
-                  <Label htmlFor={key} className="text-sm font-medium">
-                    {setting}
+                <div key={setting.id} className="space-y-2">
+                  <Label htmlFor={setting.id} className="text-sm font-medium">
+                    {setting.name}
                   </Label>
                   <Input
-                    id={key}
+                    id={setting.id}
                     type="text"
                     value={currentValue}
                     onChange={(e) =>
-                      onSettingChange(activeSection, setting, e.target.value)
+                      onSettingChange(setting.id, e.target.value)
                     }
                     placeholder="Enter value..."
                     className="min-h-[44px]"

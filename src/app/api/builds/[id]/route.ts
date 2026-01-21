@@ -12,20 +12,35 @@ export async function GET(
     const supabase = createServiceRoleClient()
     const session = await auth()
 
-    // Fetch the build with all related data
+    // Fetch the build with all related data including part/setting details
     const { data: build, error } = await supabase
       .from('CarBuild')
       .select(`
         *,
         user:User(id, name, email),
         car:Car(id, name, slug, manufacturer, year, category, driveType, maxPower, weight, pp),
-        upgrades:CarBuildUpgrade(*),
-        settings:CarBuildSetting(*)
+        upgrades:CarBuildUpgrade(
+          *,
+          part:Part(*)
+        ),
+        settings:CarBuildSetting(
+          *,
+          setting:TuningSetting(*)
+        )
       `)
       .eq('id', id)
       .single()
 
-    if (error || !build) {
+    if (error) {
+      console.error('Supabase error fetching build:', error)
+      return NextResponse.json(
+        { error: 'Build not found', details: error.message },
+        { status: 404 }
+      )
+    }
+
+    if (!build) {
+      console.error('Build not found for id:', id)
       return NextResponse.json(
         { error: 'Build not found' },
         { status: 404 }
@@ -71,10 +86,10 @@ export async function GET(
       uniqueTracks: new Set(lapTimes?.map(lt => lt.trackId)).size,
     }
 
-    // Transform settings to use 'section' instead of 'category' for frontend
+    // Transform settings to use 'section' instead of 'category' for frontend compatibility
     const transformedSettings = build.settings?.map((setting: any) => ({
       ...setting,
-      section: setting.category,
+      section: setting.section?.name || setting.category,
     })) || []
 
     return NextResponse.json({
@@ -170,60 +185,182 @@ export async function PATCH(
 
     // Update upgrades if provided
     if (upgrades !== undefined && Array.isArray(upgrades)) {
+      // Validate partIds and lookup category/part names
+      if (upgrades.length > 0) {
+        const partIds = upgrades.map(u => u.partId).filter(Boolean)
+
+        if (partIds.length > 0) {
+          const { data: parts } = await supabase
+            .from('Part')
+            .select('id, name, categoryId')
+            .in('id', partIds)
+
+          if (!parts || parts.length !== partIds.length) {
+            return NextResponse.json(
+              { error: 'One or more invalid part IDs' },
+              { status: 400 }
+            )
+          }
+        }
+      }
+
       // Delete existing upgrades
       await supabase
         .from('CarBuildUpgrade')
         .delete()
         .eq('buildId', id)
 
-      // Insert new upgrades
+      // Insert new upgrades with validation
       if (upgrades.length > 0) {
-        const upgradeRecords = upgrades.map(upgrade => ({
-          id: nanoid(),
-          buildId: id,
-          category: upgrade.category,
-          part: upgrade.part,
-        }))
+        // Fetch part details to populate legacy columns
+        const partIds = upgrades.map(u => u.partId).filter(Boolean)
 
-        await supabase
-          .from('CarBuildUpgrade')
-          .insert(upgradeRecords)
+        let partDetails: any[] = []
+        if (partIds.length > 0) {
+          // Fetch parts with category details using a separate query
+          const { data: parts } = await supabase
+            .from('Part')
+            .select('id, name, categoryId')
+            .in('id', partIds)
+
+          // Fetch categories separately
+          const categoryIds = parts?.map(p => p.categoryId) || []
+          let categories: any[] = []
+          if (categoryIds.length > 0) {
+            const { data: cats } = await supabase
+              .from('PartCategory')
+              .select('id, name')
+              .in('id', categoryIds)
+            categories = cats || []
+          }
+
+          const categoryMap = new Map(categories.map(c => [c.id, c.name]))
+          partDetails = (parts || []).map(p => ({
+            ...p,
+            categoryName: categoryMap.get(p.categoryId) || ''
+          }))
+        }
+
+        const partMap = new Map(partDetails.map(p => [p.id, p]))
+
+        const upgradeRecords = upgrades
+          .filter((u: any) => u.partId) // Only include upgrades with valid partId
+          .map((upgrade: any) => {
+            const part = partMap.get(upgrade.partId)
+            return {
+              id: nanoid(),
+              buildId: id,
+              partId: upgrade.partId,
+              category: part?.categoryName || '',
+              part: part?.name || '',
+            }
+          })
+
+        if (upgradeRecords.length > 0) {
+          await supabase
+            .from('CarBuildUpgrade')
+            .insert(upgradeRecords)
+        }
       }
     }
 
     // Update settings if provided
     if (settings !== undefined && Array.isArray(settings)) {
+      // Validate settingIds and lookup section/setting names
+      if (settings.length > 0) {
+        const settingIds = settings.map(s => s.settingId).filter(Boolean)
+
+        if (settingIds.length > 0) {
+          const { data: tuningSettings } = await supabase
+            .from('TuningSetting')
+            .select('id, name, sectionId')
+            .in('id', settingIds)
+
+          if (!tuningSettings || tuningSettings.length !== settingIds.length) {
+            return NextResponse.json(
+              { error: 'One or more invalid setting IDs' },
+              { status: 400 }
+            )
+          }
+        }
+      }
+
       // Delete existing settings
       await supabase
         .from('CarBuildSetting')
         .delete()
         .eq('buildId', id)
 
-      // Insert new settings
+      // Insert new settings with validation
       if (settings.length > 0) {
-        const settingRecords = settings.map(setting => ({
-          id: nanoid(),
-          buildId: id,
-          category: setting.section,
-          setting: setting.setting,
-          value: setting.value,
-        }))
+        // Fetch setting details to populate legacy columns
+        const settingIds = settings.map(s => s.settingId).filter(Boolean)
 
-        await supabase
-          .from('CarBuildSetting')
-          .insert(settingRecords)
+        let settingDetails: any[] = []
+        if (settingIds.length > 0) {
+          // Fetch settings with section details using separate queries
+          const { data: tuningSettings } = await supabase
+            .from('TuningSetting')
+            .select('id, name, sectionId')
+            .in('id', settingIds)
+
+          // Fetch sections separately
+          const sectionIds = tuningSettings?.map(s => s.sectionId) || []
+          let sections: any[] = []
+          if (sectionIds.length > 0) {
+            const { data: secs } = await supabase
+              .from('TuningSection')
+              .select('id, name')
+              .in('id', sectionIds)
+            sections = secs || []
+          }
+
+          const sectionMap = new Map(sections.map(s => [s.id, s.name]))
+          settingDetails = (tuningSettings || []).map(s => ({
+            ...s,
+            sectionName: sectionMap.get(s.sectionId) || ''
+          }))
+        }
+
+        const settingMap = new Map(settingDetails.map(s => [s.id, s]))
+
+        const settingRecords = settings
+          .filter((s: any) => s.settingId) // Only include settings with valid settingId
+          .map((setting: any) => {
+            const tuningSetting = settingMap.get(setting.settingId)
+            return {
+              id: nanoid(),
+              buildId: id,
+              settingId: setting.settingId,
+              category: tuningSetting?.sectionName || '',
+              setting: tuningSetting?.name || '',
+              value: setting.value,
+            }
+          })
+
+        if (settingRecords.length > 0) {
+          await supabase
+            .from('CarBuildSetting')
+            .insert(settingRecords)
+        }
       }
     }
 
-    // Fetch the updated build
+    // Fetch the updated build with full details
     const { data: updatedBuild } = await supabase
       .from('CarBuild')
       .select(`
         *,
         user:User(id, name, email),
         car:Car(id, name, slug, manufacturer, year),
-        upgrades:CarBuildUpgrade(*),
-        settings:CarBuildSetting(*)
+        upgrades:CarBuildUpgrade(
+          *,
+          part:Part(*)
+        ),
+        settings:CarBuildSetting(
+          *,
+          setting:TuningSetting(*)
+        )
       `)
       .eq('id', id)
       .single()
