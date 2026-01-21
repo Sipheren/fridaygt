@@ -1665,8 +1665,6 @@ All phases of the BUILD-CENTRIC RACE SYSTEM have been successfully implemented:
 
 > **Status**: ✅ IMPLEMENTED - Migrated from static TypeScript files to database-driven system.
 
-For full details, see [`docs/PARTS-TUNING-MIGRATION.md`](PARTS-TUNING-MIGRATION.md).
-
 ### Summary
 - **PartCategory** table: 5 categories (Sports, Club Sports, Semi-Racing, Racing, Extreme)
 - **Part** table: 72 parts with FK to categories

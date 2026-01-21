@@ -149,8 +149,7 @@ fridaygt/
 │   ├── PLAN.md                  # Roadmap and status
 │   ├── SESSION-LOG.md           # Development history
 │   ├── DATABASE-SCHEMA.md       # Database structure
-│   ├── DESIGN-SYSTEM.md         # UI/UX standards
-│   └── PARTS-TUNING-MIGRATION.md # Migration docs
+│   └── DESIGN-SYSTEM.md         # UI/UX standards
 ├── supabase/                    # Supabase configuration
 │   └── migrations/              # Database migrations
 │       └── done/                # Applied migrations
@@ -191,7 +190,6 @@ See [DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md) for complete schema.
 - **[SESSION-LOG.md](docs/SESSION-LOG.md)** - Detailed development session history
 - **[DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md)** - Complete database structure
 - **[DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md)** - UI/UX design system and patterns
-- **[PARTS-TUNING-MIGRATION.md](docs/PARTS-TUNING-MIGRATION.md)** - Parts/tuning migration guide
 
 ## Available Scripts
 
