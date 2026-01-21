@@ -1,44 +1,57 @@
 # FridayGT
 
-> **🏎️ Current Branch**: `buildfocussed` - Build-centric architecture
-> **Status**: Active development
+> **🏎️ GT7 Lap Time Tracker & Race Management**
+> **Status**: Active Development | **Branch**: `main`
 
-A GT7 lap time tracker and race management application built with Next.js, Supabase, and NextAuth.
+A comprehensive Gran Turismo 7 lap time tracker and race management application built with Next.js, Supabase, and NextAuth.
 
 ## 🎯 Project Overview
 
-FridayGT helps Gran Turismo 7 players track their racing performance with a **build-centric architecture** where car setups and tuning configurations are the central organizing principle.
+FridayGT helps GT7 players track racing performance with a **build-centric architecture** where car setups and tuning configurations are the central organizing principle.
 
 ### Key Concepts
 
 **Builds are Central**
 - Every lap time is associated with a specific build (car setup/tuning)
-- Builds organize your performance data by car configuration
+- Builds organize performance data by car configuration
 - Easy to compare how different tunes perform on the same track
+- Parts and tuning settings now stored in database with validation
 
-**Active Races System**
-- Mark races as "active" to feature them on the Tonight page
-- Quick toggle from the race list or edit page
-- Tonight page shows all active races for upcoming sessions
+**Race Management**
+- Create races linked to specific tracks and car combinations
+- Multiple cars can be assigned to each race
+- Run Lists organize upcoming racing sessions
+- Active races featured on the Tonight page
 
 ## Features
 
-- 🏗️ **Build Management** - Create and manage car builds with tuning setups
-- 🚗 **Car Database** - Track your car collection
-- 🛤️ **Track Database** - Comprehensive track information and lap time records
+### Core Features
+- 🏗️ **Build Management** - Create and manage car builds with parts and tuning setups
+- 🚗 **Car Database** - Track your GT7 car collection
+- 🛤️ **Track Database** - Comprehensive track information with reverse layouts
 - ⏱️ **Lap Time Tracking** - Record and analyze lap times by build and track
-- 🏁 **Race Management** - Organize races and mark them as active for upcoming sessions
-- 📺 **Tonight Page** - Quick view of all active races for tonight's racing
-- 👤 **User Profiles** - Manage your account and preferences
+- 🏁 **Race Management** - Organize races with multiple car combinations
+- 📋 **Run Lists** - Plan and manage racing sessions with multiple events
+- 📺 **Tonight Page** - Quick view of active races for tonight's racing
+- 👤 **User Profiles** - Manage account with gamertag support
+
+### Recent Enhancements (2026)
+- ✅ Database-driven parts and tuning settings (72 parts, 60 settings)
+- ✅ Foreign key validation for build components
+- ✅ Multiple cars per race entry support
+- ✅ Global hover system for consistent UI feedback
+- ✅ Unified button styling across all pages
+- ✅ Row-level security (RLS) for data protection
 
 ## Tech Stack
 
-- **Frontend:** Next.js 14 (App Router), React, TypeScript, Tailwind CSS
-- **UI Components:** shadcn/ui
-- **Backend:** Next.js API Routes
-- **Database:** Supabase (PostgreSQL)
-- **Authentication:** NextAuth.js v5
-- **State Management:** React hooks, Server Components
+- **Frontend:** Next.js 15 (App Router), React, TypeScript, Tailwind CSS
+- **UI Components:** shadcn/ui with custom design system
+- **Backend:** Next.js API Routes with Supabase client
+- **Database:** Supabase (PostgreSQL 15) with RLS
+- **Authentication:** NextAuth.js v5 with email magic links
+- **State Management:** React hooks, Server Components, Suspense
+- **Email:** Resend for transactional emails
 
 ## Getting Started
 
@@ -46,6 +59,7 @@ FridayGT helps Gran Turismo 7 players track their racing performance with a **bu
 
 - Node.js 18+ installed
 - Supabase project created
+- Resend API key (for emails)
 - Environment variables configured
 
 ### Installation
@@ -55,18 +69,27 @@ FridayGT helps Gran Turismo 7 players track their racing performance with a **bu
 npm install
 
 # Copy environment variables
-cp .env.example .env
+cp .env.local.example .env.local
 
-# Update .env with your Supabase credentials
+# Update .env.local with your credentials
 ```
 
 ### Required Environment Variables
 
 ```env
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# NextAuth
 NEXTAUTH_SECRET=your_nextauth_secret
 NEXTAUTH_URL=http://localhost:3000
+
+# Email (Resend)
+RESEND_API_KEY=your_resend_api_key
+EMAIL_FROM=noreply@yourdomain.com
+DEFAULT_ADMIN_EMAIL=admin@yourdomain.com
 ```
 
 ### Development
@@ -84,58 +107,70 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 fridaygt/
 ├── src/                         # Next.js app source
 │   ├── app/                      # App Router pages and API routes
-│   │   ├── admin/               # Admin pages
-│   │   ├── api/                 # API routes
+│   │   ├── admin/               # Admin dashboard pages
+│   │   ├── api/                 # API endpoints
 │   │   ├── auth/                # Authentication pages
-│   │   ├── builds/              # Build management pages
-│   │   ├── cars/                # Car database pages
-│   │   ├── lap-times/           # Lap time tracking pages
-│   │   ├── races/               # Race management pages
-│   │   ├── tracks/              # Track database pages
-│   │   └── tonight/             # Tonight's races page
+│   │   ├── builds/              # Build management (CRUD)
+│   │   ├── cars/                # Car database
+│   │   ├── lap-times/           # Lap time tracking
+│   │   ├── races/               # Race management
+│   │   ├── run-lists/           # Run list management
+│   │   ├── tracks/              # Track database
+│   │   └── tonight/             # Tonight's active races
 │   ├── components/              # React components
 │   │   ├── builds/              # Build-related components
 │   │   ├── lap-times/           # Lap time components
-│   │   └── ui/                  # shadcn/ui components
-│   ├── lib/                     # Utility libraries
-│   └── types/                   # TypeScript type definitions
+│   │   ├── races/               # Race components
+│   │   ├── run-lists/           # Run list components
+│   │   └── ui/                  # shadcn/ui + custom UI
+│   ├── lib/                     # Utilities (auth, db, helpers)
+│   └── types/                   # TypeScript definitions
 ├── public/                      # Static assets
 ├── docs/                        # Project documentation
 │   ├── DATABASE-SCHEMA.md       # Database structure
-│   ├── DESIGN-SYSTEM.md         # UI/UX design system
-│   ├── PLAN.md                  # Overall vision and roadmap
-│   └── SESSION-LOG.md           # Development log
+│   ├── DESIGN-SYSTEM.md         # UI/UX standards
+│   ├── PARTS-TUNING-MIGRATION.md # Migration docs
+│   └── PLAN.md                  # Roadmap
 ├── supabase/                    # Supabase configuration
-│   └── migrations/              # Database migration scripts
-├── gt7data/                     # GT7 game data
-│   ├── gt7_cars_combined.csv    # Car data
-│   ├── gt7_courses_combined.csv # Track/course data
-│   ├── gt7_parts_shop.csv       # Parts data
-│   └── gt7_tuning_settings.csv  # Tuning options
-└── scripts/                     # Utility scripts for data import
+│   └── migrations/              # Database migrations
+│       └── done/                # Applied migrations
+├── gt7data/                     # GT7 game data (CSV)
+│   ├── gt7_cars_combined.csv    # 350+ cars
+│   ├── gt7_courses_combined.csv # Tracks and layouts
+│   ├── gt7_parts_shop.csv       # 72 parts across 5 categories
+│   └── gt7_tuning_settings.csv  # 60 settings across 15 sections
+└── scripts/                     # Utility scripts
 ```
+
+## Database Schema Highlights
+
+### Core Tables
+- **User** - User accounts with roles (PENDING/USER/ADMIN)
+- **Car** - GT7 car catalog (350+ cars)
+- **Track** - Track catalog with reverse layouts
+- **CarBuild** - User car builds/tunes
+- **CarBuildUpgrade** - Installed parts (FK to Part)
+- **CarBuildSetting** - Tuning settings (FK to TuningSetting)
+- **LapTime** - Lap times linked to builds and tracks
+- **Race** - Races with track and multiple cars
+- **RaceCar** - Junction table for race→car relationships
+- **RunList** - Racing session plans
+- **RunListEntry** - Events within a run list
+
+### Parts & Tuning (2026-01-21)
+- **PartCategory** - 5 categories (Sports, Club Sports, Semi-Racing, Racing, Extreme)
+- **Part** - 72 individual parts with foreign key validation
+- **TuningSection** - 15 tuning sections (Suspension, ECU, Transmission, etc.)
+- **TuningSetting** - 60 individual settings with validation
+
+See [DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md) for complete schema.
 
 ## Documentation
 
-- **[PLAN.md](docs/PLAN.md)** - Overall vision, architecture, and implementation roadmap
-- **[DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md)** - Complete database structure and table definitions
-- **[DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md)** - UI/UX design system and component standards
-- **[SESSION-LOG.md](docs/SESSION-LOG.md)** - Detailed development history and session logs
-
-## Database Migrations
-
-Database migrations are stored in the `supabase/migrations/` directory.
-
-### Applying Migrations
-
-1. Open Supabase Dashboard → SQL Editor
-2. Open the migration file from `supabase/migrations/`
-3. Run the SQL script
-
-### Important Migrations
-
-- `20260119_build_centric_pivot.sql` - Build-centric architecture changes
-- `20260119_add_race_active.sql` - Active races system
+- **[DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md)** - Complete database structure
+- **[DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md)** - UI/UX design system
+- **[PLAN.md](docs/PLAN.md)** - Project vision and roadmap
+- **[PARTS-TUNING-MIGRATION.md](docs/PARTS-TUNING-MIGRATION.md)** - Database migration guide
 
 ## Available Scripts
 
@@ -145,54 +180,93 @@ npm run dev              # Start development server
 
 # Build & Type Check
 npm run build            # Build for production
-npm run type-check       # Run TypeScript type checking
+npm run type-check       # TypeScript type checking
 npm run lint             # Run ESLint
 
 # Data Import
-npm run import-cars      # Import GT7 car data
-npm run import-tracks    # Import GT7 track data
+npx tsx scripts/import-cars-combined.ts     # Import car data
+npx tsx scripts/import-tracks-combined.ts   # Import track data
+npx tsx scripts/migrate-parts-to-db.ts      # Migrate parts to DB
+npx tsx scripts/generate-parts-shop.ts      # Generate parts TypeScript file
+
+# Database
+# Run migrations manually in Supabase SQL Editor
 ```
 
-## Deployment
+## Database Migrations
 
-The application is deployed on Vercel and uses Supabase for the database.
+Migrations are stored in `supabase/migrations/`. Applied migrations are moved to `supabase/migrations/done/`.
 
-### Environment Variables for Production
+### Recent Migrations
+- `20260121_add_parts_and_settings_tables.sql` - Parts/tuning tables
+- `20260121_finalize_parts_migration.sql` - FK constraints
+- `20260119_build_centric_pivot.sql` - Build architecture
+- `20260119_race_configuration.sql` - Race entity
+- `20260119_add_multiple_cars_to_runlist.sql` - Multi-car support
 
-Ensure these are set in your deployment environment:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXTAUTH_SECRET`
-- `NEXTAUTH_URL` (set to your production domain)
+### Applying Migrations
+
+1. Open Supabase Dashboard → SQL Editor
+2. Copy the migration file content
+3. Run the SQL script
 
 ## Architecture
 
-### Build-Centric Design
-
-The `buildfocussed` branch implements a build-centric architecture:
+### Data Model
 
 ```
-Build (car setup)
-  ├── Car (vehicle)
-  ├── Upgrades & Parts
-  ├── Tuning Settings
-  └── Lap Times (linked to tracks)
-      └── Track
+Car (GT7 catalog)
+  └── CarBuild (user's tuned setup)
+       ├── CarBuildUpgrade → Part (validated parts)
+       ├── CarBuildSetting → TuningSetting (validated tuning)
+       └── LapTime → Track (performance records)
+
+Race (scheduled event on a track)
+  └── RaceCar (multiple car/build combinations)
+
+RunList (racing session plan)
+  └── RunListEntry → Race (events in session)
+       └── RunListEntryCar (additional cars for entry)
 ```
 
-This differs from traditional lap time trackers that organize by car or track first.
+### Security
 
-### Active Races System
+- **Row Level Security (RLS)** enabled on all user data
+- Users can only access their own builds, lap times, and run lists
+- Public access for reference data (cars, tracks, parts)
+- Admin role for elevated permissions
 
-Races can be marked as "active" which:
-- Displays them on the Tonight page
-- Indicates upcoming races for the group
-- Provides quick access from navigation
-- Can be toggled from race list or edit page
+### Design System
+
+- Global hover states for consistent feedback
+- Unified button styling (`ghostBordered` for secondary actions)
+- Touch-friendly targets (min 44px height)
+- Consistent spacing and typography
+- Dark mode support (if applicable)
+
+See [DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) for details.
+
+## Deployment
+
+### Production Environment Variables
+
+Required for production deployment:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXTAUTH_SECRET`
+- `NEXTAUTH_URL`
+- `RESEND_API_KEY`
+- `EMAIL_FROM`
+- `DEFAULT_ADMIN_EMAIL`
+
+### Deployment Platform
+
+Currently deployed on Vercel with Supabase as the backend.
 
 ## Contributing
 
-This is a personal project for tracking GT7 lap times and managing racing sessions.
+This is a personal project for GT7 racing. Suggestions and improvements are welcome through issues and pull requests.
 
 ## License
 
