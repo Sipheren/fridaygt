@@ -156,38 +156,114 @@ export async function POST(request: NextRequest) {
 
     // Insert upgrades if provided
     if (upgrades && Array.isArray(upgrades) && upgrades.length > 0) {
-      const upgradeRecords = upgrades.map(upgrade => ({
-        id: nanoid(),
-        buildId,
-        category: upgrade.category,
-        part: upgrade.part,
-      }))
+      const partIds = upgrades.map(u => u.partId).filter(Boolean)
 
-      const { error: upgradesError } = await supabase
-        .from('CarBuildUpgrade')
-        .insert(upgradeRecords)
+      let partDetails: any[] = []
+      if (partIds.length > 0) {
+        // Fetch parts with category details
+        const { data: parts } = await supabase
+          .from('Part')
+          .select('id, name, categoryId')
+          .in('id', partIds)
 
-      if (upgradesError) {
-        console.error('Error inserting upgrades:', upgradesError)
+        // Fetch categories separately
+        const categoryIds = parts?.map(p => p.categoryId) || []
+        let categories: any[] = []
+        if (categoryIds.length > 0) {
+          const { data: cats } = await supabase
+            .from('PartCategory')
+            .select('id, name')
+            .in('id', categoryIds)
+          categories = cats || []
+        }
+
+        const categoryMap = new Map(categories.map(c => [c.id, c.name]))
+        partDetails = (parts || []).map(p => ({
+          ...p,
+          categoryName: categoryMap.get(p.categoryId) || ''
+        }))
+      }
+
+      const partMap = new Map(partDetails.map(p => [p.id, p]))
+
+      const upgradeRecords = upgrades
+        .filter(u => u.partId) // Only include upgrades with valid partId
+        .map(upgrade => {
+          const part = partMap.get(upgrade.partId)
+          return {
+            id: nanoid(),
+            buildId,
+            partId: upgrade.partId,
+            category: part?.categoryName || '',
+            part: part?.name || '',
+          }
+        })
+
+      if (upgradeRecords.length > 0) {
+        const { error: upgradesError } = await supabase
+          .from('CarBuildUpgrade')
+          .insert(upgradeRecords)
+
+        if (upgradesError) {
+          console.error('Error inserting upgrades:', upgradesError)
+        }
       }
     }
 
     // Insert tuning settings if provided
     if (settings && Array.isArray(settings) && settings.length > 0) {
-      const settingRecords = settings.map(setting => ({
-        id: nanoid(),
-        buildId,
-        category: setting.section,
-        setting: setting.setting,
-        value: setting.value,
-      }))
+      const settingIds = settings.map(s => s.settingId).filter(Boolean)
 
-      const { error: settingsError } = await supabase
-        .from('CarBuildSetting')
-        .insert(settingRecords)
+      let settingDetails: any[] = []
+      if (settingIds.length > 0) {
+        // Fetch settings with section details
+        const { data: tuningSettings } = await supabase
+          .from('TuningSetting')
+          .select('id, name, sectionId')
+          .in('id', settingIds)
 
-      if (settingsError) {
-        console.error('Error inserting settings:', settingsError)
+        // Fetch sections separately
+        const sectionIds = tuningSettings?.map(s => s.sectionId) || []
+        let sections: any[] = []
+        if (sectionIds.length > 0) {
+          const { data: secs } = await supabase
+            .from('TuningSection')
+            .select('id, name')
+            .in('id', sectionIds)
+          sections = secs || []
+        }
+
+        const sectionMap = new Map(sections.map(s => [s.id, s.name]))
+        settingDetails = (tuningSettings || []).map(s => ({
+          ...s,
+          sectionName: sectionMap.get(s.sectionId) || ''
+        }))
+      }
+
+      const settingMap = new Map(settingDetails.map(s => [s.id, s]))
+
+      const settingRecords = settings
+        .filter(s => s.settingId) // Only include settings with valid settingId
+        .map(setting => {
+          const tuningSetting = settingMap.get(setting.settingId)
+          return {
+            id: nanoid(),
+            buildId,
+            settingId: setting.settingId,
+            category: tuningSetting?.sectionName || '',
+            setting: tuningSetting?.name || '',
+            value: setting.value,
+          }
+        })
+
+      if (settingRecords.length > 0) {
+        const { error: settingsError } = await supabase
+          .from('CarBuildSetting')
+          .insert(settingRecords)
+
+        if (settingsError) {
+          console.error('Error inserting settings:', settingsError)
+        }
       }
     }
 
@@ -198,8 +274,14 @@ export async function POST(request: NextRequest) {
         *,
         user:User(id, name, email),
         car:Car(id, name, slug, manufacturer, year),
-        upgrades:CarBuildUpgrade(*),
-        settings:CarBuildSetting(*)
+        upgrades:CarBuildUpgrade(
+          *,
+          part:Part(*)
+        ),
+        settings:CarBuildSetting(
+          *,
+          setting:TuningSetting(*)
+        )
       `)
       .eq('id', buildId)
       .single()
