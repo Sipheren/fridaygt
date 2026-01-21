@@ -203,7 +203,7 @@ export default function EditRacePage() {
         throw new Error(data.error || 'Failed to update race')
       }
 
-      router.replace(`/races/${raceId}`)
+      router.push(`/races/${raceId}`)
     } catch (err) {
       console.error('Error updating race:', err)
       setError(err instanceof Error ? err.message : 'Failed to update race')
@@ -291,6 +291,7 @@ export default function EditRacePage() {
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
+              className="min-h-[44px]"
             />
           </div>
 
@@ -304,6 +305,7 @@ export default function EditRacePage() {
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
+              className="min-h-[44px]"
               rows={3}
             />
           </div>
@@ -359,6 +361,7 @@ export default function EditRacePage() {
                 onChange={(e) =>
                   setFormData({ ...formData, laps: e.target.value })
                 }
+                className="min-h-[44px]"
               />
             </div>
 
@@ -370,7 +373,7 @@ export default function EditRacePage() {
                   setFormData({ ...formData, weather: value })
                 }
               >
-                <SelectTrigger id="weather">
+                <SelectTrigger id="weather" className="w-full min-h-[44px]">
                   <SelectValue placeholder="Select weather" />
                 </SelectTrigger>
                 <SelectContent>

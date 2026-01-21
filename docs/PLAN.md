@@ -433,10 +433,7 @@ Start → /builds/new
 - [x] Build lap time entry page
 - [x] Create "My Lap Times" page with search, delete, PB detection
 - [x] Test lap time creation through UI
-- [ ] **Lap time edit functionality NOT IMPLEMENTED** - Users can only create and delete
-  - [ ] PATCH endpoint exists in `/api/lap-times/[id]/route.ts` but not connected to UI
-  - [ ] Edit page exists at `/lap-times/[id]/edit` but not accessible from UI
-  - [ ] No "Edit" button on lap time cards/rows
+- [x] **Lap time CRUD complete** - Create and delete functionality (editing intentionally not supported - users delete and recreate)
 
 **Part 2: Track Page Integration ✅ COMPLETED**
 - [x] Update track detail page to show lap times for this track
@@ -1157,17 +1154,16 @@ Edit page unification and hover visibility improvements:
 ### 🔜 Remaining Work
 
 **High Priority**:
-1. ❌ Connect lap time edit UI (endpoint exists at `/api/lap-times/[id]`)
-2. ❌ Images for cars and tracks (552 cars + 118 tracks)
+1. ❌ Images for cars and tracks (552 cars + 118 tracks)
 
 **Medium Priority**:
-3. ❌ Global leaderboards page
-4. ❌ Admin dashboard with statistics
-5. ❌ Build sharing features (share links, comparison)
+2. ❌ Global leaderboards page
+3. ❌ Admin dashboard with statistics
+4. ❌ Build sharing features (share links, comparison)
 
 **Low Priority**:
-6. ❌ Build ratings/favorites
-7. ❌ Data visualizations (lap time progress charts)
+5. ❌ Build ratings/favorites
+6. ❌ Data visualizations (lap time progress charts)
 
 ---
 
@@ -1185,6 +1181,7 @@ For detailed session-by-session progress, see [`docs/SESSION-LOG.md`](SESSION-LO
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-21 | #13 | Tuning input types (dropdowns, numbers, ratios), mobile dropdown nav, input height consistency |
 | 2026-01-21 | #12 | Parts & tuning DB migration, UI hover fixes |
 | 2026-01-19 | #11 | Build-centric race system polish, UX improvements |
 | 2026-01-14 | #10 | Mobile responsiveness, RLS security policies |

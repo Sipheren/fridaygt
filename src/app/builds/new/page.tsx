@@ -176,7 +176,7 @@ export default function NewBuildPage() {
           <div className="space-y-2">
             <Label htmlFor="car">Car *</Label>
             <Select value={carId} onValueChange={setCarId} required>
-              <SelectTrigger id="car">
+              <SelectTrigger id="car" className="min-h-[44px] w-full">
                 <SelectValue placeholder="Select a car" />
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
@@ -198,6 +198,7 @@ export default function NewBuildPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Street Racing Setup, Track Day Special"
+              className="min-h-[44px]"
               required
             />
           </div>
@@ -210,6 +211,7 @@ export default function NewBuildPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your build setup, tuning philosophy, or notes"
+              className="min-h-[44px]"
               rows={4}
             />
           </div>

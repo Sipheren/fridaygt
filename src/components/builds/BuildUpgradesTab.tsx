@@ -5,6 +5,13 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 
@@ -90,10 +97,27 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeToggle }: BuildUpg
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 h-[700px]">
-      {/* Category Tabs (Left Side) */}
-      <Card className="w-full sm:w-64 p-2">
-        <div className="flex flex-row sm:flex-col gap-1">
+    <div className="flex flex-col sm:flex-row gap-4">
+      {/* Category Navigation */}
+      {/* Mobile: Dropdown selector */}
+      <div className="sm:hidden w-full">
+        <Select value={activeCategory} onValueChange={setActiveCategory}>
+          <SelectTrigger className="min-h-[44px] w-full">
+            <SelectValue placeholder="Select category..." />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={category.name}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Desktop: Vertical sidebar tabs */}
+      <Card className="hidden sm:block w-64 p-2">
+        <div className="flex flex-col gap-1">
           {categories.map((category) => (
             <Button
               key={category.id}
@@ -114,7 +138,7 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeToggle }: BuildUpg
       </Card>
 
       {/* Parts List (Right Side) */}
-      <Card className="flex-1 p-4">
+      <Card className="flex-1 p-4 overflow-hidden flex flex-col">
         <div className="mb-4">
           <h3 className="text-lg font-semibold">{activeCategory}</h3>
           <p className="text-sm text-muted-foreground">
@@ -122,7 +146,7 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeToggle }: BuildUpg
           </p>
         </div>
 
-        <div className="overflow-y-auto h-[580px] pr-4">
+        <div className="overflow-y-auto flex-1 pr-4">
           <div className="space-y-2">
             {activeCategoryParts.map((part) => {
               const isChecked = selectedUpgrades[part.id] || false

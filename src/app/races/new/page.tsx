@@ -204,7 +204,7 @@ export default function NewRacePage() {
       }
 
       const race = await response.json()
-      router.push(`/races/${race.id}`)
+      router.replace(`/races/${race.id}`)
     } catch (err) {
       console.error('Error creating race:', err)
       setError(err instanceof Error ? err.message : 'Failed to create race')
@@ -333,7 +333,7 @@ export default function NewRacePage() {
                       value={formData.trackId}
                       onValueChange={handleTrackSelect}
                     >
-                      <SelectTrigger id="track" className="w-full">
+                      <SelectTrigger id="track" className="w-full min-h-[44px]">
                         <SelectValue placeholder="Select a track" />
                       </SelectTrigger>
                       <SelectContent>
@@ -432,6 +432,7 @@ export default function NewRacePage() {
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
+                      className="min-h-[44px]"
                     />
                   </div>
 
@@ -444,6 +445,7 @@ export default function NewRacePage() {
                       onChange={(e) =>
                         setFormData({ ...formData, description: e.target.value })
                       }
+                      className="min-h-[44px]"
                       rows={3}
                     />
                   </div>
@@ -460,6 +462,7 @@ export default function NewRacePage() {
                         onChange={(e) =>
                           setFormData({ ...formData, laps: e.target.value })
                         }
+                        className="min-h-[44px]"
                       />
                     </div>
 
@@ -471,7 +474,7 @@ export default function NewRacePage() {
                           setFormData({ ...formData, weather: value })
                         }
                       >
-                        <SelectTrigger id="weather">
+                        <SelectTrigger id="weather" className="w-full min-h-[44px]">
                           <SelectValue placeholder="Select weather" />
                         </SelectTrigger>
                         <SelectContent>
