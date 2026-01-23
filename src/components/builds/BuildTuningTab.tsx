@@ -73,6 +73,43 @@ function renderSettingInput(
     )
   }
 
+  // DUAL input (front:rear split for suspension settings)
+  if (inputType === 'dual') {
+    const step = setting.step || 1
+    const min = setting.minValue ?? undefined
+    const max = setting.maxValue ?? undefined
+
+    // Parse current value as "front:rear"
+    const [front = '', rear = ''] = currentValue.split(':')
+
+    return (
+      <div className="flex items-center gap-2">
+        <Input
+          id={`${setting.id}-front`}
+          type="number"
+          step={step}
+          min={min}
+          max={max}
+          value={front}
+          onChange={(e) => onChange(`${e.target.value}:${rear}`)}
+          placeholder="Front"
+          className="min-h-[44px] flex-1"
+        />
+        <Input
+          id={`${setting.id}-rear`}
+          type="number"
+          step={step}
+          min={min}
+          max={max}
+          value={rear}
+          onChange={(e) => onChange(`${front}:${e.target.value}`)}
+          placeholder="Rear"
+          className="min-h-[44px] flex-1"
+        />
+      </div>
+    )
+  }
+
   // NUMBER or DECIMAL
   if (inputType === 'number' || inputType === 'decimal') {
     const step = setting.step || (inputType === 'decimal' ? 0.01 : 1)
@@ -268,6 +305,11 @@ export function BuildTuningTab({ tuningSettings, onSettingChange }: BuildTuningT
                 <div key={setting.id} className="space-y-2">
                   <Label htmlFor={setting.id} className="text-sm font-medium">
                     {setting.name}
+                    {setting.unit && (
+                      <span className="text-muted-foreground font-normal ml-1">
+                        ({setting.unit})
+                      </span>
+                    )}
                   </Label>
                   {renderSettingInput(setting, currentValue, (value) =>
                     onSettingChange(setting.id, value)
