@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
@@ -15,8 +14,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { formatLapTime } from '@/lib/time'
-import { Plus, Search, Clock, Trophy, Wrench, Trash2, Loader2 } from 'lucide-react'
+import { Plus, Clock, Trophy, Wrench, Trash2, Loader2 } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
+import { PageWrapper, PageHeader, EmptyState, SearchBar } from '@/components/layout'
 
 interface LapTime {
   id: string
@@ -135,63 +135,52 @@ export default function LapTimesPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8">
+      <PageWrapper>
         <LoadingSection text="Loading lap times..." />
-      </div>
+      </PageWrapper>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+    <PageWrapper>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Clock className="h-8 w-8 text-primary" />
-            MY LAP TIMES
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {lapTimes.length} {lapTimes.length === 1 ? 'lap' : 'laps'} recorded
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/lap-times/new">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Lap Time
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="MY LAP TIMES"
+        icon={Clock}
+        description={`${lapTimes.length} ${lapTimes.length === 1 ? 'lap' : 'laps'} recorded`}
+        actions={
+          <Button asChild>
+            <Link href="/lap-times/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Lap Time
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          id="lap-time-search"
-          name="lap-time-search"
-          type="text"
-          placeholder="Search by track or car..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
-      </div>
+      <SearchBar
+        placeholder="Search by track or car..."
+        value={searchQuery}
+        onChange={setSearchQuery}
+      />
 
       {/* Lap Times List */}
       {filteredLapTimes.length === 0 ? (
-        <div className="text-center py-12 border border-border rounded-lg">
-          <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground text-lg">
-            {searchQuery ? 'No lap times match your search' : 'No lap times recorded yet'}
-          </p>
-          {!searchQuery && (
-            <Button asChild className="mt-4">
-              <Link href="/lap-times/new">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Your First Lap Time
-              </Link>
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={Clock}
+          title={searchQuery ? 'No lap times match your search' : 'No lap times recorded yet'}
+          actions={
+            !searchQuery && (
+              <Button asChild>
+                <Link href="/lap-times/new">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Your First Lap Time
+                </Link>
+              </Button>
+            )
+          }
+        />
       ) : (
         <div className="space-y-3">
           {filteredLapTimes.map((lap) => {
@@ -329,6 +318,6 @@ export default function LapTimesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageWrapper>
   )
 }

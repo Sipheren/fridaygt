@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { LoadingSection } from '@/components/ui/loading'
+import { PageWrapper } from '@/components/layout'
 import { formatLapTime } from '@/lib/time'
 
 interface RaceCar {
@@ -182,22 +183,26 @@ export default function RaceDetailPage() {
   }
 
   if (loading) {
-    return <LoadingSection />
+    return (
+      <PageWrapper>
+        <LoadingSection text="Loading race..." />
+      </PageWrapper>
+    )
   }
 
   if (!race) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8">
+      <PageWrapper>
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Race not found</h1>
           <Button onClick={() => router.back()} className="min-h-[44px]">Go Back</Button>
         </div>
-      </div>
+      </PageWrapper>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+    <PageWrapper>
       {/* Header */}
       <div>
         <Button
@@ -481,6 +486,6 @@ export default function RaceDetailPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </PageWrapper>
   )
 }

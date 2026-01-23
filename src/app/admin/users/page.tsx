@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { ArrowLeft, UserCheck, UserX, Shield, User, Clock, AlertTriangle, Loader2, Users } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
+import { PageWrapper, PageHeader } from '@/components/layout'
 
 type User = {
   id: string
@@ -136,9 +137,9 @@ export default function AdminUsersPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+      <PageWrapper>
         <LoadingSection text="Loading users..." />
-      </div>
+      </PageWrapper>
     )
   }
 
@@ -147,7 +148,7 @@ export default function AdminUsersPage() {
   const admins = users.filter(u => u.role === 'ADMIN')
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+    <PageWrapper>
       {/* Success/Error Message */}
       {message && (
         <div className={`rounded-md border p-4 ${
@@ -167,25 +168,21 @@ export default function AdminUsersPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Users className="h-8 w-8 text-primary" />
-            USER MANAGEMENT
-          </h1>
-          <p className="text-muted-foreground">
-            Approve pending users and manage roles
-          </p>
-        </div>
-        <Button
-          variant="ghost"
-          onClick={() => router.push('/')}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Home
-        </Button>
-      </div>
+      <PageHeader
+        title="USER MANAGEMENT"
+        icon={Users}
+        description="Approve pending users and manage roles"
+        actions={
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/')}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+        }
+      />
 
       {/* Stats Overview */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
@@ -432,6 +429,6 @@ export default function AdminUsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageWrapper>
   )
 }

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Settings as SettingsIcon, Database, Image, Palette, Loader2 } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
+import { PageWrapper, PageHeader } from '@/components/layout'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -55,31 +56,30 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 max-w-[1200px] mx-auto">
+      <PageWrapper>
         <LoadingSection text="Loading settings..." />
-      </div>
+      </PageWrapper>
     )
   }
 
   return (
-    <div className="space-y-6 max-w-[1200px] mx-auto">
+    <PageWrapper>
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">SETTINGS</h1>
-          <p className="text-muted-foreground font-mono text-sm">
-            Application overview and statistics
-          </p>
-        </div>
-        <Button
-          variant="ghost"
-          onClick={() => router.push('/')}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Home
-        </Button>
-      </div>
+      <PageHeader
+        title="SETTINGS"
+        icon={SettingsIcon}
+        description="Application overview and statistics"
+        actions={
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/')}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+        }
+      />
 
       {/* Database Section */}
       <div className="border border-border rounded-lg p-6 space-y-4">
@@ -234,6 +234,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   )
 }

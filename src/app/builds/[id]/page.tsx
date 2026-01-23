@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { formatLapTime } from '@/lib/time'
 import { LoadingSection } from '@/components/ui/loading'
+import { PageWrapper } from '@/components/layout'
 
 interface Part {
   id: string
@@ -207,24 +208,24 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+      <PageWrapper>
         <LoadingSection text="Loading build..." />
-      </div>
+      </PageWrapper>
     )
   }
 
   if (!build) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8">
+      <PageWrapper>
         <div className="text-center py-12 border border-border rounded-lg">
           <p className="text-lg font-semibold">Build not found</p>
         </div>
-      </div>
+      </PageWrapper>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+    <PageWrapper>
       {/* Back Button */}
       <Button variant="ghost" onClick={() => router.push('/builds')} className="h-11 px-4 sm:h-9">
         <ArrowLeft className="h-4 w-4 mr-2" />
@@ -455,6 +456,6 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
             </CardContent>
           </Card>
         )}
-    </div>
+    </PageWrapper>
   )
 }

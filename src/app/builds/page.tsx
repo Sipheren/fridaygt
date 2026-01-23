@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Search, Plus, Wrench, Lock, Globe, User, Trash2, Pencil } from 'lucide-react'
+import { Plus, Wrench, Lock, Globe, User, Trash2, Pencil } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
+import { PageWrapper, PageHeader, EmptyState, SearchBar } from '@/components/layout'
 import {
   Dialog,
   DialogContent,
@@ -133,44 +133,36 @@ export default function BuildsPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+      <PageWrapper>
         <LoadingSection text="Loading builds..." />
-      </div>
+      </PageWrapper>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+    <PageWrapper>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Wrench className="h-8 w-8 text-primary" />
-            BUILDS
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {builds.length} {builds.length === 1 ? 'build' : 'builds'} available
-          </p>
-        </div>
-        <Button asChild className="gap-2 min-h-[44px]">
-          <Link href="/builds/new">
-            <Plus className="h-4 w-4" />
-            Create Build
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="BUILDS"
+        icon={Wrench}
+        description={`${builds.length} ${builds.length === 1 ? 'build' : 'builds'} available`}
+        actions={
+          <Button asChild className="gap-2 min-h-[44px]">
+            <Link href="/builds/new">
+              <Plus className="h-4 w-4" />
+              Create Build
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Search and Filters */}
       <div className="flex flex-col gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search builds, cars, or creators..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        <SearchBar
+          placeholder="Search builds, cars, or creators..."
+          value={search}
+          onChange={setSearch}
+        />
         <div className="grid grid-cols-3 gap-2">
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
@@ -203,24 +195,26 @@ export default function BuildsPage() {
 
       {/* Builds List */}
       {filteredBuilds.length === 0 ? (
-        <div className="text-center py-12 border border-border rounded-lg">
-          <Wrench className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground text-lg">
-            {builds.length === 0
+        <EmptyState
+          icon={Wrench}
+          title={
+            builds.length === 0
               ? 'No builds found'
               : search || filter !== 'all'
               ? 'No builds match your search or filter'
-              : 'No builds found'}
-          </p>
-          {filter === 'mine' && builds.length === 0 && (
-            <Button asChild className="mt-4">
-              <Link href="/builds/new">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First Build
-              </Link>
-            </Button>
-          )}
-        </div>
+              : 'No builds found'
+          }
+          actions={
+            filter === 'mine' && builds.length === 0 && (
+              <Button asChild>
+                <Link href="/builds/new">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Build
+                </Link>
+              </Button>
+            )
+          }
+        />
       ) : (
         <div className="space-y-3">
           {filteredBuilds.map((build) => (
@@ -350,6 +344,6 @@ export default function BuildsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageWrapper>
   )
 }

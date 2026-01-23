@@ -1667,3 +1667,125 @@ All phases of the BUILD-CENTRIC RACE SYSTEM have been successfully implemented:
 - ✅ Referential integrity maintained
 - ✅ All existing builds continue to work
 
+---
+
+## UI CONSISTENCY STANDARDIZATION - COMPLETE (2026-01-24)
+
+> **Status**: ✅ COMPLETED - All main listing and settings pages now use standardized layout components and consistent styling.
+
+### Summary
+
+Standardized UI inconsistencies across FridayGT pages to match the documented design system. Created reusable layout components to prevent future UI drift and ensure consistent container widths, typography hierarchy, and visual patterns.
+
+### Components Created
+
+**Four new layout components** in `src/components/layout/`:
+
+1. **PageWrapper** (`PageWrapper.tsx`)
+   - Standard container with responsive padding
+   - Size variants: standard (max-w-7xl), narrow (max-w-md), wide (max-w-7xl)
+   - Pattern: `mx-auto px-4 py-8 space-y-6`
+
+2. **PageHeader** (`PageHeader.tsx`)
+   - Standard header with icon, title, description, actions
+   - Icon size: `h-8 w-8`
+   - Title: `text-3xl font-bold tracking-tight`
+   - Responsive flex layout (title left, actions right)
+
+3. **EmptyState** (`EmptyState.tsx`)
+   - Standardized empty state display
+   - Padding: `py-12`
+   - Icon size: `h-12 w-12`
+   - Optional action buttons
+
+4. **SearchBar** (`SearchBar.tsx`)
+   - Standardized search input with centered icon
+   - Icon positioning: `top-1/2 transform -translate-y-1/2`
+   - Consistent `pl-10` padding for icon
+
+5. **Index** (`index.ts`)
+   - Barrel export for all layout components
+
+### Pages Migrated
+
+**8 pages migrated to use new components**:
+
+1. `src/app/lap-times/page.tsx` - PageWrapper, PageHeader, SearchBar, EmptyState
+2. `src/app/builds/page.tsx` - PageWrapper, PageHeader, SearchBar, EmptyState
+3. `src/app/races/page.tsx` - PageWrapper, PageHeader, SearchBar, EmptyState
+4. `src/app/admin/users/page.tsx` - PageWrapper, PageHeader
+5. `src/app/builds/[id]/page.tsx` - PageWrapper
+6. `src/app/races/[id]/page.tsx` - PageWrapper (fixed loading/error states)
+7. `src/app/settings/page.tsx` - PageWrapper, PageHeader (fixed container width)
+8. `src/app/admin/settings/page.tsx` - PageWrapper, PageHeader (fixed container width)
+
+### Issues Fixed
+
+**Container Widths:**
+- Changed all `max-w-[1400px]` → `max-w-7xl`
+- Changed all `max-w-[1200px]` → `max-w-7xl`
+- Standardized to design system specification
+
+**Header Styling:**
+- All H1 titles now use `text-3xl font-bold tracking-tight`
+- All header icons now use `h-8 w-8` size
+- Headers missing icons now have appropriate icons
+
+**Search Icon Positioning:**
+- All search icons use centered positioning (`top-1/2 transform -translate-y-1/2`)
+
+**Text Styling:**
+- Removed `font-mono` from settings page descriptions
+- Removed `uppercase` from descriptive text
+
+**Code Quality:**
+- Removed unused `Input` import from lap-times, builds, races pages
+- Removed unused `Search` icon import from lap-times, builds, races pages
+
+### Verification
+
+**Build Status:**
+- ✅ TypeScript compilation: PASSED
+- ✅ Next.js build: PASSED
+- ✅ Static page generation: 29 pages
+
+**Visual Verification:**
+- ✅ All pages verified in Chrome DevTools
+- ✅ Responsive testing (375px, 768px, 1920px viewports)
+- ✅ No unused imports or functions
+- ✅ Consistent container patterns
+
+### Design System Compliance
+
+All main listing and settings pages now follow:
+- Layout standards (Section: Layout)
+- Typography hierarchy (Section: Typography)
+- Component patterns (Section: Components)
+- Page patterns (Section: Page Patterns)
+
+### Files Modified
+
+**New Files Created:**
+- `src/components/layout/PageWrapper.tsx`
+- `src/components/layout/PageHeader.tsx`
+- `src/components/layout/EmptyState.tsx`
+- `src/components/layout/SearchBar.tsx`
+- `src/components/layout/index.ts`
+
+**Files Modified:**
+- `src/app/lap-times/page.tsx`
+- `src/app/builds/page.tsx`
+- `src/app/races/page.tsx`
+- `src/app/admin/users/page.tsx`
+- `src/app/builds/[id]/page.tsx`
+- `src/app/races/[id]/page.tsx`
+- `src/app/settings/page.tsx`
+- `src/app/admin/settings/page.tsx`
+
+### Next Steps (Optional)
+
+The core standardization is complete. Optional future enhancements:
+1. **Card Migration** - Migrate remaining custom div cards to shadcn Card components
+2. **Form Page Standardization** - Create form-specific layout components
+3. **Component Expansion** - Add more specialized layout components if patterns emerge
+

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import {
@@ -14,8 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { MapPin, Car, Plus, List, Search, Trash2, Power } from 'lucide-react'
+import { MapPin, Car, Plus, List, Trash2, Power } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
+import { PageWrapper, PageHeader, EmptyState, SearchBar } from '@/components/layout'
 import Link from 'next/link'
 
 interface Car {
@@ -162,44 +162,36 @@ export default function RacesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <LoadingSection />
-      </div>
+      <PageWrapper>
+        <LoadingSection text="Loading races..." />
+      </PageWrapper>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+    <PageWrapper>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <List className="h-8 w-8 text-primary" />
-            RACES
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {races.length} {races.length === 1 ? 'race' : 'races'} available
-          </p>
-        </div>
-        <Button asChild className="gap-2 min-h-[44px]">
-          <Link href="/races/new">
-            <Plus className="h-4 w-4" />
-            Create Race
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="RACES"
+        icon={List}
+        description={`${races.length} ${races.length === 1 ? 'race' : 'races'} available`}
+        actions={
+          <Button asChild className="gap-2 min-h-[44px]">
+            <Link href="/races/new">
+              <Plus className="h-4 w-4" />
+              Create Race
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Search and Filters */}
       <div className="flex flex-col gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search races..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        <SearchBar
+          placeholder="Search races..."
+          value={search}
+          onChange={setSearch}
+        />
         <div className="grid grid-cols-3 gap-2">
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
@@ -230,24 +222,26 @@ export default function RacesPage() {
 
       {/* Races List */}
       {filteredRaces.length === 0 ? (
-        <div className="text-center py-12 border border-border rounded-lg">
-          <List className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground text-lg">
-            {races.length === 0
+        <EmptyState
+          icon={List}
+          title={
+            races.length === 0
               ? 'No races found'
               : search || filter !== 'all'
               ? 'No races match your search or filter'
-              : 'No races found'}
-          </p>
-          {races.length === 0 && (
-            <Button asChild className="mt-4">
-              <Link href="/races/new">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First Race
-              </Link>
-            </Button>
-          )}
-        </div>
+              : 'No races found'
+          }
+          actions={
+            races.length === 0 && (
+              <Button asChild>
+                <Link href="/races/new">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Race
+                </Link>
+              </Button>
+            )
+          }
+        />
       ) : (
         <div className="space-y-3">
           {filteredRaces.map((race) => (
@@ -397,6 +391,6 @@ export default function RacesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageWrapper>
   )
 }

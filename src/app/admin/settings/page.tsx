@@ -4,29 +4,29 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Settings as SettingsIcon, Database, Image, Palette } from 'lucide-react'
+import { PageWrapper, PageHeader } from '@/components/layout'
 
 export default function AdminSettingsPage() {
   const router = useRouter()
 
   return (
-    <div className="space-y-6 max-w-[1200px] mx-auto">
+    <PageWrapper>
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">SETTINGS</h1>
-          <p className="text-muted-foreground font-mono text-sm">
-            Application configuration and preferences
-          </p>
-        </div>
-        <Button
-          variant="ghost"
-          onClick={() => router.push('/')}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Home
-        </Button>
-      </div>
+      <PageHeader
+        title="SETTINGS"
+        icon={SettingsIcon}
+        description="Application configuration and preferences"
+        actions={
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/')}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+        }
+      />
 
       {/* Database Section */}
       <div className="border border-border rounded-lg p-6 space-y-4">
@@ -163,6 +163,6 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   )
 }
