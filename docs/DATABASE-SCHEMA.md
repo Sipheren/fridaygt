@@ -255,8 +255,31 @@
 | name | varchar(100) | NO | - | Build name |
 | description | text | YES | - | Build description |
 | isPublic | boolean | YES | false | Public/private |
+| **finalDrive** | text | YES | - | Final drive ratio (NEW - 2026-01-24) |
+| **gear1** | text | YES | - | 1st gear ratio (NEW - 2026-01-24) |
+| **gear2** | text | YES | - | 2nd gear ratio (NEW - 2026-01-24) |
+| **gear3** | text | YES | - | 3rd gear ratio (NEW - 2026-01-24) |
+| **gear4** | text | YES | - | 4th gear ratio (NEW - 2026-01-24) |
+| **gear5** | text | YES | - | 5th gear ratio (NEW - 2026-01-24) |
+| **gear6** | text | YES | - | 6th gear ratio (NEW - 2026-01-24) |
+| **gear7** | text | YES | - | 7th gear ratio (NEW - 2026-01-24) |
+| **gear8** | text | YES | - | 8th gear ratio (NEW - 2026-01-24) |
+| **gear9** | text | YES | - | 9th gear ratio (NEW - 2026-01-24) |
+| **gear10** | text | YES | - | 10th gear ratio (NEW - 2026-01-24) |
+| **gear11** | text | YES | - | 11th gear ratio (NEW - 2026-01-24) |
+| **gear12** | text | YES | - | 12th gear ratio (NEW - 2026-01-24) |
+| **gear13** | text | YES | - | 13th gear ratio (NEW - 2026-01-24) |
+| **gear14** | text | YES | - | 14th gear ratio (NEW - 2026-01-24) |
+| **gear15** | text | YES | - | 15th gear ratio (NEW - 2026-01-24) |
+| **gear16** | text | YES | - | 16th gear ratio (NEW - 2026-01-24) |
+| **gear17** | text | YES | - | 17th gear ratio (NEW - 2026-01-24) |
+| **gear18** | text | YES | - | 18th gear ratio (NEW - 01-24) |
+| **gear19** | text | YES | - | 19th gear ratio (NEW - 2026-01-24) |
+| **gear20** | text | YES | - | 20th gear ratio (NEW - 2026-01-24) |
 | createdAt | timestamp | NO | CURRENT_TIMESTAMP | - |
 | updatedAt | timestamp | NO | - | - |
+
+> **Note:** Gear ratios stored as text type to preserve leading/trailing zeros (e.g., "2.500"). Supports up to 20 gears.
 
 ### CarBuildUpgrade
 | Column | Type | Nullable | Default | Description |
@@ -280,6 +303,7 @@
 | **settingId** | uuid | NO | - | FK → TuningSetting (NEW - 2026-01-21) |
 
 **Note:** `settingId` is now NOT NULL with foreign key constraint. Legacy columns kept for compatibility.
+> **Transmission gears NOT stored here** - Gears (1st-20th + Final Drive) are direct columns on CarBuild (as of 2026-01-24).
 
 ### LobbySettings
 | Column | Type | Nullable | Default | Description |
@@ -357,7 +381,9 @@
 | createdAt | timestamp | NO | CURRENT_TIMESTAMP | - |
 | updatedAt | timestamp | NO | - | - |
 
-**Sections (15):** Tyres, Suspension, Differential Gear, Aerodynamics, ECU, Performance Adjustment, Transmission, Nitrous/Overtake, Supercharger, Intake & Exhaust, Brakes, Steering, Drivetrain, Engine Tuning, Bodywork
+**Sections (6):** Suspension, Differential Gear, Aerodynamics, ECU, Performance Adjustment, Transmission
+
+> **Note:** Transmission section has NO settings in TuningSetting. Gear ratios (1st-20th + Final Drive) are stored as direct columns on CarBuild table.
 
 ### TuningSetting
 | Column | Type | Nullable | Default | Description |
@@ -373,7 +399,7 @@
 
 **Constraints:** UNIQUE (sectionId, name)
 **Indexes:** sectionId, name, isActive
-**Total Settings:** 60
+**Total Settings:** 53 (as of 2026-01-24, after removing Transmission gear settings)
 
 ### API Endpoints (2026-01-21)
 

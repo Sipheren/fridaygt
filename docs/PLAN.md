@@ -43,7 +43,8 @@ FridayGT uses a **build-centric** architecture where:
 Car (GT7 catalog, 552 cars)
   └── CarBuild (user's tuned setup)
        ├── CarBuildUpgrade → Part (validated parts, 72 total)
-       ├── CarBuildSetting → TuningSetting (validated tuning, 60 total)
+       ├── CarBuildSetting → TuningSetting (validated tuning, 53 total - NO Transmission gears)
+       ├── [Direct columns: finalDrive, gear1-20] (Gear ratios as text, supports up to 20 gears)
        └── LapTime → Track (performance records)
 
 Race (track + builds, toggleable active status)
@@ -85,12 +86,16 @@ Tonight Page → Shows all races where isActive = true
 - Car database (552 cars with specs) — API accessible
 - Track database (118 tracks with layouts) — API accessible
 - Parts database (72 parts, 5 categories) — database-driven with FK validation
-- Tuning settings database (60 settings, 15 sections) — database-driven with FK validation
+- Tuning settings database (53 settings, 6 sections) — database-driven with FK validation
+  - Transmission section exists but has NO settings (gears are direct CarBuild columns)
 
 ### Phase 4: Build Management ✅
 - Build CRUD (create, read, update, delete, clone)
 - Parts system (72 parts across 5 categories: Sports, Club Sports, Semi-Racing, Racing, Extreme)
-- Tuning system (60 settings across 15 sections: Suspension, ECU, Transmission, Aerodynamics, etc.)
+- Tuning system (53 settings across 6 sections: Suspension, Differential, ECU, Performance Adjustment, Aerodynamics)
+  - **Gear ratios**: Fixed columns on CarBuild (gear1-20, finalDrive as text, supports up to 20 gears)
+  - Preserves formatting (leading/trailing zeros like "2.500")
+  - Removed from flexible CarBuildSetting system (Session #22)
 - Input types: sliders, dropdowns, number inputs, dual front/rear inputs, ratio inputs
 - Quick build creation modal (inline during race/lap time creation)
 - Build selector component with multi-select and search
