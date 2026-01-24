@@ -212,7 +212,12 @@ export async function POST(request: NextRequest) {
 
     // Insert tuning settings if provided
     if (settings && Array.isArray(settings) && settings.length > 0) {
-      const settingIds = settings.map(s => s.settingId).filter(Boolean)
+      // Separate standard settings from custom gears
+      const standardSettings = settings.filter(s => s.settingId && !s.settingId.startsWith('custom:'))
+      const customGears = settings.filter(s => s.settingId && s.settingId.startsWith('custom:'))
+
+      // Handle standard settings (fetch details from TuningSetting table)
+      const settingIds = standardSettings.map(s => s.settingId).filter(Boolean)
 
       let settingDetails: any[] = []
       if (settingIds.length > 0) {
@@ -242,8 +247,7 @@ export async function POST(request: NextRequest) {
 
       const settingMap = new Map(settingDetails.map(s => [s.id, s]))
 
-      const settingRecords = settings
-        .filter(s => s.settingId) // Only include settings with valid settingId
+      const settingRecords = standardSettings
         .map(setting => {
           const tuningSetting = settingMap.get(setting.settingId)
           return {
@@ -256,10 +260,26 @@ export async function POST(request: NextRequest) {
           }
         })
 
-      if (settingRecords.length > 0) {
+      // Handle custom gears (store with settingId=null and custom name in 'setting' field)
+      // Save all custom gears, even with empty values, to preserve user's added gears
+      const customGearRecords = customGears.map(gear => {
+        const gearName = gear.settingId.replace('custom:', '')
+        return {
+          id: nanoid(),
+          buildId,
+          settingId: null,
+          category: 'Transmission',
+          setting: gearName,
+          value: gear.value,
+        }
+      })
+
+      const allRecords = [...settingRecords, ...customGearRecords]
+
+      if (allRecords.length > 0) {
         const { error: settingsError } = await supabase
           .from('CarBuildSetting')
-          .insert(settingRecords)
+          .insert(allRecords)
 
         if (settingsError) {
           console.error('Error inserting settings:', settingsError)

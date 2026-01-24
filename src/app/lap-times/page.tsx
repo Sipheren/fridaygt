@@ -25,6 +25,8 @@ interface LapTime {
   conditions: string | null
   sessionType: 'Q' | 'R' | null
   createdAt: string
+  buildId: string | null
+  buildName: string | null
   track: {
     id: string
     name: string
@@ -38,11 +40,6 @@ interface LapTime {
     slug: string
     manufacturer: string
   }
-  build: {
-    id: string
-    name: string
-    description: string | null
-  } | null
 }
 
 export default function LapTimesPage() {
@@ -204,12 +201,12 @@ export default function LapTimesPage() {
                         <span className="text-muted-foreground">
                           {lap.car.manufacturer} {lap.car.name}
                         </span>
-                        {lap.build && (
+                        {lap.buildName && (
                           <>
                             <span className="hidden sm:inline text-muted-foreground">•</span>
                             <span className="text-sm text-muted-foreground flex items-center gap-1">
                               <Wrench className="h-3 w-3" />
-                              {lap.build.name}
+                              {lap.buildName}
                             </span>
                           </>
                         )}

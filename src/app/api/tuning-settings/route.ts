@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
       query = query.eq('isActive', true)
     }
 
-    // Order by sectionId first, then by name
-    const { data: settings, error } = await query.order('sectionId', { ascending: true }).order('name', { ascending: true })
+    // Order by sectionId first, then by displayOrder
+    const { data: settings, error } = await query.order('sectionId', { ascending: true }).order('displayOrder', { ascending: true, nullsFirst: false })
 
     if (error) throw error
 
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       settings.sort((a, b) => {
         const sectionOrder = (a.section as any).displayOrder - (b.section as any).displayOrder
         if (sectionOrder !== 0) return sectionOrder
-        return a.name.localeCompare(b.name)
+        return (a.displayOrder || 999) - (b.displayOrder || 999)
       })
     }
 

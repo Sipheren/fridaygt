@@ -14,7 +14,10 @@ export async function GET() {
 
     if (error) throw error
 
-    return NextResponse.json({ sections })
+    // Filter out Tyres section as tyres are already selected in the parts area
+    const filteredSections = sections?.filter(s => s.name !== 'Tyres') || []
+
+    return NextResponse.json({ sections: filteredSections })
   } catch (error) {
     console.error('Error fetching tuning sections:', error)
     return NextResponse.json(

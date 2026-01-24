@@ -98,6 +98,8 @@ interface LapTime {
   conditions: string | null
   sessionType: 'Q' | 'R' | null
   createdAt: string
+  buildId: string | null
+  buildName: string | null
   user: {
     id: string
     name: string | null
@@ -110,12 +112,6 @@ interface LapTime {
     manufacturer: string
     year: number | null
   }
-  build: {
-    id: string
-    name: string
-    description: string | null
-    isPublic: boolean
-  } | null
 }
 
 interface UserStats {
@@ -426,10 +422,10 @@ export default function RaceDetailPage() {
                     <div key={lap.id} className="flex items-center justify-between text-sm p-2 rounded gt-hover-card">
                       <div className="flex-1 min-w-0">
                         <span className="font-mono font-bold text-xs sm:text-sm">{formatLapTime(lap.timeMs)}</span>
-                        {lap.build && (
+                        {lap.buildName && (
                           <span className="text-muted-foreground ml-2 flex items-center gap-1 text-xs">
                             <Wrench className="h-3 w-3" />
-                            <span className="truncate">{lap.build.name}</span>
+                            <span className="truncate">{lap.buildName}</span>
                           </span>
                         )}
                       </div>

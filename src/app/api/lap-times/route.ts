@@ -38,9 +38,10 @@ export async function GET(request: NextRequest) {
         sessionType,
         createdAt,
         updatedAt,
+        buildId,
+        buildName,
         track:Track(id, name, slug, location, category, layout),
-        car:Car(id, name, slug, manufacturer, year, category),
-        build:CarBuild(id, name, description, isPublic)
+        car:Car(id, name, slug, manufacturer, year, category)
       `)
       .eq('userId', userData.id)
       .order('createdAt', { ascending: false })
@@ -157,6 +158,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Car not found' }, { status: 404 })
     }
 
+    // Fetch build name if buildId is provided (store as snapshot)
+    let buildName = null
+    if (buildId) {
+      const { data: build } = await supabase
+        .from('CarBuild')
+        .select('name')
+        .eq('id', buildId)
+        .single()
+
+      if (build) {
+        buildName = build.name
+      }
+    }
+
     // Create lap time
     const now = new Date().toISOString()
     const { data: lapTime, error } = await supabase
@@ -167,6 +182,7 @@ export async function POST(request: NextRequest) {
         trackId,
         carId,
         buildId: buildId || null,
+        buildName: buildName,
         timeMs,
         notes: notes || null,
         conditions: conditions || null,
@@ -182,9 +198,10 @@ export async function POST(request: NextRequest) {
         sessionType,
         createdAt,
         updatedAt,
+        buildId,
+        buildName,
         track:Track(id, name, slug, location, category, layout),
-        car:Car(id, name, slug, manufacturer, year, category),
-        build:CarBuild(id, name, description, isPublic)
+        car:Car(id, name, slug, manufacturer, year, category)
       `)
       .single()
 

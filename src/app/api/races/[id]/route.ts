@@ -69,9 +69,10 @@ export async function GET(
         createdAt,
         updatedAt,
         sessionType,
+        buildId,
+        buildName,
         user:User(id, name, email),
-        car:Car(id, name, slug, manufacturer, year),
-        build:CarBuild(id, name, description, isPublic)
+        car:Car(id, name, slug, manufacturer, year)
       `)
       .eq('trackId', trackId)
       .in('buildId', buildIds)  // Filter to ONLY builds in this race
@@ -95,10 +96,10 @@ export async function GET(
     for (const lapTime of lapTimes || []) {
       const user = lapTime.user as any
       const car = lapTime.car as any
-      const build = lapTime.build as any
       const userId = user?.id
       const carId = car?.id
-      const buildId = build?.id || null
+      const buildId = (lapTime as any).buildId || null
+      const buildName = (lapTime as any).buildName || null
 
       if (!userId || !carId) continue
 
@@ -112,7 +113,7 @@ export async function GET(
           carId,
           carName: `${car.manufacturer} ${car.name}`,
           buildId,
-          buildName: build?.name || null,
+          buildName,
           bestTime: lapTime.timeMs,
           totalLaps: 1,
           bestLapId: lapTime.id,

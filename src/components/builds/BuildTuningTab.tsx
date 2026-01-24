@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 
 interface TuningSection {
   id: string
@@ -28,6 +28,7 @@ interface TuningSetting {
   description?: string
   defaultValue?: string
   displayValue?: string
+  displayOrder?: number | null
   isActive: boolean
   inputType?: string
   decimalPlaces?: number | null
@@ -39,9 +40,15 @@ interface TuningSetting {
   section: TuningSection
 }
 
+interface CustomGear {
+  name: string
+  value: string
+}
+
 interface BuildTuningTabProps {
   tuningSettings: Record<string, string>
   onSettingChange: (settingId: string, value: string) => void
+  onSettingDelete?: (settingId: string) => void
 }
 
 // Helper function to render the appropriate input based on inputType
@@ -185,10 +192,11 @@ function renderSettingInput(
   )
 }
 
-export function BuildTuningTab({ tuningSettings, onSettingChange }: BuildTuningTabProps) {
+export function BuildTuningTab({ tuningSettings, onSettingChange, onSettingDelete }: BuildTuningTabProps) {
   const [sections, setSections] = useState<TuningSection[]>([])
   const [settings, setSettings] = useState<TuningSetting[]>([])
   const [activeSection, setActiveSection] = useState<string>('')
+  const [customGears, setCustomGears] = useState<CustomGear[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -226,9 +234,82 @@ export function BuildTuningTab({ tuningSettings, onSettingChange }: BuildTuningT
     fetchData()
   }, []) // Only fetch once on mount
 
+  // Initialize custom gears from tuningSettings (custom: prefixed keys)
+  useEffect(() => {
+    const customGearEntries = Object.entries(tuningSettings)
+      .filter(([key]) => key.startsWith('custom:'))
+      .map(([key, value]) => ({ name: key.replace('custom:', ''), value }))
+
+    setCustomGears(customGearEntries)
+  }, [tuningSettings])
+
+  // Add a new custom gear
+  const addCustomGear = () => {
+    // Find the highest gear number from existing custom gears
+    let maxGearNumber = 6 // Start after 6th gear
+    customGears.forEach(gear => {
+      const match = gear.name.match(/^(\d+)(?:st|nd|rd|th) Gear$/)
+      if (match) {
+        const gearNumber = parseInt(match[1], 10)
+        if (gearNumber > maxGearNumber) {
+          maxGearNumber = gearNumber
+        }
+      }
+    })
+
+    const nextGearNumber = maxGearNumber + 1
+    const gearName = `${nextGearNumber}${getOrdinalSuffix(nextGearNumber)} Gear`
+    const newGear: CustomGear = { name: gearName, value: '' }
+
+    setCustomGears([...customGears, newGear])
+    // Initialize the value in parent state
+    onSettingChange(`custom:${gearName}`, '')
+  }
+
+  // Update custom gear value
+  const updateCustomGear = (index: number, value: string) => {
+    const updatedGears = [...customGears]
+    updatedGears[index].value = value
+    setCustomGears(updatedGears)
+    onSettingChange(`custom:${updatedGears[index].name}`, value)
+  }
+
+  // Remove custom gear
+  const removeCustomGear = (index: number) => {
+    const gearToRemove = customGears[index]
+    const updatedGears = customGears.filter((_, i) => i !== index)
+    setCustomGears(updatedGears)
+    // Call onSettingDelete if available to properly remove from parent state
+    if (onSettingDelete) {
+      onSettingDelete(`custom:${gearToRemove.name}`)
+    } else {
+      // Fallback: set to empty string
+      onSettingChange(`custom:${gearToRemove.name}`, '')
+    }
+  }
+
+  // Helper to get ordinal suffix (1st, 2nd, 3rd, etc.)
+  const getOrdinalSuffix = (n: number): string => {
+    const s = ['th', 'st', 'nd', 'rd']
+    const v = n % 100
+    return s[(v - 20) % 10] || s[v] || s[0]
+  }
+
   // Get the active section data
   const activeSectionObj = sections.find((s) => s.name === activeSection)
-  const activeSectionSettings = settings.filter((s) => s.sectionId === activeSectionObj?.id)
+  let activeSectionSettings = settings.filter((s) => s.sectionId === activeSectionObj?.id)
+
+  // For Transmission: sort gears properly (1-6, custom gears, Final Drive at bottom)
+  const isTransmission = activeSection === 'Transmission'
+  if (isTransmission) {
+    const standardGears = activeSectionSettings.filter(s => s.name.includes('Gear') && !s.name.includes('Final'))
+    const finalDrive = activeSectionSettings.find(s => s.name === 'Final Drive')
+
+    // Sort standard gears by displayOrder (should be 1-6)
+    standardGears.sort((a, b) => (a.displayOrder || 999) - (b.displayOrder || 999))
+
+    activeSectionSettings = [...standardGears, ...(finalDrive ? [finalDrive] : [])]
+  }
 
   if (loading) {
     return (
@@ -292,31 +373,120 @@ export function BuildTuningTab({ tuningSettings, onSettingChange }: BuildTuningT
         <div className="mb-4">
           <h3 className="text-lg font-semibold">{activeSection}</h3>
           <p className="text-sm text-muted-foreground">
-            {activeSectionSettings.length} settings
+            {isTransmission
+              ? `${activeSectionSettings.length + customGears.length} settings`
+              : `${activeSectionSettings.length} settings`
+            }
           </p>
         </div>
 
         <div className="overflow-y-auto flex-1 pr-4">
           <div className="space-y-4">
-            {activeSectionSettings.map((setting) => {
-              const currentValue = tuningSettings[setting.id] || ''
+            {isTransmission ? (
+              <>
+                {/* Render standard gears (1st-6th) */}
+                {activeSectionSettings
+                  .filter(s => s.name.includes('Gear') && !s.name.includes('Final'))
+                  .map((setting) => {
+                    const currentValue = tuningSettings[setting.id] || ''
+                    return (
+                      <div key={setting.id} className="space-y-2">
+                        <Label htmlFor={setting.id} className="text-sm font-medium">
+                          {setting.name}
+                          {setting.unit && (
+                            <span className="text-muted-foreground font-normal ml-1">
+                              ({setting.unit})
+                            </span>
+                          )}
+                        </Label>
+                        {renderSettingInput(setting, currentValue, (value) =>
+                          onSettingChange(setting.id, value)
+                        )}
+                      </div>
+                    )
+                  })}
 
-              return (
-                <div key={setting.id} className="space-y-2">
-                  <Label htmlFor={setting.id} className="text-sm font-medium">
-                    {setting.name}
-                    {setting.unit && (
-                      <span className="text-muted-foreground font-normal ml-1">
-                        ({setting.unit})
-                      </span>
+                {/* Render custom gears (7th+) */}
+                {customGears.map((gear, index) => (
+                  <div key={`custom-${index}`} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">{gear.name}</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeCustomGear(index)}
+                        className="text-destructive hover:text-destructive h-8 px-2"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                    <Input
+                      type="number"
+                      step="0.001"
+                      value={gear.value}
+                      onChange={(e) => updateCustomGear(index, e.target.value)}
+                      placeholder="Enter gear ratio..."
+                      className="min-h-[44px]"
+                    />
+                  </div>
+                ))}
+
+                {/* Add Gear Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addCustomGear}
+                  className="w-full gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Gear
+                </Button>
+
+                {/* Final Drive at bottom */}
+                {activeSectionSettings
+                  .filter(s => s.name === 'Final Drive')
+                  .map((setting) => {
+                    const currentValue = tuningSettings[setting.id] || ''
+                    return (
+                      <div key={setting.id} className="space-y-2 pt-4 border-t border-border">
+                        <Label htmlFor={setting.id} className="text-sm font-medium">
+                          {setting.name}
+                          {setting.unit && (
+                            <span className="text-muted-foreground font-normal ml-1">
+                              ({setting.unit})
+                            </span>
+                          )}
+                        </Label>
+                        {renderSettingInput(setting, currentValue, (value) =>
+                          onSettingChange(setting.id, value)
+                        )}
+                      </div>
+                    )
+                  })}
+              </>
+            ) : (
+              /* Non-transmission sections: render normally */
+              activeSectionSettings.map((setting) => {
+                const currentValue = tuningSettings[setting.id] || ''
+
+                return (
+                  <div key={setting.id} className="space-y-2">
+                    <Label htmlFor={setting.id} className="text-sm font-medium">
+                      {setting.name}
+                      {setting.unit && (
+                        <span className="text-muted-foreground font-normal ml-1">
+                          ({setting.unit})
+                        </span>
+                      )}
+                    </Label>
+                    {renderSettingInput(setting, currentValue, (value) =>
+                      onSettingChange(setting.id, value)
                     )}
-                  </Label>
-                  {renderSettingInput(setting, currentValue, (value) =>
-                    onSettingChange(setting.id, value)
-                  )}
-                </div>
-              )
-            })}
+                  </div>
+                )
+              })
+            )}
           </div>
         </div>
       </Card>

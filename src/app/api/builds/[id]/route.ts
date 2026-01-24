@@ -87,10 +87,22 @@ export async function GET(
     }
 
     // Transform settings to use 'section' instead of 'category' for frontend compatibility
-    const transformedSettings = build.settings?.map((setting: any) => ({
-      ...setting,
-      section: setting.section?.name || setting.category,
-    })) || []
+    // For custom gears (settingId is null), convert to "custom:" format
+    const transformedSettings = build.settings?.map((setting: any) => {
+      // Custom gears have settingId=null and should use "custom:" prefix
+      if (setting.settingId === null) {
+        return {
+          ...setting,
+          settingId: `custom:${setting.setting}`,
+          section: setting.category,
+        }
+      }
+      // Standard settings
+      return {
+        ...setting,
+        section: setting.setting?.section?.name || setting.category,
+      }
+    }) || []
 
     return NextResponse.json({
       ...build,
@@ -266,9 +278,13 @@ export async function PATCH(
 
     // Update settings if provided
     if (settings !== undefined && Array.isArray(settings)) {
-      // Validate settingIds and lookup section/setting names
-      if (settings.length > 0) {
-        const settingIds = settings.map(s => s.settingId).filter(Boolean)
+      // Separate standard settings from custom gears
+      const standardSettings = settings.filter((s: any) => s.settingId && !s.settingId.startsWith('custom:'))
+      const customGears = settings.filter((s: any) => s.settingId && s.settingId.startsWith('custom:'))
+
+      // Validate standard settingIds and lookup section/setting names
+      if (standardSettings.length > 0) {
+        const settingIds = standardSettings.map(s => s.settingId).filter(Boolean)
 
         if (settingIds.length > 0) {
           const { data: tuningSettings } = await supabase
@@ -293,8 +309,8 @@ export async function PATCH(
 
       // Insert new settings with validation
       if (settings.length > 0) {
-        // Fetch setting details to populate legacy columns
-        const settingIds = settings.map(s => s.settingId).filter(Boolean)
+        // Fetch standard setting details to populate legacy columns
+        const settingIds = standardSettings.map((s: any) => s.settingId).filter(Boolean)
 
         let settingDetails: any[] = []
         if (settingIds.length > 0) {
@@ -324,8 +340,8 @@ export async function PATCH(
 
         const settingMap = new Map(settingDetails.map(s => [s.id, s]))
 
-        const settingRecords = settings
-          .filter((s: any) => s.settingId) // Only include settings with valid settingId
+        // Handle standard settings
+        const settingRecords = standardSettings
           .map((setting: any) => {
             const tuningSetting = settingMap.get(setting.settingId)
             return {
@@ -338,10 +354,26 @@ export async function PATCH(
             }
           })
 
-        if (settingRecords.length > 0) {
+        // Handle custom gears (store with settingId=null and custom name in 'setting' field)
+        // Save all custom gears, even with empty values, to preserve user's added gears
+        const customGearRecords = customGears.map((gear: any) => {
+          const gearName = gear.settingId.replace('custom:', '')
+          return {
+            id: nanoid(),
+            buildId: id,
+            settingId: null,
+            category: 'Transmission',
+            setting: gearName,
+            value: gear.value,
+          }
+        })
+
+        const allRecords = [...settingRecords, ...customGearRecords]
+
+        if (allRecords.length > 0) {
           await supabase
             .from('CarBuildSetting')
-            .insert(settingRecords)
+            .insert(allRecords)
         }
       }
     }

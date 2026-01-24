@@ -21,17 +21,13 @@ interface LapTime {
   notes: string | null
   conditions: string | null
   createdAt: string
+  buildId: string | null
+  buildName: string | null
   user: {
     id: string
     name: string | null
     email: string
   }
-  build?: {
-    id: string
-    name: string
-    description: string | null
-    isPublic: boolean
-  } | null
 }
 
 interface TrackLapData {
@@ -243,15 +239,11 @@ export function CarLapTimes({ carSlug, carName }: CarLapTimesProps) {
                           </span>
                         </div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          {lapTime.build && (
-                            <Link
-                              href={`/builds/${lapTime.build.id}`}
-                              className="flex items-center gap-1 hover:text-primary transition-colors"
-                              onClick={(e) => e.stopPropagation()}
-                            >
+                          {lapTime.buildName && (
+                            <span className="flex items-center gap-1">
                               <Wrench className="h-3 w-3" />
-                              <span>{lapTime.build.name}</span>
-                            </Link>
+                              <span>{lapTime.buildName}</span>
+                            </span>
                           )}
                           {lapTime.conditions && (
                             <Badge variant="outline" className="text-xs">

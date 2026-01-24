@@ -90,6 +90,14 @@ export default function NewBuildPage() {
     }))
   }
 
+  const handleTuningSettingDelete = (settingId: string) => {
+    setTuningSettings((prev) => {
+      const updated = { ...prev }
+      delete updated[settingId]
+      return updated
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -107,8 +115,8 @@ export default function NewBuildPage() {
         .map(([partId]) => ({ partId }))
 
       // Convert tuning settings to array of settingIds
+      // Note: Include all settings, even empty ones (needed for custom gears placeholder)
       const settings = Object.entries(tuningSettings)
-        .filter(([_, value]) => value.trim() !== '')
         .map(([settingId, value]) => ({ settingId, value }))
 
       const response = await fetch('/api/builds', {
@@ -261,6 +269,7 @@ export default function NewBuildPage() {
           <BuildTuningTab
             tuningSettings={tuningSettings}
             onSettingChange={handleTuningSetting}
+            onSettingDelete={handleTuningSettingDelete}
           />
         </TabsContent>
       </Tabs>
