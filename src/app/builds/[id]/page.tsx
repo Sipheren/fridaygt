@@ -522,15 +522,13 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                       <span className="truncate flex-1">
                         {typeof upgrade.part === 'string' ? upgrade.part : upgrade.part.name}
                       </span>
-                      {upgrade.value && (
-                        <Badge
-                          variant="secondary"
-                          className="text-xs font-mono shrink-0 ml-2"
-                          style={{ backgroundColor: '#FF7115', color: 'white', border: 'none' }}
-                        >
-                          {upgrade.value}
-                        </Badge>
-                      )}
+                      <Badge
+                        variant="secondary"
+                        className="text-sm font-mono shrink-0 ml-2 px-3 py-1"
+                        style={{ backgroundColor: '#FF7115', color: 'white', border: 'none' }}
+                      >
+                        {upgrade.value || 'Installed'}
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -558,12 +556,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                 <h3 className="font-semibold text-sm text-primary mb-2">
                   {formatCategoryName(category)}
                 </h3>
-                {/* Transmission: single column with max-width on desktop, full width on mobile */}
-                {/* Other sections: 2 column grid on desktop, 1 column on mobile */}
-                <div className={category === 'Transmission'
-                  ? 'max-w-md space-y-2'
-                  : 'grid grid-cols-1 sm:grid-cols-2 gap-2'
-                }>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {settings.map((settingItem) => {
                     const metadata = settingItem.settingId ? tuningSettingsMetadata[settingItem.settingId] : undefined
                     return (
