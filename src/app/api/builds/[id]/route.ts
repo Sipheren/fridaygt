@@ -223,7 +223,7 @@ export async function PATCH(
     for (const [key, value] of Object.entries(gearFields)) {
       if (key.startsWith('gear') || key === 'finalDrive') {
         // Store as string, empty string becomes null
-        updateData[key as keyof typeof updateData] = value === '' ? null : value
+        (updateData as any)[key] = value === '' ? null : value
       }
     }
 
