@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -45,12 +45,38 @@ interface LapTime {
 export default function LapTimesPage() {
   const router = useRouter()
   const [lapTimes, setLapTimes] = useState<LapTime[]>([])
-  const [filteredLapTimes, setFilteredLapTimes] = useState<LapTime[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [lapToDelete, setLapToDelete] = useState<LapTime | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [showErrorDialog, setShowErrorDialog] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  // Derived state - memoized filtering
+  const filteredLapTimes = useMemo(() => {
+    if (!searchQuery) {
+      return lapTimes
+    }
+
+    const query = searchQuery.toLowerCase()
+    return lapTimes.filter(
+      (lap) =>
+        lap.track.name.toLowerCase().includes(query) ||
+        lap.track.location.toLowerCase().includes(query) ||
+        lap.car.name.toLowerCase().includes(query) ||
+        lap.car.manufacturer.toLowerCase().includes(query)
+    )
+  }, [lapTimes, searchQuery])
+
+  // Memoized personal best calculator
+  const getPersonalBest = useCallback((trackId: string, carId: string) => {
+    const times = lapTimes.filter(
+      (lap) => lap.track.id === trackId && lap.car.id === carId
+    )
+    if (times.length === 0) return null
+    return Math.min(...times.map((t) => t.timeMs))
+  }, [lapTimes])
 
   // Load lap times
   useEffect(() => {
@@ -59,7 +85,6 @@ export default function LapTimesPage() {
         const response = await fetch('/api/lap-times')
         const data = await response.json()
         setLapTimes(data.lapTimes || [])
-        setFilteredLapTimes(data.lapTimes || [])
       } catch (error) {
         console.error('Error loading lap times:', error)
       } finally {
@@ -69,33 +94,6 @@ export default function LapTimesPage() {
 
     loadLapTimes()
   }, [])
-
-  // Filter lap times
-  useEffect(() => {
-    if (!searchQuery) {
-      setFilteredLapTimes(lapTimes)
-      return
-    }
-
-    const query = searchQuery.toLowerCase()
-    const filtered = lapTimes.filter(
-      (lap) =>
-        lap.track.name.toLowerCase().includes(query) ||
-        lap.track.location.toLowerCase().includes(query) ||
-        lap.car.name.toLowerCase().includes(query) ||
-        lap.car.manufacturer.toLowerCase().includes(query)
-    )
-    setFilteredLapTimes(filtered)
-  }, [searchQuery, lapTimes])
-
-  // Calculate personal best for each track/car race
-  const getPersonalBest = (trackId: string, carId: string) => {
-    const times = lapTimes.filter(
-      (lap) => lap.track.id === trackId && lap.car.id === carId
-    )
-    if (times.length === 0) return null
-    return Math.min(...times.map((t) => t.timeMs))
-  }
 
   function openDeleteDialog(lap: LapTime) {
     setLapToDelete(lap)
@@ -119,12 +117,12 @@ export default function LapTimesPage() {
 
       // Remove from local state
       setLapTimes(lapTimes.filter((lap) => lap.id !== lapToDelete!.id))
-      setFilteredLapTimes(filteredLapTimes.filter((lap) => lap.id !== lapToDelete!.id))
       setDeleteDialogOpen(false)
       setLapToDelete(null)
     } catch (error: any) {
       console.error('Error deleting lap time:', error)
-      alert(error.message || 'Failed to delete lap time')
+      setErrorMessage(error.message || 'Failed to delete lap time')
+      setShowErrorDialog(true)
     } finally {
       setDeletingId(null)
     }
@@ -311,6 +309,21 @@ export default function LapTimesPage() {
                   Delete
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+            <DialogDescription>{errorMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowErrorDialog(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
@@ -41,21 +41,36 @@ interface Build {
 export default function BuildsPage() {
   const router = useRouter()
   const [builds, setBuilds] = useState<Build[]>([])
-  const [filteredBuilds, setFilteredBuilds] = useState<Build[]>([])
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'public' | 'mine'>('all')
   const [loading, setLoading] = useState(true)
   const [deletingBuildId, setDeletingBuildId] = useState<string | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [showErrorDialog, setShowErrorDialog] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  // Derived state - computed from builds and search
+  const filteredBuilds = useMemo(() => {
+    if (!search) {
+      return builds
+    }
+
+    const query = search.toLowerCase()
+    return builds.filter(
+      (build) =>
+        build.name.toLowerCase().includes(query) ||
+        build.description?.toLowerCase().includes(query) ||
+        build.car.name.toLowerCase().includes(query) ||
+        build.car.manufacturer.toLowerCase().includes(query) ||
+        build.user.name?.toLowerCase().includes(query) ||
+        build.user.email.toLowerCase().includes(query)
+    )
+  }, [builds, search])
 
   useEffect(() => {
     fetchBuilds()
   }, [filter])
-
-  useEffect(() => {
-    filterBuilds()
-  }, [search, builds])
 
   const fetchBuilds = async () => {
     try {
@@ -71,31 +86,11 @@ export default function BuildsPage() {
       const response = await fetch(url)
       const data = await response.json()
       setBuilds(data.builds || [])
-      setFilteredBuilds(data.builds || [])
     } catch (error) {
       console.error('Error fetching builds:', error)
     } finally {
       setLoading(false)
     }
-  }
-
-  const filterBuilds = () => {
-    if (!search) {
-      setFilteredBuilds(builds)
-      return
-    }
-
-    const query = search.toLowerCase()
-    const filtered = builds.filter(
-      (build) =>
-        build.name.toLowerCase().includes(query) ||
-        build.description?.toLowerCase().includes(query) ||
-        build.car.name.toLowerCase().includes(query) ||
-        build.car.manufacturer.toLowerCase().includes(query) ||
-        build.user.name?.toLowerCase().includes(query) ||
-        build.user.email.toLowerCase().includes(query)
-    )
-    setFilteredBuilds(filtered)
   }
 
   const deleteBuild = async (buildId: string) => {
@@ -116,7 +111,8 @@ export default function BuildsPage() {
 
       if (!res.ok) {
         const data = await res.json()
-        alert(data.error || 'Failed to delete build')
+        setErrorMessage(data.error || 'Failed to delete build')
+        setShowErrorDialog(true)
         return
       }
 
@@ -124,7 +120,8 @@ export default function BuildsPage() {
       await fetchBuilds()
     } catch (error) {
       console.error('Error deleting build:', error)
-      alert('Failed to delete build')
+      setErrorMessage('Failed to delete build')
+      setShowErrorDialog(true)
     } finally {
       setDeletingBuildId(null)
       setPendingDeleteId(null)
@@ -340,6 +337,21 @@ export default function BuildsPage() {
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
               Delete Build
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+            <DialogDescription>{errorMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowErrorDialog(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

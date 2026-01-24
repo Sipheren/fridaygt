@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
 import { nanoid } from 'nanoid'
+import type { DbPart, DbPartCategory, DbTuningSetting, DbTuningSection } from '@/types/database'
+import { CreateBuildSchema, validateBody } from '@/lib/validation'
 
 export async function GET(request: NextRequest) {
   try {
@@ -104,15 +106,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { carId, name, description, isPublic, upgrades, settings } = body
 
-    // Validate required fields
-    if (!carId || !name) {
+    // Validate request body with Zod
+    const validationResult = await validateBody(CreateBuildSchema, body)
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Missing required fields: carId, name' },
+        { error: validationResult.error },
         { status: 400 }
       )
     }
+
+    const { carId, name, description, isPublic, upgrades, settings } = validationResult.data
 
     // Verify car exists
     const { data: car, error: carError } = await supabase
@@ -248,7 +252,7 @@ export async function POST(request: NextRequest) {
       const settingMap = new Map(settingDetails.map(s => [s.id, s]))
 
       const settingRecords = standardSettings
-        .map(setting => {
+        .map((setting: any) => {
           const tuningSetting = settingMap.get(setting.settingId)
           return {
             id: nanoid(),
@@ -262,7 +266,7 @@ export async function POST(request: NextRequest) {
 
       // Handle custom gears (store with settingId=null and custom name in 'setting' field)
       // Save all custom gears, even with empty values, to preserve user's added gears
-      const customGearRecords = customGears.map(gear => {
+      const customGearRecords = customGears.map((gear: any) => {
         const gearName = gear.settingId.replace('custom:', '')
         return {
           id: nanoid(),

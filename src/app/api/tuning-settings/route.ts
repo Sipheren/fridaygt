@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
+import type { DbTuningSection } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
     // Client-side sort by section displayOrder if sections are included
     if (settings && settings.length > 0 && settings[0].section) {
       settings.sort((a, b) => {
-        const sectionOrder = (a.section as any).displayOrder - (b.section as any).displayOrder
+        const sectionOrder = ((a.section as any).displayOrder || 0) - ((b.section as any).displayOrder || 0)
         if (sectionOrder !== 0) return sectionOrder
         return (a.displayOrder || 999) - (b.displayOrder || 999)
       })

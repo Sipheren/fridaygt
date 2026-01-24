@@ -17,10 +17,6 @@ import {
   Award,
   Activity,
   Wrench,
-  Globe,
-  Lock,
-  List,
-  ChevronRight,
   Plus,
   Edit,
 } from 'lucide-react'
@@ -131,18 +127,6 @@ interface Statistics {
   worldRecord: LeaderboardEntry | null
 }
 
-interface RunListReference {
-  id: string
-  order: number
-  notes: string | null
-  runList: {
-    id: string
-    name: string
-    isPublic: boolean
-    createdById: string
-  }
-}
-
 export default function RaceDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -150,7 +134,6 @@ export default function RaceDetailPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [userStats, setUserStats] = useState<UserStats | null>(null)
   const [statistics, setStatistics] = useState<Statistics | null>(null)
-  const [runLists, setRunLists] = useState<RunListReference[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -167,7 +150,6 @@ export default function RaceDetailPage() {
         setLeaderboard(data.leaderboard || [])
         setUserStats(data.userStats || null)
         setStatistics(data.statistics || null)
-        setRunLists(data.runLists || [])
       } else {
         console.error('Error fetching race:', data.error)
       }
@@ -441,47 +423,6 @@ export default function RaceDetailPage() {
         </Card>
       )}
 
-      {/* Run Lists using this race */}
-      {runLists.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <List className="h-5 w-5" />
-              Used in Run Lists
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {runLists.map((ref) => (
-                <Link
-                  key={ref.id}
-                  href={`/run-lists/${ref.runList.id}`}
-                  className="block"
-                >
-                  <Card className="gt-hover-card">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="font-medium">{ref.runList.name}</span>
-                          {ref.runList.isPublic ? (
-                            <Globe className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Lock className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      {ref.notes && (
-                        <p className="text-sm text-muted-foreground mt-1">{ref.notes}</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </PageWrapper>
   )
 }

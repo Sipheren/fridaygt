@@ -53,7 +53,6 @@ export function Header({ user }: HeaderProps) {
               height={196}
               className="h-8 w-auto sm:h-10"
               priority
-              unoptimized
             />
           </Link>
 

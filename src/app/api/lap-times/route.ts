@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
+import { CreateLapTimeSchema, validateBody } from '@/lib/validation'
 
 // GET /api/lap-times - Get user's lap times with optional filtering
 export async function GET(request: NextRequest) {
@@ -89,39 +90,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { trackId, carId, buildId, timeMs, notes, conditions, sessionType } = body
+
+    // Validate request body with Zod
+    const validationResult = await validateBody(CreateLapTimeSchema, body)
+    if (!validationResult.success) {
+      console.log('[LAP TIME API] Validation failed:', validationResult.error)
+      return NextResponse.json({ error: validationResult.error }, { status: 400 })
+    }
+
+    const { trackId, carId, buildId, timeMs, notes, conditions, sessionType } = validationResult.data
     console.log('[LAP TIME API] Request:', { trackId, carId, buildId, timeMs, sessionType })
-
-    // Validation
-    if (!trackId || !carId || !timeMs) {
-      return NextResponse.json(
-        { error: 'trackId, carId, and timeMs are required' },
-        { status: 400 }
-      )
-    }
-
-    // Validate sessionType if provided
-    if (sessionType && !['Q', 'R'].includes(sessionType)) {
-      return NextResponse.json(
-        { error: 'sessionType must be either Q or R' },
-        { status: 400 }
-      )
-    }
-
-    if (typeof timeMs !== 'number' || timeMs <= 0) {
-      return NextResponse.json(
-        { error: 'timeMs must be a positive number' },
-        { status: 400 }
-      )
-    }
-
-    // Reasonable lap time validation (between 10 seconds and 30 minutes)
-    if (timeMs < 10000 || timeMs > 1800000) {
-      return NextResponse.json(
-        { error: 'Lap time must be between 10 seconds and 30 minutes' },
-        { status: 400 }
-      )
-    }
 
     const supabase = createServiceRoleClient()
 
@@ -208,7 +186,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('[LAP TIME API] Error creating lap time:', error)
       return NextResponse.json(
-        { error: 'Failed to create lap time', details: error.message },
+        { error: 'Failed to create lap time' },
         { status: 500 }
       )
     }
@@ -218,7 +196,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[LAP TIME API] Unexpected error:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

@@ -1,28 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
+import { QuickBuildSchema, validateBody } from '@/lib/validation'
+import { handleApiError, NotFoundError, UnauthorizedError, ValidationError } from '@/lib/api-error-handler'
+import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 
 // POST /api/builds/quick - Quick build creation for inline modal
 // Purpose: Create builds without leaving race creation flow
 export async function POST(req: NextRequest) {
   try {
+    // Apply rate limiting (20 requests per minute)
+    const rateLimit = await checkRateLimit(req, RateLimit.Mutation())
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      )
+    }
+
     // Check authentication
     const session = await auth()
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      throw new UnauthorizedError()
     }
 
     const body = await req.json()
-    const { carId, name, description } = body
 
-    // Validation
-    if (!carId) {
-      return NextResponse.json({ error: 'carId is required' }, { status: 400 })
+    // Validate request body with Zod
+    const validationResult = await validateBody(QuickBuildSchema, body)
+    if (!validationResult.success) {
+      throw new ValidationError(validationResult.error)
     }
 
-    if (!name || name.trim().length === 0) {
-      return NextResponse.json({ error: 'name is required' }, { status: 400 })
-    }
+    const { carId, name, description } = validationResult.data
 
     const supabase = createServiceRoleClient()
 
@@ -34,7 +45,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (carError || !car) {
-      return NextResponse.json({ error: 'Car not found' }, { status: 404 })
+      throw new NotFoundError('Car')
     }
 
     // Generate build ID
@@ -47,16 +58,15 @@ export async function POST(req: NextRequest) {
         id: buildId,
         userId: session.user.id,
         carId,
-        name: name.trim(),
-        description: description?.trim() || null,
+        name,
+        description,
         isPublic: false, // Quick builds are private by default
       })
       .select()
       .single()
 
     if (buildError) {
-      console.error('Error creating build:', buildError)
-      return NextResponse.json({ error: 'Failed to create build' }, { status: 500 })
+      throw buildError // Will be caught by handleApiError
     }
 
     // Fetch complete build data for response
@@ -69,12 +79,12 @@ export async function POST(req: NextRequest) {
       .eq('id', buildId)
       .single()
 
-    return NextResponse.json(completeBuild, { status: 201 })
+    // Add rate limit headers to successful response
+    return NextResponse.json(completeBuild, {
+      status: 201,
+      headers: rateLimitHeaders(rateLimit),
+    })
   } catch (error) {
-    console.error('Error creating quick build:', error)
-    return NextResponse.json(
-      { error: 'Failed to create build' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }

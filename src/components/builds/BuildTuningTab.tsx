@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -82,10 +82,6 @@ function renderSettingInput(
 
   // DUAL input (front:rear split for suspension settings)
   if (inputType === 'dual') {
-    const step = setting.step || 1
-    const min = setting.minValue ?? undefined
-    const max = setting.maxValue ?? undefined
-
     // Parse current value as "front:rear"
     const [front = '', rear = ''] = currentValue.split(':')
 
@@ -93,10 +89,8 @@ function renderSettingInput(
       <div className="flex items-center gap-2">
         <Input
           id={`${setting.id}-front`}
-          type="number"
-          step={step}
-          min={min}
-          max={max}
+          type="text"
+          inputMode="decimal"
           value={front}
           onChange={(e) => onChange(`${e.target.value}:${rear}`)}
           placeholder="Front"
@@ -104,10 +98,8 @@ function renderSettingInput(
         />
         <Input
           id={`${setting.id}-rear`}
-          type="number"
-          step={step}
-          min={min}
-          max={max}
+          type="text"
+          inputMode="decimal"
           value={rear}
           onChange={(e) => onChange(`${front}:${e.target.value}`)}
           placeholder="Rear"
@@ -119,18 +111,12 @@ function renderSettingInput(
 
   // NUMBER or DECIMAL
   if (inputType === 'number' || inputType === 'decimal') {
-    const step = setting.step || (inputType === 'decimal' ? 0.01 : 1)
-    const min = setting.minValue ?? undefined
-    const max = setting.maxValue ?? undefined
-
     return (
       <div className="flex items-center gap-2">
         <Input
           id={setting.id}
-          type="number"
-          step={step}
-          min={min}
-          max={max}
+          type="text"
+          inputMode="decimal"
           value={currentValue}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Enter value..."
@@ -148,16 +134,14 @@ function renderSettingInput(
   // RATIO format (e.g., "0:100" for Front/Rear Torque Distribution)
   if (inputType === 'ratio') {
     // Parse current value as "front:rear"
-    const [front = 0, rear = 100] = currentValue.split(':').map(Number)
+    const [front = '', rear = ''] = currentValue.split(':')
 
     return (
       <div className="flex items-center gap-2">
         <Input
           id={`${setting.id}-front`}
-          type="number"
-          step={1}
-          min={0}
-          max={100}
+          type="text"
+          inputMode="numeric"
           value={front}
           onChange={(e) => onChange(`${e.target.value}:${rear}`)}
           placeholder="Front"
@@ -166,10 +150,8 @@ function renderSettingInput(
         <span className="text-muted-foreground font-medium">:</span>
         <Input
           id={`${setting.id}-rear`}
-          type="number"
-          step={1}
-          min={0}
-          max={100}
+          type="text"
+          inputMode="numeric"
           value={rear}
           onChange={(e) => onChange(`${front}:${e.target.value}`)}
           placeholder="Rear"
@@ -288,28 +270,37 @@ export function BuildTuningTab({ tuningSettings, onSettingChange, onSettingDelet
     }
   }
 
-  // Helper to get ordinal suffix (1st, 2nd, 3rd, etc.)
-  const getOrdinalSuffix = (n: number): string => {
+  // Helper to get ordinal suffix (1st, 2nd, 3rd, etc.) - memoized
+  const getOrdinalSuffix = useCallback((n: number): string => {
     const s = ['th', 'st', 'nd', 'rd']
     const v = n % 100
     return s[(v - 20) % 10] || s[v] || s[0]
-  }
+  }, [])
 
-  // Get the active section data
-  const activeSectionObj = sections.find((s) => s.name === activeSection)
-  let activeSectionSettings = settings.filter((s) => s.sectionId === activeSectionObj?.id)
+  // Get the active section data - memoized
+  const activeSectionObj = useMemo(
+    () => sections.find((s) => s.name === activeSection),
+    [sections, activeSection]
+  )
 
-  // For Transmission: sort gears properly (1-6, custom gears, Final Drive at bottom)
-  const isTransmission = activeSection === 'Transmission'
-  if (isTransmission) {
-    const standardGears = activeSectionSettings.filter(s => s.name.includes('Gear') && !s.name.includes('Final'))
-    const finalDrive = activeSectionSettings.find(s => s.name === 'Final Drive')
+  // Get active section settings - memoized to avoid re-filtering on every render
+  const activeSectionSettings = useMemo(() => {
+    let filtered = settings.filter((s) => s.sectionId === activeSectionObj?.id)
 
-    // Sort standard gears by displayOrder (should be 1-6)
-    standardGears.sort((a, b) => (a.displayOrder || 999) - (b.displayOrder || 999))
+    // For Transmission: sort gears properly (1-6, custom gears, Final Drive at bottom)
+    const isTransmission = activeSection === 'Transmission'
+    if (isTransmission) {
+      const standardGears = filtered.filter(s => s.name.includes('Gear') && !s.name.includes('Final'))
+      const finalDrive = filtered.find(s => s.name === 'Final Drive')
 
-    activeSectionSettings = [...standardGears, ...(finalDrive ? [finalDrive] : [])]
-  }
+      // Sort standard gears by displayOrder (should be 1-6) - use toSorted to avoid mutation
+      const sortedGears = standardGears.toSorted((a, b) => (a.displayOrder || 999) - (b.displayOrder || 999))
+
+      filtered = [...sortedGears, ...(finalDrive ? [finalDrive] : [])]
+    }
+
+    return filtered
+  }, [settings, activeSectionObj, activeSection])
 
   if (loading) {
     return (
@@ -373,7 +364,7 @@ export function BuildTuningTab({ tuningSettings, onSettingChange, onSettingDelet
         <div className="mb-4">
           <h3 className="text-lg font-semibold">{activeSection}</h3>
           <p className="text-sm text-muted-foreground">
-            {isTransmission
+            {activeSection === 'Transmission'
               ? `${activeSectionSettings.length + customGears.length} settings`
               : `${activeSectionSettings.length} settings`
             }
@@ -382,7 +373,7 @@ export function BuildTuningTab({ tuningSettings, onSettingChange, onSettingDelet
 
         <div className="overflow-y-auto flex-1 pr-4">
           <div className="space-y-4">
-            {isTransmission ? (
+            {activeSection === 'Transmission' ? (
               <>
                 {/* Render standard gears (1st-6th) */}
                 {activeSectionSettings
@@ -422,8 +413,8 @@ export function BuildTuningTab({ tuningSettings, onSettingChange, onSettingDelet
                       </Button>
                     </div>
                     <Input
-                      type="number"
-                      step="0.001"
+                      type="text"
+                      inputMode="decimal"
                       value={gear.value}
                       onChange={(e) => updateCustomGear(index, e.target.value)}
                       placeholder="Enter gear ratio..."

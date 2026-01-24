@@ -2,6 +2,24 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
+import { UpdateRaceSchema, validateBody } from '@/lib/validation'
+import type { DbRace, DbRaceCar, DbCarBuild, DbUser, DbTrack, DbLapTime, DbCar } from '@/types/database'
+
+// Enriched lap time type with nested user and car data
+type DbLapTimeWithRelations = DbLapTime & {
+  user: DbUser
+  car: DbCar
+  buildId: string | null
+  buildName: string | null
+}
+
+// Enriched race type with raceCars property
+type DbRaceWithCars = DbRace & {
+  raceCars?: Array<DbRaceCar & {
+    car?: DbCar
+    build?: DbCarBuild
+  }>
+}
 
 // GET /api/races/[id] - Get a single race with details
 export async function GET(
@@ -51,13 +69,20 @@ export async function GET(
       .eq('raceId', id)
 
     // Attach related data to race object
-    ;(race as any).track = track
-    ;(race as any).createdBy = createdBy
-    ;(race as any).RaceCar = raceCars || []
+    const enrichedRace: DbRace & {
+      track?: DbTrack
+      createdBy?: DbUser
+      RaceCar: DbRaceCar[]
+    } = {
+      ...race,
+      track,
+      createdBy,
+      RaceCar: raceCars || [],
+    }
 
     // Get all lap times for this race (ONLY from builds in this race at this track)
     const trackId = track?.id || race.trackId
-    const buildIds = raceCars?.map((rc: any) => rc.buildId) || []
+    const buildIds = raceCars?.map((rc: any) => rc.buildId).filter(Boolean) || []
 
     const { data: lapTimes } = await supabase
       .from('LapTime')
@@ -94,8 +119,8 @@ export async function GET(
     }>()
 
     for (const lapTime of lapTimes || []) {
-      const user = lapTime.user as any
-      const car = lapTime.car as any
+      const user = (lapTime as any).user
+      const car = (lapTime as any).car
       const userId = user?.id
       const carId = car?.id
       const buildId = (lapTime as any).buildId || null
@@ -138,17 +163,6 @@ export async function GET(
         position: index + 1
       }))
 
-    // Get run lists using this race
-    const { data: runListEntries } = await supabase
-      .from('RunListEntry')
-      .select(`
-        id,
-        order,
-        notes,
-        runList:RunList(id, name, isPublic, createdById)
-      `)
-      .eq('raceId', id)
-
     // Get current user's data if logged in
     const session = await auth()
     let userStats = null
@@ -160,7 +174,7 @@ export async function GET(
         .single()
 
       if (userData) {
-        const userLapTimes = lapTimes?.filter(lt => (lt.user as any)?.id === userData.id) || []
+        const userLapTimes = (lapTimes || []).filter((lt: any) => lt.user?.id === userData.id)
 
         if (userLapTimes.length > 0) {
           const times = userLapTimes.map(lt => lt.timeMs)
@@ -185,7 +199,7 @@ export async function GET(
     const allTimes = lapTimes?.map(lt => lt.timeMs) || []
     const statistics = {
       totalLaps: lapTimes?.length || 0,
-      uniqueDrivers: new Set((lapTimes || []).map(lt => (lt.user as any)?.id).filter(Boolean)).size,
+      uniqueDrivers: new Set((lapTimes || []).map((lt: any) => lt.user?.id).filter(Boolean)).size,
       fastestTime: allTimes.length > 0 ? Math.min(...allTimes) : null,
       averageTime: allTimes.length > 0
         ? Math.round(allTimes.reduce((a, b) => a + b, 0) / allTimes.length)
@@ -200,8 +214,7 @@ export async function GET(
       statistics,
       recentActivity: (lapTimes || [])
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 10),
-      runLists: runListEntries || []
+        .slice(0, 10)
     })
   } catch (error) {
     console.error('Unexpected error:', error)
@@ -225,7 +238,14 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { name, description, buildIds, laps, weather, isActive } = body
+
+    // Validate request body with Zod
+    const validationResult = await validateBody(UpdateRaceSchema, body)
+    if (!validationResult.success) {
+      return NextResponse.json({ error: validationResult.error }, { status: 400 })
+    }
+
+    const { name, description, buildIds, laps, weather, isActive } = validationResult.data
 
     const supabase = createServiceRoleClient()
 
@@ -262,23 +282,15 @@ export async function PATCH(
       )
     }
 
-    // Validation
-    if (weather !== undefined && !['dry', 'wet'].includes(weather)) {
-      return NextResponse.json(
-        { error: 'weather must be either "dry" or "wet"' },
-        { status: 400 }
-      )
-    }
-
-    if (laps !== undefined && (typeof laps !== 'number' || laps < 1)) {
-      return NextResponse.json(
-        { error: 'laps must be a positive number' },
-        { status: 400 }
-      )
-    }
-
     const now = new Date().toISOString()
-    const updates: any = {
+    const updates: Partial<{
+      name: string | null
+      description: string | null
+      laps: number | null
+      weather: string | null
+      isActive: boolean
+      updatedAt: string
+    }> = {
       updatedAt: now
     }
 
@@ -366,24 +378,32 @@ export async function PATCH(
         .eq('raceId', id)
 
       // Attach cars to race
-      ;(race as any).raceCars = createdCars || []
-    } else {
-      // Fetch existing cars
-      const { data: existingCars } = await supabase
-        .from('RaceCar')
-        .select(`
-          id,
-          carId,
-          buildId,
-          car:Car(id, name, slug, manufacturer, year, category),
-          build:CarBuild(id, name, description, isPublic)
-        `)
-        .eq('raceId', id)
-
-      ;(race as any).raceCars = existingCars || []
+      return NextResponse.json({
+        race: {
+          ...race,
+          raceCars: createdCars || [],
+        }
+      })
     }
 
-    return NextResponse.json({ race })
+    // Fetch existing cars
+    const { data: existingCars } = await supabase
+      .from('RaceCar')
+      .select(`
+        id,
+        carId,
+        buildId,
+        car:Car(id, name, slug, manufacturer, year, category),
+        build:CarBuild(id, name, description, isPublic)
+      `)
+      .eq('raceId', id)
+
+    return NextResponse.json({
+      race: {
+        ...race,
+        raceCars: existingCars || [],
+      }
+    })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json(
@@ -440,29 +460,13 @@ export async function DELETE(
       )
     }
 
-    // Check if race is being used by any run lists
-    const { data: runListEntries } = await supabase
-      .from('RunListEntry')
-      .select('id')
-      .eq('raceId', id)
-
-    if (runListEntries && runListEntries.length > 0) {
-      return NextResponse.json(
-        {
-          error: 'Cannot delete race that is in use',
-          details: `Race is being used by ${runListEntries.length} run list(s). Remove it from run lists first.`
-        },
-        { status: 409 }
-      )
-    }
-
     // Delete the race (RaceCar entries will be cascade deleted)
     const { error } = await supabase.from('Race').delete().eq('id', id)
 
     if (error) {
       console.error('Error deleting race:', error)
       return NextResponse.json(
-        { error: 'Failed to delete race', details: error.message },
+        { error: 'Failed to delete race' },
         { status: 500 }
       )
     }

@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
+import type { DbRaceWithRelations, DbCarBuild } from '@/types/database'
+import { CreateRaceSchema, UpdateRaceSchema, validateBody } from '@/lib/validation'
 
 // GET /api/races - List all races with run list associations
 export async function GET(req: NextRequest) {
   try {
     const supabase = createServiceRoleClient()
 
-    // Fetch all races
+    // Fetch all races with related data in a single query (fixes N+1 query issue)
     const { data: races, error: racesError } = await supabase
       .from('Race')
-      .select('*')
+      .select(`
+        *,
+        track:Track(*),
+        RaceCar(
+          *,
+          car:Car(id, name, slug, manufacturer),
+          build:CarBuild(id, name, description)
+        )
+      `)
       .order('createdAt', { ascending: false })
 
     if (racesError) {
@@ -20,58 +30,8 @@ export async function GET(req: NextRequest) {
 
     console.log('Fetched races:', races?.length)
 
-    // Fetch related data for each race separately
-    const enrichedRaces = await Promise.all(
-      (races || []).map(async (race: any) => {
-        // Get track info
-        const { data: track } = await supabase
-          .from('Track')
-          .select('*')
-          .eq('id', race.trackId)
-          .single()
-
-        // Get race cars with car and build info
-        const { data: raceCars } = await supabase
-          .from('RaceCar')
-          .select(`
-            id,
-            carId,
-            buildId,
-            car:Car(id, name, slug, manufacturer),
-            build:CarBuild(id, name, description)
-          `)
-          .eq('raceId', race.id)
-
-        // Get run lists using this race
-        const { data: runListEntries } = await supabase
-          .from('RunListEntry')
-          .select(`
-            runListId,
-            runList:RunList(id, name, isPublic)
-          `)
-          .eq('raceId', race.id)
-
-        // Deduplicate run lists
-        const runListMap = new Map<string, any>()
-        runListEntries?.forEach((entry: any) => {
-          if (entry.runList && !runListMap.has(entry.runList.id)) {
-            runListMap.set(entry.runList.id, entry.runList)
-          }
-        })
-        const runLists = Array.from(runListMap.values())
-
-        return {
-          ...race,
-          track,
-          RaceCar: raceCars || [],
-          runLists,
-          runListCount: runLists.length
-        }
-      })
-    )
-
     // Sort: Active first, then by display name
-    const sortedRaces = enrichedRaces.sort((a, b) => {
+    const sortedRaces = (races || []).sort((a, b) => {
       if (a.isActive !== b.isActive) {
         return a.isActive ? -1 : 1
       }
@@ -89,13 +49,13 @@ export async function GET(req: NextRequest) {
 }
 
 // Helper function to generate display name for races without custom names
-function getDisplayName(race: any): string {
+function getDisplayName(race: DbRaceWithRelations): string {
   if (race.name) {
     return race.name
   }
 
   const trackName = race.track?.name || 'Unknown Track'
-  const firstCar = race.RaceCar?.[0]?.car
+  const firstCar = (race.RaceCar?.[0] as any)?.car
   const carName = firstCar ? `${firstCar.manufacturer} ${firstCar.name}` : 'Unknown Car'
 
   return `${trackName} + ${carName}`
@@ -111,33 +71,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { trackId, buildIds, name, description, laps, weather, isActive } = body
 
-    // Validation
-    if (!trackId) {
-      return NextResponse.json({ error: 'trackId is required' }, { status: 400 })
+    // Validate request body with Zod
+    const validationResult = await validateBody(CreateRaceSchema, body)
+    if (!validationResult.success) {
+      return NextResponse.json({ error: validationResult.error }, { status: 400 })
     }
 
-    if (!buildIds || !Array.isArray(buildIds) || buildIds.length === 0) {
-      return NextResponse.json(
-        { error: 'At least one buildId is required' },
-        { status: 400 }
-      )
-    }
-
-    if (weather && !['dry', 'wet'].includes(weather)) {
-      return NextResponse.json(
-        { error: 'weather must be either "dry" or "wet"' },
-        { status: 400 }
-      )
-    }
-
-    if (laps !== undefined && (typeof laps !== 'number' || laps < 1)) {
-      return NextResponse.json(
-        { error: 'laps must be a positive number' },
-        { status: 400 }
-      )
-    }
+    const { trackId, buildIds, name, description, laps, weather, isActive } = validationResult.data
 
     const supabase = createServiceRoleClient()
 

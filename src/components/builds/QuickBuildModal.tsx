@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -135,14 +135,16 @@ export function QuickBuildModal({
     }
   }
 
-  // Group cars by manufacturer
-  const carsByManufacturer = cars.reduce((acc, car) => {
-    if (!acc[car.manufacturer]) {
-      acc[car.manufacturer] = []
-    }
-    acc[car.manufacturer].push(car)
-    return acc
-  }, {} as Record<string, Car[]>)
+  // Group cars by manufacturer - memoized to avoid re-grouping on every render
+  const carsByManufacturer = useMemo(() => {
+    return cars.reduce((acc, car) => {
+      if (!acc[car.manufacturer]) {
+        acc[car.manufacturer] = []
+      }
+      acc[car.manufacturer].push(car)
+      return acc
+    }, {} as Record<string, Car[]>)
+  }, [cars])
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

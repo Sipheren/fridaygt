@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Wrench,
   ArrowLeft,
@@ -104,6 +112,9 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
   const [cloning, setCloning] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showErrorDialog, setShowErrorDialog] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     params.then((p) => {
@@ -122,7 +133,8 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       setBuild(data)
     } catch (error) {
       console.error('Error fetching build:', error)
-      alert('Failed to load build')
+      setErrorMessage('Failed to load build')
+      setShowErrorDialog(true)
       router.push('/builds')
     } finally {
       setLoading(false)
@@ -130,11 +142,13 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this build?')) {
-      return
-    }
+    setShowDeleteDialog(true)
+  }
 
+  const confirmDelete = async () => {
+    setShowDeleteDialog(false)
     setDeleting(true)
+
     try {
       const response = await fetch(`/api/builds/${id}`, {
         method: 'DELETE',
@@ -147,7 +161,8 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       router.push('/builds')
     } catch (error) {
       console.error('Error deleting build:', error)
-      alert('Failed to delete build')
+      setErrorMessage('Failed to delete build')
+      setShowErrorDialog(true)
       setDeleting(false)
     }
   }
@@ -167,28 +182,33 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       router.push(`/builds/${data.id}`)
     } catch (error) {
       console.error('Error cloning build:', error)
-      alert('Failed to clone build')
+      setErrorMessage('Failed to clone build')
+      setShowErrorDialog(true)
       setCloning(false)
     }
   }
 
-  // Group upgrades by category
-  const groupedUpgrades = build?.upgrades.reduce((acc, upgrade) => {
-    if (!acc[upgrade.category]) {
-      acc[upgrade.category] = []
-    }
-    acc[upgrade.category].push(upgrade)
-    return acc
-  }, {} as Record<string, BuildUpgrade[]>) || {}
+  // Group upgrades by category - memoized to avoid re-grouping on every render
+  const groupedUpgrades = useMemo(() => {
+    return build?.upgrades.reduce((acc, upgrade) => {
+      if (!acc[upgrade.category]) {
+        acc[upgrade.category] = []
+      }
+      acc[upgrade.category].push(upgrade)
+      return acc
+    }, {} as Record<string, BuildUpgrade[]>) || {}
+  }, [build?.upgrades])
 
-  // Group settings by section
-  const groupedSettings = build?.settings.reduce((acc, setting) => {
-    if (!acc[setting.section]) {
-      acc[setting.section] = []
-    }
-    acc[setting.section].push(setting)
-    return acc
-  }, {} as Record<string, BuildSetting[]>) || {}
+  // Group settings by section - memoized to avoid re-grouping on every render
+  const groupedSettings = useMemo(() => {
+    return build?.settings.reduce((acc, setting) => {
+      if (!acc[setting.section]) {
+        acc[setting.section] = []
+      }
+      acc[setting.section].push(setting)
+      return acc
+    }, {} as Record<string, BuildSetting[]>) || {}
+  }, [build?.settings])
 
   const formatCategoryName = (category: string) => {
     return category
@@ -456,6 +476,68 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
             </CardContent>
           </Card>
         )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Build?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this build?
+              <div className="mt-3 p-3 bg-muted rounded-md">
+                <p className="font-medium">{build?.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {build?.car.manufacturer} {build?.car.name}
+                </p>
+              </div>
+              <p className="text-destructive text-sm mt-2">
+                This action cannot be undone.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+            <DialogDescription>{errorMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowErrorDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageWrapper>
   )
 }

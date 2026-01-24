@@ -27,6 +27,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { ArrowLeft, Save, Wrench, Settings } from 'lucide-react'
 import { BuildUpgradesTab } from '@/components/builds/BuildUpgradesTab'
 import { BuildTuningTab } from '@/components/builds/BuildTuningTab'
@@ -45,6 +53,9 @@ export default function NewBuildPage() {
   const [cars, setCars] = useState<Car[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [showErrorDialog, setShowErrorDialog] = useState(false)
+  const [showValidationDialog, setShowValidationDialog] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   // Form fields
   const [carId, setCarId] = useState('')
@@ -102,7 +113,7 @@ export default function NewBuildPage() {
     e.preventDefault()
 
     if (!carId || !name) {
-      alert('Please select a car and enter a build name')
+      setShowValidationDialog(true)
       return
     }
 
@@ -140,7 +151,8 @@ export default function NewBuildPage() {
       router.push(`/builds/${data.id}`)
     } catch (error) {
       console.error('Error creating build:', error)
-      alert('Failed to create build')
+      setErrorMessage('Failed to create build')
+      setShowErrorDialog(true)
       setSaving(false)
     }
   }
@@ -281,6 +293,38 @@ export default function NewBuildPage() {
           {saving ? 'Saving...' : 'Save Build'}
         </Button>
       </div>
+
+      {/* Validation Dialog */}
+      <Dialog open={showValidationDialog} onOpenChange={setShowValidationDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Validation Error</DialogTitle>
+            <DialogDescription>
+              Please select a car and enter a build name before saving.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowValidationDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+            <DialogDescription>{errorMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowErrorDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   )
 }

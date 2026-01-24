@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { sendApprovalNotification, sendUserRemovalNotification } from '@/lib/email'
+import { isAdmin } from '@/lib/auth-utils'
+import { UpdateUserRoleSchema, validateBody } from '@/lib/validation'
+import type { DbUser } from '@/types/database'
 
 export async function PATCH(
   request: Request,
@@ -9,16 +12,20 @@ export async function PATCH(
 ) {
   const session = await auth()
 
-  if (!session || (session.user as any)?.role !== 'ADMIN') {
+  if (!isAdmin(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { id } = await params
-  const { role } = await request.json()
+  const body = await request.json()
 
-  if (!['PENDING', 'USER', 'ADMIN'].includes(role)) {
-    return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+  // Validate request body with Zod
+  const validationResult = await validateBody(UpdateUserRoleSchema, body)
+  if (!validationResult.success) {
+    return NextResponse.json({ error: validationResult.error }, { status: 400 })
   }
+
+  const { role } = validationResult.data
 
   const supabase = createServiceRoleClient()
 
@@ -41,7 +48,8 @@ export async function PATCH(
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Error updating user:', error)
+    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
   }
 
   // Send approval email if changing from PENDING to USER
@@ -62,7 +70,7 @@ export async function DELETE(
 ) {
   const session = await auth()
 
-  if (!session || (session.user as any)?.role !== 'ADMIN') {
+  if (!isAdmin(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -111,12 +119,14 @@ export async function DELETE(
 
   if (error) {
     console.error('Error deleting user:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 })
   }
 
   // Send notification to ALL admins
   if (user?.email && admins && admins.length > 0) {
-    const adminEmails = admins.map((a: any) => a.email).filter((e: string) => e)
+    const adminEmails = admins
+      .map((a: any) => a.email)
+      .filter((e: string | null): e is string => e !== null && e !== '')
 
     console.log(`Sending user removal notification to ${adminEmails.length} admins:`, adminEmails)
 

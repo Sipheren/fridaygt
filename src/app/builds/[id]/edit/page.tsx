@@ -20,6 +20,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { ArrowLeft, Save, Wrench, Settings } from 'lucide-react'
 import { BuildUpgradesTab } from '@/components/builds/BuildUpgradesTab'
 import { BuildTuningTab } from '@/components/builds/BuildTuningTab'
@@ -69,6 +77,9 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
   const [id, setId] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [showErrorDialog, setShowErrorDialog] = useState(false)
+  const [showValidationDialog, setShowValidationDialog] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   // Form fields
   const [name, setName] = useState('')
@@ -120,7 +131,8 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
       setTuningSettings(settingsMap)
     } catch (error) {
       console.error('Error fetching build:', error)
-      alert('Failed to load build')
+      setErrorMessage('Failed to load build')
+      setShowErrorDialog(true)
       router.push('/builds')
     } finally {
       setLoading(false)
@@ -153,7 +165,7 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     e.preventDefault()
 
     if (!name) {
-      alert('Please enter a build name')
+      setShowValidationDialog(true)
       return
     }
 
@@ -189,7 +201,8 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
       router.push(`/builds/${id}`)
     } catch (error) {
       console.error('Error updating build:', error)
-      alert('Failed to update build')
+      setErrorMessage('Failed to update build')
+      setShowErrorDialog(true)
       setSaving(false)
     }
   }
@@ -321,6 +334,38 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
+
+      {/* Validation Dialog */}
+      <Dialog open={showValidationDialog} onOpenChange={setShowValidationDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Validation Error</DialogTitle>
+            <DialogDescription>
+              Please enter a build name before saving.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowValidationDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+            <DialogDescription>{errorMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowErrorDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   )
 }

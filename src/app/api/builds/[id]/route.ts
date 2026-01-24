@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
 import { nanoid } from 'nanoid'
+import { UpdateBuildSchema, validateBody } from '@/lib/validation'
+import type {
+  DbCarBuildUpgrade,
+  DbCarBuildSetting,
+  DbPart,
+  DbPartCategory,
+  DbTuningSetting,
+  DbTuningSection,
+} from '@/types/database'
 
 export async function GET(
   request: NextRequest,
@@ -34,7 +43,7 @@ export async function GET(
     if (error) {
       console.error('Supabase error fetching build:', error)
       return NextResponse.json(
-        { error: 'Build not found', details: error.message },
+        { error: 'Build not found' },
         { status: 404 }
       )
     }
@@ -171,10 +180,22 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { name, description, isPublic, upgrades, settings } = body
+
+    // Validate request body with Zod
+    const validationResult = await validateBody(UpdateBuildSchema, body)
+    if (!validationResult.success) {
+      return NextResponse.json({ error: validationResult.error }, { status: 400 })
+    }
+
+    const { name, description, isPublic, upgrades, settings } = validationResult.data
 
     // Update the build
-    const updateData: any = {
+    const updateData: Partial<{
+      name: string
+      description: string | null
+      isPublic: boolean
+      updatedAt: string
+    }> = {
       updatedAt: new Date().toISOString(),
     }
 
@@ -256,9 +277,9 @@ export async function PATCH(
         const partMap = new Map(partDetails.map(p => [p.id, p]))
 
         const upgradeRecords = upgrades
-          .filter((u: any) => u.partId) // Only include upgrades with valid partId
-          .map((upgrade: any) => {
-            const part = partMap.get(upgrade.partId)
+          .filter((u): u is { partId?: string } => !!u.partId) // Only include upgrades with valid partId
+          .map((upgrade) => {
+            const part = partMap.get(upgrade.partId!)
             return {
               id: nanoid(),
               buildId: id,
@@ -279,8 +300,12 @@ export async function PATCH(
     // Update settings if provided
     if (settings !== undefined && Array.isArray(settings)) {
       // Separate standard settings from custom gears
-      const standardSettings = settings.filter((s: any) => s.settingId && !s.settingId.startsWith('custom:'))
-      const customGears = settings.filter((s: any) => s.settingId && s.settingId.startsWith('custom:'))
+      const standardSettings = settings.filter((s): s is { settingId?: string } =>
+        !!s.settingId && !s.settingId.startsWith('custom:')
+      )
+      const customGears = settings.filter((s): s is { settingId?: string } =>
+        !!s.settingId && s.settingId.startsWith('custom:')
+      )
 
       // Validate standard settingIds and lookup section/setting names
       if (standardSettings.length > 0) {
@@ -310,7 +335,9 @@ export async function PATCH(
       // Insert new settings with validation
       if (settings.length > 0) {
         // Fetch standard setting details to populate legacy columns
-        const settingIds = standardSettings.map((s: any) => s.settingId).filter(Boolean)
+        const settingIds = standardSettings
+          .map((s) => s.settingId)
+          .filter((id): id is string => id !== undefined && id !== null)
 
         let settingDetails: any[] = []
         if (settingIds.length > 0) {
@@ -343,7 +370,7 @@ export async function PATCH(
         // Handle standard settings
         const settingRecords = standardSettings
           .map((setting: any) => {
-            const tuningSetting = settingMap.get(setting.settingId)
+            const tuningSetting = settingMap.get(setting.settingId!)
             return {
               id: nanoid(),
               buildId: id,

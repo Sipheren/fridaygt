@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
 import { nanoid } from 'nanoid'
+import type { DbCarBuildUpgrade, DbCarBuildSetting } from '@/types/database'
 
 export async function POST(
   request: NextRequest,

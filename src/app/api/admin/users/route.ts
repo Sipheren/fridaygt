@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
+import { isAdmin } from '@/lib/auth-utils'
 
 export async function GET() {
   const session = await auth()
 
-  if (!session || (session.user as any)?.role !== 'ADMIN') {
+  if (!isAdmin(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -16,7 +17,8 @@ export async function GET() {
     .order('createdAt', { ascending: false })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Error fetching users:', error)
+    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
   }
 
   return NextResponse.json({ users })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -75,33 +75,37 @@ export function BuildSelector({
     fetchBuilds()
   }, [buildsProp, buildsLoadingProp])
 
-  // Filter builds based on search
-  const filteredBuilds = builds.filter((build) => {
-    const searchLower = searchQuery.toLowerCase()
-    return (
-      build.name.toLowerCase().includes(searchLower) ||
-      build.car?.manufacturer.toLowerCase().includes(searchLower) ||
-      build.car?.name.toLowerCase().includes(searchLower)
-    )
-  })
+  // Filter builds based on search - memoized to avoid re-filtering on every render
+  const filteredBuilds = useMemo(() => {
+    return builds.filter((build) => {
+      const searchLower = searchQuery.toLowerCase()
+      return (
+        build.name.toLowerCase().includes(searchLower) ||
+        build.car?.manufacturer.toLowerCase().includes(searchLower) ||
+        build.car?.name.toLowerCase().includes(searchLower)
+      )
+    })
+  }, [builds, searchQuery])
 
-  // Group builds by car
-  const buildsByCar = filteredBuilds.reduce((acc, build) => {
-    const carKey = `${build.car?.manufacturer} ${build.car?.name}`
-    if (!acc[carKey]) {
-      acc[carKey] = []
-    }
-    acc[carKey].push(build)
-    return acc
-  }, {} as Record<string, Build[]>)
+  // Group builds by car - memoized since it depends on filteredBuilds
+  const buildsByCar = useMemo(() => {
+    return filteredBuilds.reduce((acc, build) => {
+      const carKey = `${build.car?.manufacturer} ${build.car?.name}`
+      if (!acc[carKey]) {
+        acc[carKey] = []
+      }
+      acc[carKey].push(build)
+      return acc
+    }, {} as Record<string, Build[]>)
+  }, [filteredBuilds])
 
-  // Get selected build objects
-  const selectedBuildObjects = builds.filter((b) =>
-    selectedBuilds.includes(b.id)
-  )
+  // Get selected build objects - memoized to avoid re-filtering on every render
+  const selectedBuildObjects = useMemo(() => {
+    return builds.filter((b) => selectedBuilds.includes(b.id))
+  }, [builds, selectedBuilds])
 
   // Toggle build selection and close dropdown
-  const toggleBuild = (buildId: string) => {
+  const toggleBuild = useCallback((buildId: string) => {
     if (selectedBuilds.includes(buildId)) {
       onBuildsChange(selectedBuilds.filter((id) => id !== buildId))
     } else {
@@ -109,17 +113,17 @@ export function BuildSelector({
     }
     // Close dropdown after selection for better UX
     setOpen(false)
-  }
+  }, [selectedBuilds, onBuildsChange])
 
   // Remove build from selection
-  const removeBuild = (buildId: string) => {
+  const removeBuild = useCallback((buildId: string) => {
     onBuildsChange(selectedBuilds.filter((id) => id !== buildId))
-  }
+  }, [selectedBuilds, onBuildsChange])
 
   // Clear all selections
-  const clearAll = () => {
+  const clearAll = useCallback(() => {
     onBuildsChange([])
-  }
+  }, [onBuildsChange])
 
   return (
     <div className="space-y-3">

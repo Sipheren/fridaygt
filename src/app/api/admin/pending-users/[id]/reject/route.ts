@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
+import { isAdmin } from '@/lib/auth-utils'
 
 // POST /api/admin/pending-users/[id]/reject - Reject a pending user
 export async function POST(
@@ -9,7 +10,7 @@ export async function POST(
 ) {
   try {
     const session = await auth()
-    if (!session?.user || (session.user as any).role !== 'ADMIN') {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

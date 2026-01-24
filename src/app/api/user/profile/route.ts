@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
+import { UpdateUserProfileSchema, validateBody } from '@/lib/validation'
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -10,31 +11,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { gamertag, name } = body
 
-    // Validate gamertag if provided
-    if (gamertag !== undefined) {
-      if (typeof gamertag !== 'string') {
-        return NextResponse.json({ error: 'Gamertag must be a string' }, { status: 400 })
-      }
-
-      const trimmedGamertag = gamertag.trim()
-
-      if (trimmedGamertag.length < 3) {
-        return NextResponse.json({ error: 'Gamertag must be at least 3 characters' }, { status: 400 })
-      }
-
-      if (trimmedGamertag.length > 20) {
-        return NextResponse.json({ error: 'Gamertag must be less than 20 characters' }, { status: 400 })
-      }
-
-      if (!/^[a-zA-Z0-9_-]+$/.test(trimmedGamertag)) {
-        return NextResponse.json(
-          { error: 'Gamertag can only contain letters, numbers, hyphens, and underscores' },
-          { status: 400 }
-        )
-      }
+    // Validate request body with Zod
+    const validationResult = await validateBody(UpdateUserProfileSchema, body)
+    if (!validationResult.success) {
+      return NextResponse.json({ error: validationResult.error }, { status: 400 })
     }
+
+    const { gamertag, name } = validationResult.data
 
     const supabase = createServiceRoleClient()
 
@@ -43,7 +27,7 @@ export async function PATCH(request: NextRequest) {
       const { data: existingUser } = await supabase
         .from('User')
         .select('id')
-        .eq('gamertag', gamertag.trim())
+        .eq('gamertag', gamertag)
         .neq('id', session.user.id)
         .single()
 
@@ -53,16 +37,20 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Build update object
-    const updateData: any = {
+    const updateData: Partial<{
+      name: string | null
+      gamertag: string | null
+      updatedAt: string
+    }> = {
       updatedAt: new Date().toISOString(),
     }
 
     if (gamertag !== undefined) {
-      updateData.gamertag = gamertag.trim()
+      updateData.gamertag = gamertag
     }
 
     if (name !== undefined) {
-      updateData.name = name.trim()
+      updateData.name = name
     }
 
     // Safety: Ensure user record exists (create if missing)

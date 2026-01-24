@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -64,6 +64,8 @@ export default function RacesPage() {
   const [deletingRaceId, setDeletingRaceId] = useState<string | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [showErrorDialog, setShowErrorDialog] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     fetchRaces()
@@ -81,6 +83,31 @@ export default function RacesPage() {
       setLoading(false)
     }
   }
+
+  // Memoize display name function to avoid re-creation
+  const getDisplayName = useCallback((race: Race): string => {
+    if (race.name) return race.name
+
+    const trackName = race.track?.name || 'Unknown Track'
+    const firstCar = race.RaceCar?.[0]?.car
+    const carName = firstCar ? `${firstCar.manufacturer} ${firstCar.name}` : 'Unknown Car'
+
+    return `${trackName} + ${carName}`
+  }, [])
+
+  // Memoize filtered races to avoid re-filtering on every render
+  const filteredRaces = useMemo(() => {
+    return races.filter((race) => {
+      const displayName = getDisplayName(race).toLowerCase()
+      const matchesSearch = displayName.includes(search.toLowerCase())
+
+      if (!matchesSearch) return false
+
+      if (filter === 'active') return race.isActive
+      if (filter === 'inactive') return !race.isActive
+      return true
+    })
+  }, [races, search, filter, getDisplayName])
 
   const deleteRace = async (raceId: string) => {
     setPendingDeleteId(raceId)
@@ -100,7 +127,8 @@ export default function RacesPage() {
 
       if (!res.ok) {
         const data = await res.json()
-        alert(data.error || 'Failed to delete race')
+        setErrorMessage(data.error || 'Failed to delete race')
+        setShowErrorDialog(true)
         return
       }
 
@@ -108,21 +136,12 @@ export default function RacesPage() {
       await fetchRaces()
     } catch (error) {
       console.error('Error deleting race:', error)
-      alert('Failed to delete race')
+      setErrorMessage('Failed to delete race')
+      setShowErrorDialog(true)
     } finally {
       setDeletingRaceId(null)
       setPendingDeleteId(null)
     }
-  }
-
-  const getDisplayName = (race: Race): string => {
-    if (race.name) return race.name
-
-    const trackName = race.track?.name || 'Unknown Track'
-    const firstCar = race.RaceCar?.[0]?.car
-    const carName = firstCar ? `${firstCar.manufacturer} ${firstCar.name}` : 'Unknown Car'
-
-    return `${trackName} + ${carName}`
   }
 
   const toggleActiveRace = async (raceId: string, currentState: boolean) => {
@@ -135,7 +154,8 @@ export default function RacesPage() {
 
       if (!res.ok) {
         const data = await res.json()
-        alert(data.error || 'Failed to update race')
+        setErrorMessage(data.error || 'Failed to update race')
+        setShowErrorDialog(true)
         return
       }
 
@@ -145,20 +165,10 @@ export default function RacesPage() {
       ))
     } catch (error) {
       console.error('Error toggling race active status:', error)
-      alert('Failed to update race')
+      setErrorMessage('Failed to update race')
+      setShowErrorDialog(true)
     }
   }
-
-  const filteredRaces = races.filter((race) => {
-    const displayName = getDisplayName(race).toLowerCase()
-    const matchesSearch = displayName.includes(search.toLowerCase())
-
-    if (!matchesSearch) return false
-
-    if (filter === 'active') return race.isActive
-    if (filter === 'inactive') return !race.isActive
-    return true
-  })
 
   if (loading) {
     return (
@@ -387,6 +397,21 @@ export default function RacesPage() {
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
               Delete Race
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+            <DialogDescription>{errorMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowErrorDialog(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
