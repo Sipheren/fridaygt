@@ -71,6 +71,17 @@ interface BuildSetting {
   value: string
 }
 
+interface TuningSettingMetadata {
+  id: string
+  name: string
+  inputType?: string
+  unit?: string | null
+  minValue?: number | null
+  maxValue?: number | null
+  step?: number | null
+  displayOrder?: number | null
+}
+
 interface Build {
   id: string
   name: string
@@ -115,6 +126,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showErrorDialog, setShowErrorDialog] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [tuningSettingsMetadata, setTuningSettingsMetadata] = useState<Record<string, TuningSettingMetadata>>({})
 
   useEffect(() => {
     params.then((p) => {
@@ -125,12 +137,27 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
   const fetchBuild = async (buildId: string) => {
     try {
-      const response = await fetch(`/api/builds/${buildId}`)
-      if (!response.ok) {
+      const [buildRes, settingsRes] = await Promise.all([
+        fetch(`/api/builds/${buildId}`),
+        fetch('/api/tuning-settings')
+      ])
+
+      if (!buildRes.ok) {
         throw new Error('Failed to fetch build')
       }
-      const data = await response.json()
+
+      const data = await buildRes.json()
       setBuild(data)
+
+      // Fetch tuning settings metadata for display formatting
+      if (settingsRes.ok) {
+        const settingsData = await settingsRes.json()
+        const metadataMap: Record<string, TuningSettingMetadata> = {}
+        settingsData.settings?.forEach((setting: TuningSettingMetadata) => {
+          metadataMap[setting.id] = setting
+        })
+        setTuningSettingsMetadata(metadataMap)
+      }
     } catch (error) {
       console.error('Error fetching build:', error)
       setErrorMessage('Failed to load build')
@@ -201,14 +228,50 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
   // Group settings by section - memoized to avoid re-grouping on every render
   const groupedSettings = useMemo(() => {
-    return build?.settings.reduce((acc, setting) => {
-      if (!acc[setting.section]) {
-        acc[setting.section] = []
+    if (!build?.settings) return {}
+
+    const grouped: Record<string, BuildSetting[]> = {}
+
+    // First, group by section
+    build.settings.forEach((setting) => {
+      if (!grouped[setting.section]) {
+        grouped[setting.section] = []
       }
-      acc[setting.section].push(setting)
-      return acc
-    }, {} as Record<string, BuildSetting[]>) || {}
-  }, [build?.settings])
+      grouped[setting.section].push(setting)
+    })
+
+    // Sort settings within each section
+    Object.keys(grouped).forEach((section) => {
+      if (section === 'Transmission') {
+        // For Transmission: sort gears by displayOrder, put Final Drive at bottom
+        grouped[section].sort((a, b) => {
+          const aSetting = a.settingId ? tuningSettingsMetadata[a.settingId] : undefined
+          const bSetting = b.settingId ? tuningSettingsMetadata[b.settingId] : undefined
+
+          const aName = aSetting?.name || ''
+          const bName = bSetting?.name || ''
+
+          // Final Drive always goes last
+          if (aName === 'Final Drive') return 1
+          if (bName === 'Final Drive') return -1
+
+          // Sort by displayOrder
+          const aOrder = aSetting?.displayOrder || 999
+          const bOrder = bSetting?.displayOrder || 999
+          return aOrder - bOrder
+        })
+      } else {
+        // For other sections, sort by setting name alphabetically
+        grouped[section].sort((a, b) => {
+          const aName = typeof a.setting === 'string' ? a.setting : a.setting.name
+          const bName = typeof b.setting === 'string' ? b.setting : b.setting.name
+          return aName.localeCompare(bName)
+        })
+      }
+    })
+
+    return grouped
+  }, [build?.settings, tuningSettingsMetadata])
 
   const formatCategoryName = (category: string) => {
     return category
@@ -224,6 +287,51 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       .split('-')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ')
+  }
+
+  const formatSettingValue = (setting: BuildSetting, metadata: TuningSettingMetadata | undefined) => {
+    const value = setting.value
+    const inputType = metadata?.inputType || 'text'
+    const unit = metadata?.unit
+    const customOrange = '#FF7115' // R255 G113 B21
+
+    // Handle dual inputs (front:rear format)
+    if (inputType === 'dual' && value.includes(':')) {
+      const [front, rear] = value.split(':')
+      return (
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-sm font-semibold" style={{ color: customOrange }}>Front: <span className="font-mono text-base">{front}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+          <span className="text-sm font-semibold" style={{ color: customOrange }}>Rear: <span className="font-mono text-base">{rear}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+        </div>
+      )
+    }
+
+    // Handle ratio inputs (front:rear format)
+    if (inputType === 'ratio' && value.includes(':')) {
+      const [front, rear] = value.split(':')
+      return (
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-sm font-semibold" style={{ color: customOrange }}>Front: <span className="font-mono text-base">{front}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+          <span className="text-sm font-semibold" style={{ color: customOrange }}>Rear: <span className="font-mono text-base">{rear}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+        </div>
+      )
+    }
+
+    // Regular value with orange badge
+    return (
+      <Badge
+        variant="secondary"
+        className="text-base font-mono px-3 py-1"
+        style={{
+          backgroundColor: customOrange,
+          color: 'white',
+          border: 'none'
+        }}
+      >
+        {value}
+        {unit && <span className="ml-1 text-sm opacity-90">{unit}</span>}
+      </Badge>
+    )
   }
 
   if (loading) {
@@ -411,11 +519,15 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                       key={upgrade.id}
                       className="flex items-center justify-between px-3 py-2 border border-border rounded text-sm"
                     >
-                      <span className="truncate">
+                      <span className="truncate flex-1">
                         {typeof upgrade.part === 'string' ? upgrade.part : upgrade.part.name}
                       </span>
                       {upgrade.value && (
-                        <Badge variant="outline" className="text-xs shrink-0 ml-2">
+                        <Badge
+                          variant="secondary"
+                          className="text-xs font-mono shrink-0 ml-2"
+                          style={{ backgroundColor: '#FF7115', color: 'white', border: 'none' }}
+                        >
                           {upgrade.value}
                         </Badge>
                       )}
@@ -447,17 +559,18 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                   {formatCategoryName(category)}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {settings.map((setting) => (
-                    <div
-                      key={setting.id}
-                      className="flex items-center justify-between px-3 py-2 border border-border rounded text-sm"
-                    >
-                      <span className="truncate">{formatSettingName(setting.setting)}</span>
-                      <Badge variant="secondary" className="text-xs font-mono shrink-0 ml-2">
-                        {setting.value}
-                      </Badge>
-                    </div>
-                  ))}
+                  {settings.map((settingItem) => {
+                    const metadata = settingItem.settingId ? tuningSettingsMetadata[settingItem.settingId] : undefined
+                    return (
+                      <div
+                        key={settingItem.id}
+                        className="flex items-center justify-between px-3 py-2 border border-border rounded text-sm"
+                      >
+                        <span className="truncate flex-1">{formatSettingName(settingItem.setting)}</span>
+                        {formatSettingValue(settingItem, metadata)}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             ))}
