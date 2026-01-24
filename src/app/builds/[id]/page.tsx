@@ -267,8 +267,8 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       const gearSettings: BuildSetting[] = []
       // Add gears 1-20 (only if they have values)
       for (let i = 1; i <= 20; i++) {
-        const gearKey = `gear${i}` as keyof Build
-        const gearValue = build[gearKey]
+        const gearKey = `gear${i}` as const
+        const gearValue = (build as unknown as Record<string, string | null>)[gearKey]
         if (gearValue !== null && gearValue !== undefined) {
           const ordinal = i === 1 ? '1st' : i === 2 ? '2nd' : i === 3 ? '3rd' :
                          i === 4 ? '4th' : i === 5 ? '5th' : i === 6 ? '6th' :

@@ -64,6 +64,18 @@ export default function NewBuildPage() {
   const [isPublic, setIsPublic] = useState(false)
   const [selectedUpgrades, setSelectedUpgrades] = useState<Record<string, boolean>>({})
   const [tuningSettings, setTuningSettings] = useState<Record<string, string>>({})
+  // Gear ratios as direct fields
+  const [gears, setGears] = useState<Record<string, string>>({
+    finalDrive: '',
+    gear1: '',
+    gear2: '',
+    gear3: '',
+    gear4: '',
+    gear5: '',
+    gear6: '',
+    // Gears 7-20 can be added dynamically
+  })
+  const [visibleGearCount, setVisibleGearCount] = useState(6) // Start with 6 gears
 
   useEffect(() => {
     fetchCars()
@@ -109,6 +121,30 @@ export default function NewBuildPage() {
     })
   }
 
+  const handleGearChange = (gearKey: string, value: string) => {
+    setGears((prev) => ({
+      ...prev,
+      [gearKey]: value,
+    }))
+  }
+
+  const handleAddGear = () => {
+    if (visibleGearCount < 20) {
+      setVisibleGearCount((prev) => prev + 1)
+    }
+  }
+
+  const handleRemoveGear = (gearNumber: number) => {
+    setGears((prev) => {
+      const updated = { ...prev }
+      delete updated[`gear${gearNumber}`]
+      return updated
+    })
+    if (gearNumber === visibleGearCount) {
+      setVisibleGearCount((prev) => Math.max(6, prev - 1))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -125,8 +161,7 @@ export default function NewBuildPage() {
         .filter(([_, selected]) => selected)
         .map(([partId]) => ({ partId }))
 
-      // Convert tuning settings to array of settingIds
-      // Note: Include all settings, even empty ones (needed for custom gears placeholder)
+      // Convert tuning settings to array of settingIds (standard settings only)
       const settings = Object.entries(tuningSettings)
         .map(([settingId, value]) => ({ settingId, value }))
 
@@ -140,6 +175,8 @@ export default function NewBuildPage() {
           isPublic,
           upgrades,
           settings,
+          // Include gears as direct fields
+          ...gears,
         }),
       })
 
@@ -282,6 +319,11 @@ export default function NewBuildPage() {
             tuningSettings={tuningSettings}
             onSettingChange={handleTuningSetting}
             onSettingDelete={handleTuningSettingDelete}
+            gears={gears}
+            onGearChange={handleGearChange}
+            onAddGear={handleAddGear}
+            onRemoveGear={handleRemoveGear}
+            visibleGearCount={visibleGearCount}
           />
         </TabsContent>
       </Tabs>

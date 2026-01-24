@@ -173,9 +173,10 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
       }
       // Load gears 1-20
       for (let i = 1; i <= 20; i++) {
-        const gearKey = `gear${i}` as keyof Build
-        if (data[gearKey] !== null && data[gearKey] !== undefined) {
-          gearsData[`gear${i}`] = data[gearKey]!
+        const gearKey = `gear${i}` as const
+        const gearValue = (data as unknown as Record<string, string | null>)[gearKey]
+        if (gearValue !== null && gearValue !== undefined) {
+          gearsData[gearKey] = gearValue
           // Track how many gears we have to show the right amount
           if (i > visibleGearCount) {
             setVisibleGearCount(i)
