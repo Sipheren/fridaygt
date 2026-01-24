@@ -255,6 +255,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-24 | #20 | Build detail page improvements - front/rear labels, units, gear ordering, orange values, responsive layout |
 | 2026-01-24 | #19 | Tuning input validation fix - allow decimals, negatives, text |
 | 2026-01-24 | #18 | Zod validation, error handling, Suspense/error boundaries, rate limiting |
 | 2026-01-24 | #17 | UI consistency standardization with reusable layout components |
