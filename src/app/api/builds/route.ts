@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { carId, name, description, isPublic, upgrades, settings } = validationResult.data
+    const { carId, name, description, isPublic, upgrades, settings, ...gearFields } = validationResult.data
 
     // Verify car exists
     const { data: car, error: carError } = await supabase
@@ -132,9 +132,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create the build
+    // Create the build with gear fields
     const buildId = nanoid()
     const now = new Date().toISOString()
+
+    // Prepare gear fields (empty string becomes null)
+    const gearData: Record<string, string | null> = {}
+    for (const [key, value] of Object.entries(gearFields)) {
+      if (key.startsWith('gear') || key === 'finalDrive') {
+        gearData[key] = value === '' ? null : value
+      }
+    }
+
     const { data: build, error: buildError } = await supabase
       .from('CarBuild')
       .insert({
@@ -146,6 +155,7 @@ export async function POST(request: NextRequest) {
         isPublic: isPublic || false,
         createdAt: now,
         updatedAt: now,
+        ...gearData,
       })
       .select()
       .single()
