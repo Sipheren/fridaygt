@@ -517,7 +517,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                   {upgrades.map((upgrade) => (
                     <div
                       key={upgrade.id}
-                      className="flex items-center justify-between px-3 py-2 border border-border rounded text-sm"
+                      className="flex items-center justify-between px-3 py-2.5 border border-border rounded text-sm min-h-[48px]"
                     >
                       <span className="truncate flex-1">
                         {typeof upgrade.part === 'string' ? upgrade.part : upgrade.part.name}
@@ -558,13 +558,18 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                 <h3 className="font-semibold text-sm text-primary mb-2">
                   {formatCategoryName(category)}
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* Transmission: single column with max-width on desktop, full width on mobile */}
+                {/* Other sections: 2 column grid on desktop, 1 column on mobile */}
+                <div className={category === 'Transmission'
+                  ? 'max-w-md space-y-2'
+                  : 'grid grid-cols-1 sm:grid-cols-2 gap-2'
+                }>
                   {settings.map((settingItem) => {
                     const metadata = settingItem.settingId ? tuningSettingsMetadata[settingItem.settingId] : undefined
                     return (
                       <div
                         key={settingItem.id}
-                        className="flex items-center justify-between px-3 py-2 border border-border rounded text-sm"
+                        className="flex items-center justify-between px-3 py-2.5 border border-border rounded text-sm min-h-[48px]"
                       >
                         <span className="truncate flex-1">{formatSettingName(settingItem.setting)}</span>
                         {formatSettingValue(settingItem, metadata)}
