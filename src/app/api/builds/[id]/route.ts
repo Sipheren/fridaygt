@@ -31,17 +31,19 @@ export async function GET(
         upgrades:CarBuildUpgrade(
           *,
           part:Part(*)
-        ),
-        settings:CarBuildSetting(
-          *,
-          setting:TuningSetting(*)
         )
       `)
       .eq('id', id)
       .single()
 
-    if (error) {
-      console.error('Supabase error fetching build:', error)
+    // Fetch settings separately to avoid JOIN issues with NULL settingId
+    const { data: settings, error: settingsError } = await supabase
+      .from('CarBuildSetting')
+      .select('id, buildId, settingId, category, setting, value')
+      .eq('buildId', id)
+
+    if (error || settingsError) {
+      console.error('Supabase error fetching build:', error || settingsError)
       return NextResponse.json(
         { error: 'Build not found' },
         { status: 404 }
@@ -95,18 +97,11 @@ export async function GET(
       uniqueTracks: new Set(lapTimes?.map(lt => lt.trackId)).size,
     }
 
+    console.log('[GET] Build settings from DB:', settings?.length || 0, 'settings')
+    console.log('[GET] Settings data:', JSON.stringify(settings, null, 2))
+
     // Transform settings to use 'section' instead of 'category' for frontend compatibility
-    // For custom gears (settingId is null), convert to "custom:" format
-    const transformedSettings = build.settings?.map((setting: any) => {
-      // Custom gears have settingId=null and should use "custom:" prefix
-      if (setting.settingId === null) {
-        return {
-          ...setting,
-          settingId: `custom:${setting.setting}`,
-          section: setting.category,
-        }
-      }
-      // Standard settings
+    const transformedSettings = settings?.map((setting: any) => {
       return {
         ...setting,
         section: setting.setting?.section?.name || setting.category,
@@ -187,7 +182,7 @@ export async function PATCH(
       return NextResponse.json({ error: validationResult.error }, { status: 400 })
     }
 
-    const { name, description, isPublic, upgrades, settings } = validationResult.data
+    const { name, description, isPublic, upgrades, settings, ...gearFields } = validationResult.data
 
     // Update the build
     const updateData: Partial<{
@@ -195,6 +190,27 @@ export async function PATCH(
       description: string | null
       isPublic: boolean
       updatedAt: string
+      finalDrive: string | null
+      gear1: string | null
+      gear2: string | null
+      gear3: string | null
+      gear4: string | null
+      gear5: string | null
+      gear6: string | null
+      gear7: string | null
+      gear8: string | null
+      gear9: string | null
+      gear10: string | null
+      gear11: string | null
+      gear12: string | null
+      gear13: string | null
+      gear14: string | null
+      gear15: string | null
+      gear16: string | null
+      gear17: string | null
+      gear18: string | null
+      gear19: string | null
+      gear20: string | null
     }> = {
       updatedAt: new Date().toISOString(),
     }
@@ -202,6 +218,14 @@ export async function PATCH(
     if (name !== undefined) updateData.name = name
     if (description !== undefined) updateData.description = description
     if (isPublic !== undefined) updateData.isPublic = isPublic
+
+    // Add gear fields if provided (stored as text to preserve formatting)
+    for (const [key, value] of Object.entries(gearFields)) {
+      if (key.startsWith('gear') || key === 'finalDrive') {
+        // Store as string, empty string becomes null
+        updateData[key as keyof typeof updateData] = value === '' ? null : value
+      }
+    }
 
     const { error: updateError } = await supabase
       .from('CarBuild')
@@ -297,19 +321,11 @@ export async function PATCH(
       }
     }
 
-    // Update settings if provided
+    // Update settings if provided (standard settings only, gears are now direct fields)
     if (settings !== undefined && Array.isArray(settings)) {
-      // Separate standard settings from custom gears
-      const standardSettings = settings.filter((s): s is { settingId?: string } =>
-        !!s.settingId && !s.settingId.startsWith('custom:')
-      )
-      const customGears = settings.filter((s): s is { settingId?: string } =>
-        !!s.settingId && s.settingId.startsWith('custom:')
-      )
-
-      // Validate standard settingIds and lookup section/setting names
-      if (standardSettings.length > 0) {
-        const settingIds = standardSettings.map(s => s.settingId).filter(Boolean)
+      // Validate settingIds and lookup section/setting names
+      if (settings.length > 0) {
+        const settingIds = settings.map(s => s.settingId).filter(Boolean) as string[]
 
         if (settingIds.length > 0) {
           const { data: tuningSettings } = await supabase
@@ -334,8 +350,8 @@ export async function PATCH(
 
       // Insert new settings with validation
       if (settings.length > 0) {
-        // Fetch standard setting details to populate legacy columns
-        const settingIds = standardSettings
+        // Fetch setting details to populate legacy columns
+        const settingIds = settings
           .map((s) => s.settingId)
           .filter((id): id is string => id !== undefined && id !== null)
 
@@ -368,7 +384,7 @@ export async function PATCH(
         const settingMap = new Map(settingDetails.map(s => [s.id, s]))
 
         // Handle standard settings
-        const settingRecords = standardSettings
+        const settingRecords = settings
           .map((setting: any) => {
             const tuningSetting = settingMap.get(setting.settingId!)
             return {
@@ -381,26 +397,10 @@ export async function PATCH(
             }
           })
 
-        // Handle custom gears (store with settingId=null and custom name in 'setting' field)
-        // Save all custom gears, even with empty values, to preserve user's added gears
-        const customGearRecords = customGears.map((gear: any) => {
-          const gearName = gear.settingId.replace('custom:', '')
-          return {
-            id: nanoid(),
-            buildId: id,
-            settingId: null,
-            category: 'Transmission',
-            setting: gearName,
-            value: gear.value,
-          }
-        })
-
-        const allRecords = [...settingRecords, ...customGearRecords]
-
-        if (allRecords.length > 0) {
+        if (settingRecords.length > 0) {
           await supabase
             .from('CarBuildSetting')
-            .insert(allRecords)
+            .insert(settingRecords)
         }
       }
     }
@@ -415,16 +415,34 @@ export async function PATCH(
         upgrades:CarBuildUpgrade(
           *,
           part:Part(*)
-        ),
-        settings:CarBuildSetting(
-          *,
-          setting:TuningSetting(*)
         )
       `)
       .eq('id', id)
       .single()
 
-    return NextResponse.json(updatedBuild)
+    // Fetch settings separately to avoid JOIN issues with NULL settingId
+    const { data: updatedSettings } = await supabase
+      .from('CarBuildSetting')
+      .select('id, buildId, settingId, category, setting, value')
+      .eq('buildId', id)
+
+    console.log('[PATCH] Updated build settings:', updatedSettings?.length || 0, 'settings')
+    console.log('[PATCH] Settings data:', JSON.stringify(updatedSettings, null, 2))
+
+    // Transform settings to use 'section' instead of 'category' for frontend compatibility
+    const transformedSettings = updatedSettings?.map((setting: any) => {
+      return {
+        ...setting,
+        section: setting.setting?.section?.name || setting.category,
+      }
+    }) || []
+
+    console.log('[PATCH] Transformed settings:', transformedSettings.length)
+
+    return NextResponse.json({
+      ...updatedBuild,
+      settings: transformedSettings,
+    })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json(

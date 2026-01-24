@@ -108,6 +108,28 @@ interface Build {
   }
   upgrades: BuildUpgrade[]
   settings: BuildSetting[]
+  // Gear ratios as direct fields (text to preserve formatting)
+  finalDrive: string | null
+  gear1: string | null
+  gear2: string | null
+  gear3: string | null
+  gear4: string | null
+  gear5: string | null
+  gear6: string | null
+  gear7: string | null
+  gear8: string | null
+  gear9: string | null
+  gear10: string | null
+  gear11: string | null
+  gear12: string | null
+  gear13: string | null
+  gear14: string | null
+  gear15: string | null
+  gear16: string | null
+  gear17: string | null
+  gear18: string | null
+  gear19: string | null
+  gear20: string | null
   statistics?: {
     totalLaps: number
     fastestTime: number | null
@@ -240,26 +262,56 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       grouped[setting.section].push(setting)
     })
 
+    // Add gears from direct fields to Transmission section
+    if (build) {
+      const gearSettings: BuildSetting[] = []
+      // Add gears 1-20 (only if they have values)
+      for (let i = 1; i <= 20; i++) {
+        const gearKey = `gear${i}` as keyof Build
+        const gearValue = build[gearKey]
+        if (gearValue !== null && gearValue !== undefined) {
+          const ordinal = i === 1 ? '1st' : i === 2 ? '2nd' : i === 3 ? '3rd' :
+                         i === 4 ? '4th' : i === 5 ? '5th' : i === 6 ? '6th' :
+                         i === 7 ? '7th' : i === 8 ? '8th' : i === 9 ? '9th' :
+                         i === 10 ? '10th' : i === 11 ? '11th' : i === 12 ? '12th' :
+                         i === 13 ? '13th' : i === 14 ? '14th' : i === 15 ? '15th' :
+                         i === 16 ? '16th' : i === 17 ? '17th' : i === 18 ? '18th' :
+                         i === 19 ? '19th' : '20th'
+          gearSettings.push({
+            id: `gear-${i}`,
+            section: 'Transmission',
+            setting: `${ordinal} Gear`,
+            value: gearValue,
+          })
+        }
+      }
+      // Add final drive if it has a value
+      if (build.finalDrive !== null && build.finalDrive !== undefined) {
+        gearSettings.push({
+          id: 'final-drive',
+          section: 'Transmission',
+          setting: 'Final Drive',
+          value: build.finalDrive,
+        })
+      }
+
+      // Sort gears in order, final drive at the end
+      gearSettings.sort((a, b) => {
+        const aIsFinal = a.setting === 'Final Drive' || (typeof a.setting === 'string' && a.setting.includes('Final'))
+        const bIsFinal = b.setting === 'Final Drive' || (typeof b.setting === 'string' && b.setting.includes('Final'))
+        if (aIsFinal) return 1
+        if (bIsFinal) return -1
+        return 0
+      })
+
+      grouped['Transmission'] = [...gearSettings, ...(grouped['Transmission'] || [])]
+    }
+
     // Sort settings within each section
     Object.keys(grouped).forEach((section) => {
       if (section === 'Transmission') {
-        // For Transmission: sort gears by displayOrder, put Final Drive at bottom
-        grouped[section].sort((a, b) => {
-          const aSetting = a.settingId ? tuningSettingsMetadata[a.settingId] : undefined
-          const bSetting = b.settingId ? tuningSettingsMetadata[b.settingId] : undefined
-
-          const aName = aSetting?.name || ''
-          const bName = bSetting?.name || ''
-
-          // Final Drive always goes last
-          if (aName === 'Final Drive') return 1
-          if (bName === 'Final Drive') return -1
-
-          // Sort by displayOrder
-          const aOrder = aSetting?.displayOrder || 999
-          const bOrder = bSetting?.displayOrder || 999
-          return aOrder - bOrder
-        })
+        // Already sorted above (gears first, then other settings)
+        // No additional sorting needed
       } else {
         // For other sections, sort by setting name alphabetically
         grouped[section].sort((a, b) => {
@@ -271,7 +323,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     })
 
     return grouped
-  }, [build?.settings, tuningSettingsMetadata])
+  }, [build?.settings, build])
 
   const formatCategoryName = (category: string) => {
     return category

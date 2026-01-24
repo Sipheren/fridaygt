@@ -114,6 +114,28 @@ export interface DbCarBuild {
   isPublic: boolean
   createdAt: string
   updatedAt: string
+  // Gear ratios as text (to preserve leading/trailing zeros)
+  finalDrive: string | null
+  gear1: string | null
+  gear2: string | null
+  gear3: string | null
+  gear4: string | null
+  gear5: string | null
+  gear6: string | null
+  gear7: string | null
+  gear8: string | null
+  gear9: string | null
+  gear10: string | null
+  gear11: string | null
+  gear12: string | null
+  gear13: string | null
+  gear14: string | null
+  gear15: string | null
+  gear16: string | null
+  gear17: string | null
+  gear18: string | null
+  gear19: string | null
+  gear20: string | null
 }
 
 export interface DbCarBuildUpgrade {

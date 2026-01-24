@@ -70,6 +70,28 @@ interface Build {
   }
   upgrades: BuildUpgrade[]
   settings: BuildSetting[]
+  // Gear ratios as direct fields (text to preserve formatting)
+  finalDrive: string | null
+  gear1: string | null
+  gear2: string | null
+  gear3: string | null
+  gear4: string | null
+  gear5: string | null
+  gear6: string | null
+  gear7: string | null
+  gear8: string | null
+  gear9: string | null
+  gear10: string | null
+  gear11: string | null
+  gear12: string | null
+  gear13: string | null
+  gear14: string | null
+  gear15: string | null
+  gear16: string | null
+  gear17: string | null
+  gear18: string | null
+  gear19: string | null
+  gear20: string | null
 }
 
 export default function EditBuildPage({ params }: { params: Promise<{ id: string }> }) {
@@ -88,6 +110,18 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
   const [carName, setCarName] = useState('')
   const [selectedUpgrades, setSelectedUpgrades] = useState<Record<string, boolean>>({})
   const [tuningSettings, setTuningSettings] = useState<Record<string, string>>({})
+  // Gear ratios as direct fields
+  const [gears, setGears] = useState<Record<string, string>>({
+    finalDrive: '',
+    gear1: '',
+    gear2: '',
+    gear3: '',
+    gear4: '',
+    gear5: '',
+    gear6: '',
+    // Gears 7-20 can be added dynamically
+  })
+  const [visibleGearCount, setVisibleGearCount] = useState(6) // Start with 6 gears
 
   useEffect(() => {
     params.then((p) => {
@@ -120,15 +154,35 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
       })
       setSelectedUpgrades(upgradesMap)
 
-      // Convert settings to input state
+      // Convert settings to input state (standard settings only, gears are direct fields)
       const settingsMap: Record<string, string> = {}
       data.settings.forEach((setting) => {
-        // Use settingId if available, otherwise skip (for legacy data)
         if (setting.settingId) {
+          // Standard setting: use settingId as key
           settingsMap[setting.settingId] = setting.value
         }
+        // Skip legacy settings without settingId (old data)
       })
       setTuningSettings(settingsMap)
+
+      // Load gears from direct fields (already strings now)
+      const gearsData: Record<string, string> = {}
+      // Load final drive
+      if (data.finalDrive !== null && data.finalDrive !== undefined) {
+        gearsData.finalDrive = data.finalDrive
+      }
+      // Load gears 1-20
+      for (let i = 1; i <= 20; i++) {
+        const gearKey = `gear${i}` as keyof Build
+        if (data[gearKey] !== null && data[gearKey] !== undefined) {
+          gearsData[`gear${i}`] = data[gearKey]!
+          // Track how many gears we have to show the right amount
+          if (i > visibleGearCount) {
+            setVisibleGearCount(i)
+          }
+        }
+      }
+      setGears(gearsData)
     } catch (error) {
       console.error('Error fetching build:', error)
       setErrorMessage('Failed to load build')
@@ -161,6 +215,30 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     })
   }
 
+  const handleGearChange = (gearKey: string, value: string) => {
+    setGears((prev) => ({
+      ...prev,
+      [gearKey]: value,
+    }))
+  }
+
+  const handleAddGear = () => {
+    if (visibleGearCount < 20) {
+      setVisibleGearCount((prev) => prev + 1)
+    }
+  }
+
+  const handleRemoveGear = (gearNumber: number) => {
+    setGears((prev) => {
+      const updated = { ...prev }
+      delete updated[`gear${gearNumber}`]
+      return updated
+    })
+    if (gearNumber === visibleGearCount) {
+      setVisibleGearCount((prev) => Math.max(6, prev - 1))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -177,8 +255,7 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
         .filter(([_, selected]) => selected)
         .map(([partId]) => ({ partId }))
 
-      // Convert tuning settings to array of settingIds
-      // Note: Include all settings, even empty ones (needed for custom gears placeholder)
+      // Convert tuning settings to array of settingIds (standard settings only)
       const settings = Object.entries(tuningSettings)
         .map(([settingId, value]) => ({ settingId, value }))
 
@@ -191,6 +268,8 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
           isPublic,
           upgrades,
           settings,
+          // Include gears as direct fields
+          ...gears,
         }),
       })
 
@@ -323,6 +402,11 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
             tuningSettings={tuningSettings}
             onSettingChange={handleTuningSetting}
             onSettingDelete={handleTuningSettingDelete}
+            gears={gears}
+            onGearChange={handleGearChange}
+            onAddGear={handleAddGear}
+            onRemoveGear={handleRemoveGear}
+            visibleGearCount={visibleGearCount}
           />
         </TabsContent>
       </Tabs>

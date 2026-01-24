@@ -45,6 +45,28 @@ export const UpdateBuildSchema = z.object({
     setting: z.string().optional(),
     value: z.string().optional(),
   })).optional(),
+  // Gear ratios as direct build fields
+  finalDrive: z.string().optional(),
+  gear1: z.string().optional(),
+  gear2: z.string().optional(),
+  gear3: z.string().optional(),
+  gear4: z.string().optional(),
+  gear5: z.string().optional(),
+  gear6: z.string().optional(),
+  gear7: z.string().optional(),
+  gear8: z.string().optional(),
+  gear9: z.string().optional(),
+  gear10: z.string().optional(),
+  gear11: z.string().optional(),
+  gear12: z.string().optional(),
+  gear13: z.string().optional(),
+  gear14: z.string().optional(),
+  gear15: z.string().optional(),
+  gear16: z.string().optional(),
+  gear17: z.string().optional(),
+  gear18: z.string().optional(),
+  gear19: z.string().optional(),
+  gear20: z.string().optional(),
 }).strict()
 
 // ============================================
