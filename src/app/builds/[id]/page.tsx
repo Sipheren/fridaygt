@@ -517,14 +517,14 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                   {upgrades.map((upgrade) => (
                     <div
                       key={upgrade.id}
-                      className="flex items-center justify-between px-3 py-2.5 border border-border rounded text-sm min-h-[48px]"
+                      className="flex items-center justify-between px-3 py-2.5 border border-border rounded text-sm min-h-[60px]"
                     >
                       <span className="truncate flex-1">
                         {typeof upgrade.part === 'string' ? upgrade.part : upgrade.part.name}
                       </span>
                       <Badge
                         variant="secondary"
-                        className="text-sm font-mono shrink-0 ml-2 px-3 py-1"
+                        className="text-base font-mono shrink-0 ml-2 px-3 py-1"
                         style={{ backgroundColor: '#FF7115', color: 'white', border: 'none' }}
                       >
                         {upgrade.value || 'Installed'}
@@ -556,13 +556,18 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                 <h3 className="font-semibold text-sm text-primary mb-2">
                   {formatCategoryName(category)}
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* Transmission: single narrow column on desktop, full width on mobile */}
+                {/* Other sections: 2 column grid */}
+                <div className={category === 'Transmission'
+                  ? 'sm:max-w-sm space-y-2'
+                  : 'grid grid-cols-1 sm:grid-cols-2 gap-2'
+                }>
                   {settings.map((settingItem) => {
                     const metadata = settingItem.settingId ? tuningSettingsMetadata[settingItem.settingId] : undefined
                     return (
                       <div
                         key={settingItem.id}
-                        className="flex items-center justify-between px-3 py-2.5 border border-border rounded text-sm min-h-[48px]"
+                        className="flex items-center justify-between px-3 py-2.5 border border-border rounded text-sm min-h-[60px]"
                       >
                         <span className="truncate flex-1">{formatSettingName(settingItem.setting)}</span>
                         {formatSettingValue(settingItem, metadata)}
