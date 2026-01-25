@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -129,7 +129,6 @@ interface Statistics {
 
 export default function RaceDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const [race, setRace] = useState<Race | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [userStats, setUserStats] = useState<UserStats | null>(null)
@@ -173,7 +172,9 @@ export default function RaceDetailPage() {
       <PageWrapper>
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Race not found</h1>
-          <Button onClick={() => router.back()} className="min-h-[44px]">Go Back</Button>
+          <Link href="/races">
+            <Button className="min-h-[44px]">Go Back</Button>
+          </Link>
         </div>
       </PageWrapper>
     )
@@ -183,14 +184,15 @@ export default function RaceDetailPage() {
     <PageWrapper>
       {/* Header */}
       <div>
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="mb-4 h-11 px-4 sm:h-9"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
+        <Link href="/races" className="inline-block mb-4">
+          <Button
+            variant="ghost"
+            className="h-11 px-4 sm:h-9"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </Link>
 
         <div className="space-y-4">
           {/* Race Name */}

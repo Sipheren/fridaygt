@@ -118,22 +118,22 @@ export const UpdateBuildSchema = z.object({
 // ============================================
 
 export const CreateRaceSchema = z.object({
-  name: z.string().min(1, 'Race name is required').max(100, 'Race name must be less than 100 characters').transform(val => val.trim()).optional().nullable(),
-  description: z.string().max(500, 'Description must be less than 500 characters').transform(val => val.trim()).optional().nullable(),
+  name: z.string().min(1, 'Race name is required').max(100, 'Race name must be less than 100 characters').transform(val => val?.trim?.() || val).optional().nullable(),
+  description: z.string().max(500, 'Description must be less than 500 characters').transform(val => val?.trim?.() || val).optional().nullable(),
   trackId: z.string().uuid('Invalid track ID'),
-  buildIds: z.array(z.string().uuid('Invalid build ID')).min(1, 'At least one build is required'),
+  buildIds: z.array(z.string().min(1, 'Invalid build ID')).min(1, 'At least one build is required'),
   laps: z.number().int().positive('Laps must be a positive integer').optional(),
   weather: z.enum(['dry', 'wet']).optional(),
   isActive: z.boolean().optional(),
 })
 
 export const UpdateRaceSchema = z.object({
-  name: z.string().min(1).max(100).transform(val => val.trim()).optional().nullable(),
-  description: z.string().max(500).transform(val => val.trim()).optional().nullable(),
+  name: z.string().min(1).max(100).transform(val => val?.trim?.() || val).optional().nullable(),
+  description: z.string().max(500).transform(val => val?.trim?.() || val).optional().nullable(),
   laps: z.number().int().positive().optional(),
   weather: z.enum(['dry', 'wet']).optional(),
   isActive: z.boolean().optional(),
-  buildIds: z.array(z.string().uuid()).min(1).optional(),
+  buildIds: z.array(z.string().min(1)).min(1).optional(),
 }).strict()
 
 // ============================================
@@ -143,7 +143,7 @@ export const UpdateRaceSchema = z.object({
 export const CreateLapTimeSchema = z.object({
   carId: z.string().uuid('Invalid car ID'),
   trackId: z.string().uuid('Invalid track ID'),
-  buildId: z.string().uuid('Invalid build ID').optional().nullable(),
+  buildId: z.string().min(1, 'Invalid build ID').optional().nullable(),
   timeMs: z.number()
     .int('Time must be an integer')
     .positive('Time must be a positive number')
