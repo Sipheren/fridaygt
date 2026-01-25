@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { SearchableComboBox } from '@/components/ui/searchable-combobox'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { BuildSelector } from '@/components/builds/BuildSelector'
@@ -20,16 +21,8 @@ import { QuickBuildModal } from '@/components/builds/QuickBuildModal'
 import { ArrowLeft, ArrowRight, Check, Loader2, MapPin, Settings } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 import Link from 'next/link'
-
-interface Track {
-  id: string
-  name: string
-  slug: string
-  location: string | null
-  category: string
-  layout: string | null
-  length: number | null
-}
+import { formatTrackOptions } from '@/lib/dropdown-helpers'
+import type { DbTrack } from '@/types/database'
 
 interface Build {
   id: string
@@ -50,7 +43,7 @@ export default function NewRacePage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [loading, setLoading] = useState(false)
-  const [tracks, setTracks] = useState<Track[]>([])
+  const [tracks, setTracks] = useState<DbTrack[]>([])
   const [tracksLoading, setTracksLoading] = useState(false)
   const [builds, setBuilds] = useState<Build[]>([])
   const [buildsLoading, setBuildsLoading] = useState(false)
@@ -100,15 +93,8 @@ export default function NewRacePage() {
     fetchData()
   }, [])
 
-  // Group tracks by category
-  const tracksByCategory = tracks.reduce((acc, track) => {
-    const category = track.category || 'Other'
-    if (!acc[category]) {
-      acc[category] = []
-    }
-    acc[category].push(track)
-    return acc
-  }, {} as Record<string, Track[]>)
+  // Format track options for SearchableComboBox
+  const trackOptions = useMemo(() => formatTrackOptions(tracks), [tracks])
 
   // Handle track selection
   const handleTrackSelect = (trackId: string) => {
@@ -327,40 +313,18 @@ export default function NewRacePage() {
                   <div>
                     <Label htmlFor="track">Track *</Label>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Choose the track for this race
+                      Choose the track for this race (grouped by country)
                     </p>
-                    <Select
+                    <SearchableComboBox
+                      options={trackOptions}
                       value={formData.trackId}
                       onValueChange={handleTrackSelect}
-                    >
-                      <SelectTrigger id="track" className="w-full min-h-[44px]">
-                        <SelectValue placeholder="Select a track" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(tracksByCategory).map(
-                          ([category, categoryTracks]) => (
-                            <div key={category}>
-                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase">
-                                {category}
-                              </div>
-                              {categoryTracks.map((track) => (
-                                <SelectItem key={track.id} value={track.id}>
-                                  <div className="flex items-center gap-2">
-                                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                                    <span>{track.name}</span>
-                                    {track.layout && (
-                                      <span className="text-muted-foreground">
-                                        ({track.layout})
-                                      </span>
-                                    )}
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </div>
-                          )
-                        )}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Select a track"
+                      searchPlaceholder="Search tracks..."
+                      disabled={loading}
+                      isLoading={tracksLoading}
+                      grouped
+                    />
                   </div>
 
                   {/* Selected Track Preview */}

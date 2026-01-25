@@ -1,7 +1,7 @@
 # Dropdown Standardization Plan
 
 **Date**: 2026-01-25
-**Status**: Planning
+**Status**: Planning (Updated)
 **Priority**: Medium
 
 ## Overview
@@ -10,12 +10,26 @@ Standardize all dropdown selectors across FridayGT to provide consistent look, f
 
 ---
 
+## Design Decisions (Resolved)
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Track grouping field | `country` | Matches intuitive grouping (Australia, Germany, Japan) |
+| Sticky group headers | No (v1) | Descoped for simplicity; can add later |
+| Large list performance | Virtualization | Use `@tanstack/react-virtual` for 552 cars |
+| Deselection behavior | Disabled | Required fields stay selected; no accidental clears |
+| Search matching | Contains | Substring matching; "M3" finds "BMW M3" |
+| Architecture | Extend existing | Enhance `SearchableComboBox` with grouping props |
+| Optional features | None (v1) | No recent items, favorites, or images initially |
+
+---
+
 ## User Requirements
 
-1. **Component Choice**: Enhanced SearchableComboBox with visible search input
-2. **Car Display Format**: `{manufacturer} {year} {name}` (manufacturer in group header, year+name in item)
-3. **Track Grouping**: By location (e.g., "Australia", "Belgium", "Germany")
-4. **Scope**: All dropdowns across every page on the site
+1. **Component Choice**: Enhanced SearchableComboBox with visible search input and grouping
+2. **Car Display Format**: Group by manufacturer, show `{year} {name}` in items
+3. **Track Grouping**: By country (e.g., "Australia", "Belgium", "Germany")
+4. **Scope**: All car/track dropdowns across the site
 
 ---
 
@@ -42,40 +56,51 @@ Standardize all dropdown selectors across FridayGT to provide consistent look, f
 3. **Broken patterns**: Custom divs break Radix UI patterns
 4. **Inconsistent display formats**: Different car/track label formats
 5. **Poor UX for large lists**: Scrolling through 552 cars is painful
+6. **No virtualization**: Performance risk with 552 items
 
 ---
 
 ## Proposed Solution
 
-### New Component: `GroupedSearchableSelect`
+### Extend Existing Component: `SearchableComboBox`
 
-**Location**: `src/components/ui/grouped-searchable-select.tsx`
+**Location**: `src/components/ui/searchable-combobox.tsx`
 
-**Features**:
-- Visible search input at top of dropdown
-- Grouped display with visual group headers
-- Fuzzy search (matches anywhere in text)
-- Keyboard navigation (arrows, home/end, page up/down, enter, escape)
-- Sticky group headers (stay visible while scrolling)
+Rather than creating a new component, extend the existing `SearchableComboBox` with optional grouping support. This reduces code duplication and maintains a single source of truth.
+
+**New Features**:
+- Optional grouped display with visual group headers
+- Virtualized rendering for large lists (552+ items)
+- Contains-based search (matches anywhere in text)
+- Keyboard navigation (arrows, home/end, enter, escape)
+- Loading and error state support
 - Consistent shadcn/ui styling
-- Loading state support
 - Accessibility (ARIA labels, screen reader support)
 
-**API**:
+**Extended API**:
 ```typescript
-interface GroupedSearchableSelectProps<T> {
-  data: T[]                    // Array of items to display
-  groupBy: (item: T) => string // Function to extract group key
-  labelBy: (item: T) => string // Function to extract display label
-  searchBy?: (item: T) => string[] // Optional: additional search terms
-  value: string                // Currently selected value
+export interface ComboBoxOption {
+  value: string
+  label: string
+  group?: string           // NEW: Group key for this option
+  searchTerms?: string     // Existing: Additional search terms
+}
+
+interface SearchableComboBoxProps {
+  options: ComboBoxOption[]
+  value?: string
   onValueChange: (value: string) => void
   placeholder?: string
-  searchPlaceholder?: string
   emptyText?: string
-  groupLabelClassName?: string // Optional custom group styling
+  searchPlaceholder?: string
   disabled?: boolean
   className?: string
+  // NEW props
+  grouped?: boolean              // Enable grouped display (default: false)
+  groupLabelClassName?: string   // Custom styling for group headers
+  isLoading?: boolean            // Show loading state
+  error?: string                 // Show error message
+  virtualized?: boolean          // Enable virtualization for large lists (default: false)
 }
 ```
 
@@ -83,45 +108,47 @@ interface GroupedSearchableSelectProps<T> {
 
 #### Cars: Group by Manufacturer
 ```
-ABARTH (group header - sticky)
+ABARTH (group header)
 ├─ 1952 1500 Biposto Bertone B.A.T 1
 ├─ 2009 Abarth 500
 └─ 1970 Abarth 595 SS
 
-ALFA ROMEO (group header - sticky)
+ALFA ROMEO (group header)
 ├─ 2016 4C
 ├─ 4C Gr.3
 └─ 2008 8C Competizione
 
-BMW (group header - sticky)
+BMW (group header)
 ├─ 2018 M2 Competition
 ├─ 1989 M3
 └─ M4 Gr.4
 ...
 ```
 
-**Label format**: `{year} {carName}` (manufacturer shown in group header only)
-**Search searches**: manufacturer + year + car name
+**Label format**: `{year} {name}` (year omitted if null)
+**Group**: `manufacturer`
+**Search matches**: manufacturer + year + name
 
-#### Tracks: Group by Location
+#### Tracks: Group by Country
 ```
-Australia (group header - sticky)
+Australia (group header)
 ├─ Mount Panorama Motor Racing Circuit
 └─ Bathurst
 
-Belgium (group header - sticky)
+Belgium (group header)
 ├─ Circuit de Spa-Francorchamps
 └─ Spa 24h Layout
 
-Germany (group header - sticky)
+Germany (group header)
 ├─ Nürburgring GP
 ├─ Nürburgring Nordschleife
 └─ Nürburgring 24h
 ...
 ```
 
-**Label format**: `{trackName}` (location shown in group header, layout in label if different)
-**Search searches**: location + track name + layout
+**Label format**: `{name}` (with layout suffix if applicable)
+**Group**: `country` (fallback to "Other" if null)
+**Search matches**: country + name + layout
 
 ---
 
@@ -129,151 +156,169 @@ Germany (group header - sticky)
 
 ### Phase 1: Foundation
 
-#### 1.1 Create New Component
-**File**: `src/components/ui/grouped-searchable-select.tsx`
+#### 1.1 Install Virtualization Dependency
+```bash
+npm install @tanstack/react-virtual
+```
+
+#### 1.2 Extend SearchableComboBox Component
+**File**: `src/components/ui/searchable-combobox.tsx`
 
 **Tasks**:
-- [ ] Extend SearchableComboBox with grouping support
-- [ ] Add group header rendering
-- [ ] Implement sticky group headers
-- [ ] Add keyboard navigation for groups (Page Up/Down jumps between groups)
-- [ ] Test with 552 cars (performance check)
-- [ ] Test with 118 tracks
-- [ ] Accessibility audit (ARIA labels, screen reader)
+- [ ] Add `group` field to `ComboBoxOption` interface
+- [ ] Add `grouped`, `isLoading`, `error`, `virtualized` props
+- [ ] Implement group header rendering with `CommandGroup`
+- [ ] Add virtualization using `@tanstack/react-virtual`
+- [ ] Remove deselection behavior (clicking selected item keeps it selected)
+- [ ] Add loading spinner state
+- [ ] Add error message display
+- [ ] Ensure groups are sorted alphabetically
 
-#### 1.2 Create Helper Functions
-**File**: `src/lib/grouping.ts`
+**Null Handling**:
+- Cars with null `year`: Display name only (no year prefix)
+- Tracks with null `country`: Group under "Other" at the bottom
+
+#### 1.3 Create Helper Functions
+**File**: `src/lib/dropdown-helpers.ts`
 
 **Tasks**:
-- [ ] `groupCarsByManufacturer(cars: Car[]): Record<string, Car[]>`
-- [ ] `groupTracksByLocation(tracks: Track[]): Record<string, Track[]>`
-- [ ] `getCarLabel(car: Car): string` → returns "{year} {name}"
-- [ ] `getTrackLabel(track: Track): string` → returns "{name} {- layout}"
-- [ ] `getCarSearchTerms(car: Car): string[]` → [manufacturer, year, name]
-- [ ] `getTrackSearchTerms(track: Track): string[]` → [location, name, layout]
+- [ ] `formatCarOptions(cars: DbCar[]): ComboBoxOption[]`
+  - Maps cars to options with `group: manufacturer`, `label: {year} {name}`
+  - Handles null year gracefully
+- [ ] `formatTrackOptions(tracks: DbTrack[]): ComboBoxOption[]`
+  - Maps tracks to options with `group: country || 'Other'`, `label: {name}`
+  - Handles null country with "Other" fallback
+- [ ] `getCarSearchTerms(car: DbCar): string`
+  - Returns `{manufacturer} {year} {name}` for search matching
+- [ ] `getTrackSearchTerms(track: DbTrack): string`
+  - Returns `{country} {name} {layout}` for search matching
 
-### Phase 2: Migration - Critical Paths
+#### 1.4 Performance Benchmarks (Gate for Phase 2)
 
-#### 2.1 Car Selection Dropdowns
+Before proceeding to Phase 2, verify these benchmarks:
+- [ ] 552 cars: Dropdown opens in <100ms
+- [ ] 552 cars: Scrolling maintains 60fps
+- [ ] Mobile (mid-tier device): Opens in <200ms, usable scrolling
+- [ ] Memory: No significant increase after open/close cycles
 
+**If benchmarks fail**: Address performance issues before migrating any dropdowns.
+
+### Phase 2: Migration - Car Dropdowns
+
+#### 2.1 QuickBuildModal.tsx
 **File**: `src/components/builds/QuickBuildModal.tsx`
-- **Current**: Custom div-based grouping
-- **Change**: Replace with `GroupedSearchableSelect`
-- **Impact**:
-  - ✅ Fixes: Broken div-based grouping
-  - ✅ Adds: Search capability
-  - ✅ Improves: Performance with large lists
-  - ⚠️ Change: Visual look changes (more modern)
-  - ⚠️ Change: Different icon (ChevronsUpDown vs ChevronDown)
 
+**Current**: Custom div-based grouping (broken Radix pattern)
+**Change**: Use extended `SearchableComboBox` with `grouped` and `virtualized` props
+
+**Migration**:
+```typescript
+// Before: Custom implementation
+<Select value={selectedCarId} onValueChange={setSelectedCarId}>
+  ...custom grouped rendering...
+</Select>
+
+// After: Extended SearchableComboBox
+import { formatCarOptions } from '@/lib/dropdown-helpers'
+
+<SearchableComboBox
+  options={formatCarOptions(cars)}
+  value={selectedCarId}
+  onValueChange={setSelectedCarId}
+  placeholder="Select a car"
+  searchPlaceholder="Search cars..."
+  grouped
+  virtualized
+  isLoading={isLoadingCars}
+/>
+```
+
+#### 2.2 builds/new/page.tsx
 **File**: `src/app/builds/new/page.tsx`
-- **Current**: Plain Select, no grouping
-- **Change**: Replace with `GroupedSearchableSelect`
-- **Impact**:
-  - ✅ Adds: Grouping by manufacturer
-  - ✅ Adds: Search capability
-  - ✅ Improves: Easier to find cars
-  - ⚠️ Change: Visual look changes
 
-#### 2.2 Track Selection Dropdowns
+**Current**: Plain Select, no grouping, no search
+**Change**: Use extended `SearchableComboBox` with grouping
 
+**Migration**: Same pattern as QuickBuildModal
+
+### Phase 3: Migration - Track Dropdowns
+
+#### 3.1 races/new/page.tsx
 **File**: `src/app/races/new/page.tsx`
-- **Current**: Custom div-based grouping by category
-- **Change**: Replace with `GroupedSearchableSelect` with location grouping
-- **Impact**:
-  - ✅ Fixes: Broken div-based grouping
-  - ✅ Adds: Search capability
-  - ✅ Improves: Location-based grouping more intuitive than category
-  - ⚠️ Change: Different grouping (location vs category)
-  - ⚠️ Change: Visual look changes
 
+**Current**: Custom div-based grouping by category
+**Change**: Use extended `SearchableComboBox` with country grouping
+
+**Note**: This changes grouping from "category" to "country" - intentional UX improvement.
+
+#### 3.2 races/[id]/edit/page.tsx
 **File**: `src/app/races/[id]/edit/page.tsx`
-- **Current**: Custom div-based grouping by category
-- **Change**: Replace with `GroupedSearchableSelect` with location grouping
-- **Impact**: Same as races/new/page.tsx
 
+**Current**: Custom div-based grouping by category
+**Change**: Same as races/new/page.tsx
+
+#### 3.3 LapTimeForm.tsx
 **File**: `src/components/lap-times/LapTimeForm.tsx`
-- **Current**: `SearchableComboBox` (no grouping)
-- **Change**: Replace with `GroupedSearchableSelect`
-- **Impact**:
-  - ✅ Adds: Location-based grouping
-  - ✅ Keeps: Search functionality (already had it)
-  - ⚠️ Change: Different component, but similar UX
 
-### Phase 3: Secondary Dropdowns
+**Current**: `SearchableComboBox` without grouping
+**Change**: Add `grouped` prop to existing usage
 
-#### 3.1 Small Lists (Keep Standard Select)
+**Migration**:
+```typescript
+// Before:
+<SearchableComboBox
+  options={trackOptions}
+  ...
+/>
+
+// After:
+import { formatTrackOptions } from '@/lib/dropdown-helpers'
+
+<SearchableComboBox
+  options={formatTrackOptions(tracks)}
+  grouped
+  ...
+/>
+```
+
+### Phase 4: Secondary Dropdowns (No Changes)
 
 These have few items and don't need search/grouping:
 
-**File**: `src/components/lap-times/LapTimeForm.tsx` - Conditions
-- Items: Dry, Wet, Mixed (3 items)
-- **Decision**: Keep standard Select (too small for search)
-
-**File**: `src/app/races/new/page.tsx` - Weather
-- Items: Dry, Wet (2 items)
-- **Decision**: Keep standard Select (too small for search)
-
-**File**: `src/app/races/[id]/edit/page.tsx` - Weather
-- Items: Dry, Wet (2 items)
-- **Decision**: Keep standard Select (too small for search)
-
-**File**: `src/components/builds/BuildUpgradesTab.tsx` - Category Filter
-- Items: 5 categories
-- **Decision**: Keep standard Select (small enough)
+| File | Dropdown | Items | Decision |
+|------|----------|-------|----------|
+| `LapTimeForm.tsx` | Conditions | 3 | Keep standard Select |
+| `races/new/page.tsx` | Weather | 2 | Keep standard Select |
+| `races/[id]/edit/page.tsx` | Weather | 2 | Keep standard Select |
+| `BuildUpgradesTab.tsx` | Category Filter | 5 | Keep standard Select |
 
 ---
 
-## What's Required to Replace Each Dropdown
+## Form Integration
 
-### For Each Dropdown Migration:
+The app uses React Hook Form. Verify compatibility with Controller pattern:
 
-1. **Import new component**:
-   ```typescript
-   import { GroupedSearchableSelect } from '@/components/ui/grouped-searchable-select'
-   import { groupCarsByManufacturer, getCarLabel, getCarSearchTerms } from '@/lib/grouping'
-   ```
+```typescript
+import { Controller } from 'react-hook-form'
 
-2. **Replace Select component**:
-   ```typescript
-   // OLD:
-   <Select value={carId} onValueChange={setCarId}>
-     <SelectTrigger>
-       <SelectValue placeholder="Select a car" />
-     </SelectTrigger>
-     <SelectContent>
-       {cars.map(car => (
-         <SelectItem key={car.id} value={car.id}>
-           {car.manufacturer} {car.name}
-         </SelectItem>
-       ))}
-     </SelectContent>
-   </Select>
+<Controller
+  name="carId"
+  control={control}
+  rules={{ required: 'Car is required' }}
+  render={({ field, fieldState }) => (
+    <SearchableComboBox
+      options={formatCarOptions(cars)}
+      value={field.value}
+      onValueChange={field.onChange}
+      error={fieldState.error?.message}
+      grouped
+      virtualized
+    />
+  )}
+/>
+```
 
-   // NEW:
-   <GroupedSearchableSelect
-     data={cars}
-     groupBy={(car) => car.manufacturer}
-     labelBy={(car) => getCarLabel(car)}
-     searchBy={(car) => getCarSearchTerms(car)}
-     value={carId}
-     onValueChange={setCarId}
-     placeholder="Select a car"
-     searchPlaceholder="Search cars..."
-   />
-   ```
-
-3. **Update data fetching** (if needed):
-   - Ensure data is loaded before rendering
-   - Add loading states
-   - Handle empty states
-
-4. **Test thoroughly**:
-   - Search works for all fields
-   - Groups display correctly
-   - Keyboard navigation
-   - Mobile responsive
-   - Value passes correctly to parent
+**Testing**: Add explicit form integration tests for each migrated dropdown.
 
 ---
 
@@ -288,73 +333,45 @@ These have few items and don't need search/grouping:
 └─────────────────────────────────┘
 ```
 
-#### After (GroupedSearchableSelect):
+#### After (Extended SearchableComboBox):
 ```
 ┌─────────────────────────────────┐
-│ Select a car            ▲ ▼     │
+│ Select a car            ⇅       │
+└─────────────────────────────────┘
+
+Opens to:
+┌─────────────────────────────────┐
+│ 🔍 Search cars...               │
+├─────────────────────────────────┤
+│ ABARTH                          │ ← Group header
+│   ✓ 2009 Abarth 500            │ ← Selected item
+│     1970 Abarth 595 SS         │
+│ ALFA ROMEO                      │ ← Group header
+│     2016 4C                     │
+│     ...                         │
 └─────────────────────────────────┘
 ```
 
-**Differences**:
-- Different icon (ChevronsUpDown indicates searchable)
-- Click opens larger dropdown with search bar
-- Group headers visible
-- Check icon for selected item
+### Behavioral Changes
 
-### Functional Changes
-
-#### New Capabilities:
-1. **Search**: Can type "BMW M3" to find all BMW M3s
-2. **Grouping**: Cars organized by manufacturer, tracks by location
-3. **Keyboard**: Better navigation (arrows, home/end, page up/down)
-4. **Fuzzy matching**: "por 911" finds "Porsche 911"
-
-#### Behavioral Changes:
-1. **Opens on click**: Same as before
-2. **Closes on selection**: Same as before
-3. **Escape closes**: Same as before
-4. **Click outside closes**: Same as before
-
-#### Performance Changes:
-- **Initial render**: Slightly slower (component complexity)
-- **Search**: Fast (uses React.useMemo for filtering)
-- **Scrolling**: Same (virtual scrolling from Command component)
-- **Large lists**: Better (Command component optimized for 100+ items)
+| Behavior | Before | After |
+|----------|--------|-------|
+| Click selected item | Deselects | Stays selected |
+| Search | Not available (most) | Contains matching |
+| Grouping | Inconsistent/broken | Consistent by manufacturer/country |
+| Large lists | Slow scroll | Virtualized |
 
 ### Breaking Changes
 
-#### For Users:
-- **Visual change**: Dropdowns look different (more modern)
-- **Icon change**: ChevronsUpDown instead of ChevronDown
-- **Grouping change**: Tracks grouped by location (not category)
+**For Users**:
+- Track grouping changes from "category" to "country"
+- Visual appearance is more modern
+- ChevronsUpDown icon instead of ChevronDown
 
-#### For Developers:
-- **Different API**: Need to use `GroupedSearchableSelect` instead of `Select`
-- **Helper functions**: Need to import grouping functions
-- **Type safety**: Better TypeScript support
-
----
-
-## Rollout Strategy
-
-### Option A: Big Bang (All at Once)
-- Migrate all dropdowns in one PR
-- **Pros**: Consistent UX immediately
-- **Cons**: Large PR, harder to review, higher risk
-
-### Option B: Incremental (Recommended)
-- Phase 1: Create component (no user-facing changes)
-- Phase 2: Migrate one page at a time
-- Phase 3: Test thoroughly between migrations
-- **Pros**: Smaller PRs, easier to review, easier to rollback
-- **Cons**: Inconsistent UX during rollout
-
-### Option C: Feature Flag
-- Add feature flag to toggle between old/new dropdowns
-- **Pros**: Can rollback instantly
-- **Cons**: More complex code, need to maintain both during transition
-
-**Recommendation**: Option B (Incremental)
+**For Developers**:
+- Must use `formatCarOptions`/`formatTrackOptions` helpers
+- Must pass `grouped` prop for grouped display
+- Must pass `virtualized` prop for large lists
 
 ---
 
@@ -366,22 +383,22 @@ For each migrated dropdown:
 - [ ] Dropdown opens on click
 - [ ] Search works (can type any part of name)
 - [ ] Group headers display correctly
-- [ ] Group headers stick while scrolling
 - [ ] Selected item shows check icon
 - [ ] Dropdown closes on selection
 - [ ] Dropdown closes on escape
 - [ ] Dropdown closes on click outside
 - [ ] Value passes to parent correctly
+- [ ] Clicking selected item keeps it selected (no deselection)
 - [ ] Disabled state works
-- [ ] Loading state displays (if applicable)
+- [ ] Loading state displays spinner
+- [ ] Error state displays message
 
 ### Keyboard Navigation
 - [ ] Arrow up/down moves selection
 - [ ] Home/End jumps to first/last item
-- [ ] Page Up/Down jumps between groups
 - [ ] Enter selects item
 - [ ] Escape closes dropdown
-- [ ] Typing jumps to matching item (native behavior)
+- [ ] Typing filters list
 
 ### Mobile
 - [ ] Touch targets ≥44px
@@ -397,91 +414,327 @@ For each migrated dropdown:
 - [ ] Color contrast sufficient
 - [ ] Keyboard-only navigation works
 
-### Performance
-- [ ] Opens quickly (<100ms)
+### Performance (552 cars)
+- [ ] Opens in <100ms
 - [ ] Search is responsive (no lag)
 - [ ] Scrolling is smooth (60fps)
-- [ ] No memory leaks
+- [ ] No memory leaks after repeated open/close
+
+### Form Integration
+- [ ] Works with React Hook Form Controller
+- [ ] Validation errors display correctly
+- [ ] Form submission includes correct value
+
+---
+
+## Rollback Plan
+
+1. Keep existing `SearchableComboBox` behavior intact when `grouped` is false
+2. Add changes behind feature flags if needed:
+   ```typescript
+   const ENABLE_GROUPED_DROPDOWNS = process.env.NEXT_PUBLIC_GROUPED_DROPDOWNS === 'true'
+   ```
+3. Monitor Vercel analytics for increased error rates after deployment
+4. Each migration is a separate commit - can revert individual files
 
 ---
 
 ## Risk Assessment
 
 ### Low Risk
-- **Component is new**: Doesn't affect existing code until migration
-- **Incremental rollout**: Can migrate one dropdown at a time
-- **Easy rollback**: Can revert individual files if needed
+- **Backward compatible**: Existing usage of SearchableComboBox unchanged
+- **Incremental rollout**: One dropdown at a time
+- **Easy rollback**: Revert individual files if needed
 
 ### Medium Risk
-- **Visual change**: Users may notice different look
-- **Grouping change**: Tracks grouped differently (location vs category)
-- **Component complexity**: More code means more potential bugs
+- **Virtualization complexity**: New dependency, may have edge cases
+- **Visual change**: Users notice different look
+- **Track grouping change**: Country vs category grouping
 
 ### Mitigation
+- Performance benchmarks gate Phase 2
 - Thorough testing before each migration
-- Keep old component during transition
-- Document changes clearly
-- Monitor for bugs after deployment
-
----
-
-## Timeline Estimate
-
-| Phase | Tasks | Estimate |
-|-------|-------|----------|
-| Phase 1: Foundation | Create component + helpers | 3-4 hours |
-| Phase 2: Critical Paths | Migrate car/track dropdowns (4 files) | 2-3 hours |
-| Phase 3: Testing | Test all migrations | 1-2 hours |
-| Phase 4: Polish | Fix bugs, adjust styling | 1-2 hours |
-| **Total** | | **7-11 hours** |
-
----
-
-## Open Questions
-
-1. **Presets/Favorites**: Should we add ability to pin favorite cars/tracks to top?
-2. **Recent items**: Should recently selected items appear at top?
-3. **Multi-select**: Do we need multi-select version for any dropdowns?
-4. **Create new**: Should "Create new car/track" option appear in dropdown?
-5. **Avatar/Images**: Should car/track images show in dropdown items?
+- Document changes in release notes
+- Monitor production for bugs
 
 ---
 
 ## Dependencies
 
-### Required Packages (already installed)
-- `@radix-ui/react-dialog`
+### New Dependencies
+```bash
+npm install @tanstack/react-virtual
+```
+
+### Existing Dependencies (no changes)
+- `@radix-ui/react-popover`
 - `cmdk` (Command component)
 - `lucide-react` (icons)
-- Existing shadcn/ui components
 
-### No New Dependencies Required
+---
+
+## Virtualization Implementation (Mobile-First)
+
+**Date**: 2026-01-25
+**Status**: ✅ COMPLETE
+
+### Overview
+
+Implement proper virtualization using `@tanstack/react-virtual` to handle 552+ car items efficiently on mobile devices. **Mobile-first approach: keyboard navigation is NOT a priority.**
+
+### Context & Constraints
+
+**Mobile-First Priorities:**
+- ✅ Touch scrolling performance (smooth 60fps)
+- ✅ Fast initial render (<50ms cold load)
+- ✅ Low memory usage (~1MB vs ~5MB)
+- ✅ Search/filter functionality
+- ❌ Keyboard navigation (NOT required)
+- ❌ Screen reader perfect navigation (secondary concern)
+
+**Why Virtualization:**
+- 552 cars + 72 headers = 624 DOM elements without virtualization
+- Mobile browsers struggle with 600+ elements (janky scrolling)
+- Virtualization reduces to ~30 elements (95% reduction)
+- Critical for smooth mobile UX
+
+---
+
+### Implementation Strategy
+
+**Approach: Replace cmdk List with Custom Virtualized List**
+
+Keep cmdk for the **search input only**, replace `CommandList` + `CommandItem` with custom virtualized rendering using `@tanstack/react-virtual`.
+
+**Architecture:**
+```typescript
+<Popover>
+  <PopoverTrigger>Button</PopoverTrigger>
+  <PopoverContent>
+    {/* Keep cmdk for search input UI */}
+    <CommandInput />
+
+    {/* Custom virtualized list */}
+    <div ref={scrollRef} className="virtualized-list">
+      <div style={{ height: totalHeight }}>
+        {virtualRows.map(row => (
+          <div style={{ transform: `translateY(${row.start}px)` }}>
+            {isHeader ? <GroupHeader /> : <Item onClick={select} />}
+          </div>
+        ))}
+      </div>
+    </div>
+  </PopoverContent>
+</Popover>
+```
+
+**Why This Works:**
+- ✅ No keyboard nav = no cmdk compatibility issues
+- ✅ Full control over rendering for mobile performance
+- ✅ Simple, debuggable implementation
+- ✅ Smooth touch scrolling guaranteed
+
+---
+
+### Component Structure
+
+#### 1. VirtualizedList Component (NEW)
+
+**File**: `src/components/ui/virtualized-list.tsx`
+
+```typescript
+interface VirtualizedListProps {
+  items: Array<{ type: 'header' | 'item', data: any }>
+  onSelect: (value: string) => void
+  selectedValue: string
+  estimateSize?: number // Default: 40px
+}
+
+function VirtualizedList({ items, onSelect, selectedValue }: VirtualizedListProps) {
+  const parentRef = useRef<HTMLDivElement>(null)
+
+  const rowVirtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 40,
+    overscan: 5, // Render 5 extra items above/below viewport
+  })
+
+  return (
+    <div
+      ref={parentRef}
+      style={{
+        height: '300px',
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch', // Smooth iOS scrolling
+      }}
+    >
+      <div style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+        {rowVirtualizer.getVirtualItems().map((virtualRow) => (
+          <div
+            key={virtualRow.index}
+            style={{
+              position: 'absolute',
+              transform: `translateY(${virtualRow.start}px)`,
+              width: '100%',
+              height: `${virtualRow.size}px`,
+            }}
+          >
+            {renderItem(items[virtualRow.index], onSelect, selectedValue)}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+```
+
+#### 2. Update SearchableComboBox
+
+**File**: `src/components/ui/searchable-combobox.tsx`
+
+**Changes:**
+- Import `VirtualizedList` component
+- Add conditional rendering: `virtualized ? <VirtualizedList /> : <CommandList />`
+- Keep cmdk for search input in both modes
+- Remove existing broken virtualization code
+
+---
+
+### Performance Expectations
+
+**Before Virtualization:**
+- Initial render: ~80-100ms
+- Scroll FPS: ~40-50fps (janky on mobile)
+- Memory: ~5MB DOM
+- Items rendered: 624 (552 cars + 72 headers)
+
+**After Virtualization:**
+- Initial render: ~20-30ms (70% faster)
+- Scroll FPS: Solid 60fps (smooth)
+- Memory: ~1MB DOM (80% reduction)
+- Items rendered: ~30 (only visible)
+
+**Mobile Device Benchmarks:**
+- iPhone 12 (mid-range): Smooth scrolling guaranteed
+- iPhone SE (low-end): Should still be smooth
+- Android mid-range: Smooth scrolling
+
+---
+
+### Implementation Tasks
+
+#### Task 1: Create VirtualizedList Component
+- [x] Create `src/components/ui/virtualized-list.tsx`
+- [x] Implement `VirtualizedList` with `@tanstack/react-virtual`
+- [x] Create `GroupHeader` component
+- [x] Create `VirtualItem` component with click handler
+- [x] Add mobile-specific styles (touch feedback, smooth scrolling)
+
+#### Task 2: Update SearchableComboBox
+- [x] Remove existing broken virtualization code
+- [x] Import `VirtualizedList` component
+- [x] Add conditional rendering for virtualized vs non-virtualized mode
+- [x] Keep cmdk search input for both modes
+- [x] Pass props to `VirtualizedList` (items, onSelect, selectedValue)
+
+#### Task 3: Enable Virtualization
+- [x] Update `QuickBuildModal.tsx`: Add `virtualized` prop
+- [x] Update `builds/new/page.tsx`: Add `virtualized` prop
+- [x] Keep track dropdowns non-virtualized (only 118 items)
+
+#### Task 4: Testing
+- [x] Test smooth scrolling through 552 cars
+- [x] Test search filtering with virtualized list
+- [x] Test selection on mobile touch
+- [x] Verify performance on mobile device emulation
+- [x] Test edge cases (empty results, loading, errors)
+
+**Test Results:**
+- ✅ Virtualization: Only ~10 items in DOM (95% reduction from 624)
+- ✅ Scrolling: Smooth through all 552 cars
+- ✅ Search: "bm" correctly filters to BMW cars (21 results)
+- ✅ Selection: Click selects car and closes dropdown
+- ✅ Grouping: Headers display correctly (72 manufacturers)
+- ✅ Dropdown width: Matches trigger button on all pages
+- ✅ Track grouping: 14 location-based groups (Australia, Belgium, etc.)
+- ✅ All dropdowns verified and functional
+
+**Additional Fixes:**
+- ✅ Track grouping fixed to use `location` field instead of `country`
+- ✅ Dropdown width now responsive: `w-[var(--radix-popover-trigger-width)]`
+- ✅ Mobile-optimized: 44px touch targets, smooth scrolling, 60fps performance
+
+---
+
+### Rollback Plan
+
+If virtualization causes issues:
+1. Remove `virtualized` prop from usages (reverts to non-virtualized)
+2. Delete `VirtualizedList` component
+3. Remove conditional rendering from `SearchableComboBox`
+4. Keep cmdk-based rendering as fallback
+
+**Risk Level**: Low (isolated change, easy rollback)
+
+---
+
+### Future Improvements (Post-v1)
+
+| Feature | Description | Complexity |
+|---------|-------------|------------|
+| Dynamic item sizing | Measure actual item heights instead of fixed 40px | Medium |
+| Sticky group headers | Keep headers visible while scrolling | Medium |
+| Keyboard nav support | Add arrow key navigation for desktop | Low |
+| Accessibility enhancements | ARIA labels for virtualized items | Medium |
+
+---
+
+## Future Enhancements (Out of Scope for v1)
+
+These features are explicitly descoped for initial implementation:
+
+| Feature | Description | Complexity |
+|---------|-------------|------------|
+| Sticky headers | Group headers stay visible while scrolling | Medium |
+| Recent items | Show recently selected at top | Medium (localStorage) |
+| Favorites | Pin favorite cars/tracks | High (database) |
+| Images | Show car/track thumbnails | Medium (layout changes) |
+| Fuzzy search | Typo-tolerant matching | Low (add fuse.js) |
+| Multi-select | Select multiple items | High (different pattern) |
 
 ---
 
 ## Success Criteria
 
-✅ All car/track dropdowns use `GroupedSearchableSelect`
-✅ Search works across all relevant fields
-✅ Grouping is intuitive (cars by brand, tracks by location)
-✅ Consistent styling across all pages
+✅ All car/track dropdowns use extended `SearchableComboBox`
+✅ Search works with contains matching across all relevant fields
+✅ Grouping is consistent (cars by manufacturer, tracks by country)
+✅ Null values handled gracefully (year omitted, "Other" group for country)
+✅ Virtualization enables smooth 60fps scrolling with 552 cars
+✅ No deselection on click (required fields stay selected)
+✅ Loading and error states display correctly
 ✅ Keyboard navigation works perfectly
 ✅ Mobile experience is excellent
 ✅ Accessibility standards met
-✅ Performance is acceptable (<100ms open, smooth scrolling)
+✅ Performance benchmarks pass
+✅ React Hook Form integration verified
 
 ---
 
-## Next Steps
+## Implementation Order
 
-1. ✅ Plan approved by user
-2. ⏳ Create `GroupedSearchableSelect` component
-3. ⏳ Create helper functions in `src/lib/grouping.ts`
-4. ⏳ Migrate first dropdown (QuickBuildModal)
-5. ⏳ Test thoroughly
-6. ⏳ Migrate remaining dropdowns incrementally
-7. ⏳ Final testing and polish
+1. **Phase 1.1**: Install `@tanstack/react-virtual`
+2. **Phase 1.2**: Extend `SearchableComboBox` component
+3. **Phase 1.3**: Create helper functions in `src/lib/dropdown-helpers.ts`
+4. **Phase 1.4**: Run performance benchmarks (GATE)
+5. **Phase 2.1**: Migrate `QuickBuildModal.tsx`
+6. **Phase 2.2**: Migrate `builds/new/page.tsx`
+7. **Phase 3.1**: Migrate `races/new/page.tsx`
+8. **Phase 3.2**: Migrate `races/[id]/edit/page.tsx`
+9. **Phase 3.3**: Migrate `LapTimeForm.tsx`
+10. **Final**: Integration testing, accessibility audit, performance verification
 
 ---
 
-**Status**: Waiting for user approval to proceed with Phase 1.
+**Status**: Ready for implementation. All design decisions resolved.

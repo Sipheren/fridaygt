@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,23 +13,11 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { SearchableComboBox } from '@/components/ui/searchable-combobox'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-
-interface Car {
-  id: string
-  name: string
-  slug: string
-  manufacturer: string
-  year?: number
-}
+import { formatCarOptions } from '@/lib/dropdown-helpers'
+import type { DbCar } from '@/types/database'
 
 interface QuickBuildModalProps {
   open: boolean
@@ -46,7 +34,7 @@ export function QuickBuildModal({
 }: QuickBuildModalProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [cars, setCars] = useState<Car[]>([])
+  const [cars, setCars] = useState<DbCar[]>([])
   const [carsLoading, setCarsLoading] = useState(false)
   const [formData, setFormData] = useState({
     carId: preselectedCarId || '',
@@ -138,16 +126,8 @@ export function QuickBuildModal({
     }
   }
 
-  // Group cars by manufacturer - memoized to avoid re-grouping on every render
-  const carsByManufacturer = useMemo(() => {
-    return cars.reduce((acc, car) => {
-      if (!acc[car.manufacturer]) {
-        acc[car.manufacturer] = []
-      }
-      acc[car.manufacturer].push(car)
-      return acc
-    }, {} as Record<string, Car[]>)
-  }, [cars])
+  // Format car options for SearchableComboBox
+  const carOptions = formatCarOptions(cars)
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -164,38 +144,20 @@ export function QuickBuildModal({
           {/* Car Selection */}
           <div className="space-y-2">
             <Label htmlFor="car">Car *</Label>
-            <Select
+            <SearchableComboBox
+              options={carOptions}
               value={formData.carId}
               onValueChange={(value) =>
                 setFormData({ ...formData, carId: value })
               }
-              disabled={carsLoading || loading}
-            >
-              <SelectTrigger id="car">
-                <SelectValue
-                  placeholder={
-                    carsLoading ? 'Loading cars...' : 'Select a car'
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(carsByManufacturer).map(
-                  ([manufacturer, manufacturerCars]) => (
-                    <div key={manufacturer}>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase">
-                        {manufacturer}
-                      </div>
-                      {manufacturerCars.map((car) => (
-                        <SelectItem key={car.id} value={car.id}>
-                          {car.year ? `${car.year} ` : ''}
-                          {car.name}
-                        </SelectItem>
-                      ))}
-                    </div>
-                  )
-                )}
-              </SelectContent>
-            </Select>
+              placeholder="Select a car"
+              searchPlaceholder="Search cars..."
+              disabled={loading}
+              isLoading={carsLoading}
+              error={cars.length === 0 && !carsLoading ? "Failed to load cars" : undefined}
+              grouped
+              virtualized
+            />
           </div>
 
           {/* Build Name */}

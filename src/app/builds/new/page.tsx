@@ -1,19 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { SearchableComboBox } from '@/components/ui/searchable-combobox'
 import {
   Tabs,
   TabsContent,
@@ -39,18 +33,13 @@ import { ArrowLeft, Save, Wrench, Settings } from 'lucide-react'
 import { BuildUpgradesTab } from '@/components/builds/BuildUpgradesTab'
 import { BuildTuningTab } from '@/components/builds/BuildTuningTab'
 import { LoadingSection } from '@/components/ui/loading'
-
-interface Car {
-  id: string
-  name: string
-  manufacturer: string
-  year: number | null
-}
+import { formatCarOptions } from '@/lib/dropdown-helpers'
+import type { DbCar } from '@/types/database'
 
 export default function NewBuildPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [cars, setCars] = useState<Car[]>([])
+  const [cars, setCars] = useState<DbCar[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showErrorDialog, setShowErrorDialog] = useState(false)
@@ -98,6 +87,9 @@ export default function NewBuildPage() {
       setLoading(false)
     }
   }
+
+  // Format car options for SearchableComboBox
+  const carOptions = useMemo(() => formatCarOptions(cars), [cars])
 
   const handleUpgradeToggle = (partId: string) => {
     setSelectedUpgrades((prev) => ({
@@ -232,19 +224,17 @@ export default function NewBuildPage() {
           {/* Car Selection */}
           <div className="space-y-2">
             <Label htmlFor="car">Car *</Label>
-            <Select value={carId} onValueChange={setCarId} required>
-              <SelectTrigger id="car" className="min-h-[44px] w-full">
-                <SelectValue placeholder="Select a car" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {cars.map((car) => (
-                  <SelectItem key={car.id} value={car.id}>
-                    {car.manufacturer} {car.name}
-                    {car.year && ` '${String(car.year).slice(-2)}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableComboBox
+              options={carOptions}
+              value={carId}
+              onValueChange={setCarId}
+              placeholder="Select a car"
+              searchPlaceholder="Search cars..."
+              disabled={saving}
+              isLoading={loading}
+              grouped
+              virtualized
+            />
           </div>
 
           {/* Build Name */}

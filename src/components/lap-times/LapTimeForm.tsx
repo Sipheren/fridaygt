@@ -17,15 +17,9 @@ import { SearchableComboBox } from '@/components/ui/searchable-combobox'
 import { BuildSelector } from '@/components/builds/BuildSelector'
 import { QuickBuildModal } from '@/components/builds/QuickBuildModal'
 import { parseLapTime, formatLapTime, isValidLapTime } from '@/lib/time'
+import { formatTrackOptions } from '@/lib/dropdown-helpers'
 import { Clock, Car as CarIcon, MapPin, AlertCircle } from 'lucide-react'
-
-interface Track {
-  id: string
-  name: string
-  slug: string
-  location: string
-  layout: string | null
-}
+import type { DbTrack } from '@/types/database'
 
 interface Build {
   id: string
@@ -42,7 +36,7 @@ interface Build {
 
 export function LapTimeForm() {
   const router = useRouter()
-  const [tracks, setTracks] = useState<Track[]>([])
+  const [tracks, setTracks] = useState<DbTrack[]>([])
   const [allBuilds, setAllBuilds] = useState<Build[]>([])
   const [buildsLoading, setBuildsLoading] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -83,15 +77,8 @@ export function LapTimeForm() {
     loadData()
   }, [])
 
-  // Format tracks for combobox with searchable labels
-  const trackOptions = useMemo(() =>
-    tracks.map((track) => ({
-      value: track.id,
-      label: `${track.name}${track.layout ? ` - ${track.layout}` : ''} (${track.location})`,
-      searchTerms: `${track.name} ${track.layout || ''} ${track.location}`.toLowerCase(),
-    })),
-    [tracks]
-  )
+  // Format tracks for combobox with grouping by country
+  const trackOptions = useMemo(() => formatTrackOptions(tracks), [tracks])
 
   // Handle build creation callback
   const handleBuildCreated = async (newBuildId: string) => {
@@ -201,6 +188,7 @@ export function LapTimeForm() {
             placeholder="Select a track..."
             searchPlaceholder="Search tracks..."
             emptyText="No track found."
+            grouped
           />
         </div>
 
