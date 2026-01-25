@@ -253,8 +253,12 @@ export default function RaceDetailPage() {
             {race.RaceCar.map((raceCar) => {
               const car = raceCar.car
               return (
-                <Link key={raceCar.id} href={`/cars/${car.slug}`} className="block h-full">
-                  <Card className="gt-hover-card h-full min-h-[140px]">
+                <Link
+                  key={raceCar.id}
+                  href={raceCar.build ? `/builds/${raceCar.buildId}` : '/builds'}
+                  className="block h-full"
+                >
+                  <Card className={`gt-hover-card h-full min-h-[140px] ${!raceCar.build ? 'opacity-60' : ''}`}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         {car.imageUrl && (
@@ -268,11 +272,15 @@ export default function RaceDetailPage() {
                           <p className="font-medium truncate">
                             {car.manufacturer} {car.name}
                           </p>
-                          {raceCar.build && (
+                          {raceCar.build ? (
                             <p className="text-sm text-primary font-medium flex items-center gap-1">
                               <Wrench className="h-3.5 w-3.5" />
                               {raceCar.build.name}
                             </p>
+                          ) : (
+                            <Badge variant="outline" className="mt-1 text-muted-foreground">
+                              Build removed
+                            </Badge>
                           )}
                           <p className="text-sm text-muted-foreground">
                             {car.year}
