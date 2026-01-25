@@ -2,66 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { LoadingSection } from '@/components/ui/loading'
+import { SortableRaceList } from '@/components/tonight/sortable-race-list'
+import type { Race } from '@/components/tonight/sortable-race-list'
 import {
-  MapPin,
-  Car as CarIcon,
   Radio,
   Settings,
-  Flame,
-  ChevronRight,
-  Flag,
-  Trophy,
 } from 'lucide-react'
 
-interface Car {
-  id: string
-  name: string
-  slug: string
-  manufacturer: string
-}
-
-interface RaceCar {
-  id: string
-  carId: string
-  buildId: string
-  car: Car
-  build: {
-    id: string
-    name: string
-    description: string | null
-  }
-}
-
-interface Track {
-  id: string
-  name: string
-  slug: string
-  location: string | null
-  category: string
-  layout: string | null
-  length: number | null
-}
-
-interface Race {
-  id: string
-  name: string | null
-  description: string | null
-  laps: number | null
-  weather: string | null
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-  track: Track
-  RaceCar: RaceCar[]
-}
-
 export default function TonightPage() {
-  const router = useRouter()
   const [races, setRaces] = useState<Race[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -71,27 +22,16 @@ export default function TonightPage() {
 
   const fetchActiveRaces = async () => {
     try {
-      const res = await fetch('/api/races')
+      // Fetch with ?isActive=true to get races in order
+      const res = await fetch('/api/races?isActive=true')
       const data = await res.json()
 
-      // Filter to only active races
-      const activeRaces = (data.races || []).filter((race: Race) => race.isActive)
-      setRaces(activeRaces)
+      setRaces(data.races || [])
     } catch (error) {
       console.error('Error fetching active races:', error)
     } finally {
       setLoading(false)
     }
-  }
-
-  const getDisplayName = (race: Race): string => {
-    if (race.name) return race.name
-
-    const trackName = race.track?.name || 'Unknown Track'
-    const firstCar = race.RaceCar?.[0]?.car
-    const carName = firstCar ? `${firstCar.manufacturer} ${firstCar.name}` : 'Unknown Car'
-
-    return `${trackName} + ${carName}`
   }
 
   if (loading) {
@@ -173,140 +113,7 @@ export default function TonightPage() {
 
       {/* Races List */}
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
-        <div className="space-y-6">
-          {races.map((race, index) => (
-            <Link
-              key={race.id}
-              href={`/races/${race.id}`}
-              className="group"
-            >
-              <Card className="gt-card-shine h-full border-2 border-primary/20 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 cursor-pointer overflow-hidden">
-                <CardContent className="p-0">
-                  {/* Race Header */}
-                  <div className="relative bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6">
-                    {/* Race Number */}
-                    <div className="absolute top-4 right-4">
-                      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-destructive text-destructive-foreground font-bold text-sm shadow-lg">
-                        {index + 1}
-                      </div>
-                    </div>
-
-                    {/* Race Name */}
-                    <h2 className="text-2xl font-bold pr-14">{getDisplayName(race)}</h2>
-
-                    {/* Track Info */}
-                    <div className="flex items-center gap-2 mt-3">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <span className="font-semibold">{race.track.name}</span>
-                      {race.track.layout && (
-                        <span className="text-sm text-muted-foreground">
-                          ({race.track.layout})
-                        </span>
-                      )}
-                      {race.track.location && (
-                        <span className="text-xs text-muted-foreground">• {race.track.location}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Race Details */}
-                  <div className="p-6 space-y-4">
-                    {/* Builds Section */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                        <CarIcon className="h-4 w-4" />
-                        <span>
-                          {race.RaceCar.length === 0
-                            ? 'No Builds'
-                            : race.RaceCar.length === 1
-                            ? '1 Build'
-                            : `${race.RaceCar.length} Builds`}
-                        </span>
-                      </div>
-
-                      {race.RaceCar.length > 0 && (
-                        <div className="space-y-2">
-                          {race.RaceCar.map((rc) => (
-                            <div
-                              key={rc.id}
-                              className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/50 group-hover:bg-muted transition-colors"
-                            >
-                              <div className="flex-1 min-w-0 space-y-1">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-medium">
-                                    {rc.car.manufacturer} {rc.car.name}
-                                  </span>
-                                  {rc.build && (
-                                    <>
-                                      <span className="text-muted-foreground">•</span>
-                                      <span
-                                        className="text-primary hover:text-primary/80 font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          router.push(`/builds/${rc.build.id}`)
-                                        }}
-                                      >
-                                        {rc.build.name}
-                                        <ChevronRight className="h-3 w-3" />
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Race Configuration */}
-                    <div className="flex flex-wrap gap-2">
-                      {race.laps && (
-                        <Badge variant="secondary" className="gap-1">
-                          <Flag className="h-3 w-3" />
-                          {race.laps} {race.laps === 1 ? 'Lap' : 'Laps'}
-                        </Badge>
-                      )}
-                      {race.weather && (
-                        <Badge variant="outline" className="gap-1">
-                          {race.weather === 'Dry' ? (
-                            <Flame className="h-3 w-3 text-orange-500" />
-                          ) : race.weather === 'Wet' ? (
-                            <span>💧</span>
-                          ) : (
-                            <span>🌤️</span>
-                          )}
-                          {race.weather}
-                        </Badge>
-                      )}
-                      {race.track.length && (
-                        <Badge variant="outline" className="gap-1">
-                          <Trophy className="h-3 w-3" />
-                          {race.track.length}km
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Description */}
-                    {race.description && (
-                      <div className="pt-3 border-t">
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {race.description}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* View Details CTA */}
-                    <div className="pt-4 border-t flex items-center justify-center text-sm text-muted-foreground font-medium">
-                      View Race Details
-                      <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+        <SortableRaceList initialRaces={races} />
       </div>
 
       {/* Footer */}

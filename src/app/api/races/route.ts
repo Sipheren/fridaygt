@@ -9,8 +9,9 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = createServiceRoleClient()
 
-    // Fetch all races with related data in a single query (fixes N+1 query issue)
-    const { data: races, error: racesError } = await supabase
+    const isActiveParam = req.nextUrl.searchParams.get('isActive')
+
+    let query = supabase
       .from('Race')
       .select(`
         *,
@@ -21,7 +22,19 @@ export async function GET(req: NextRequest) {
           build:CarBuild(id, name, description)
         )
       `)
-      .order('createdAt', { ascending: false })
+
+    // When filtering for active races, sort by order then createdAt
+    if (isActiveParam === 'true') {
+      query = query
+        .eq('isActive', true)
+        .order('order', { ascending: true, nullsFirst: false })
+        .order('createdAt', { ascending: true })
+    } else {
+      // Default behavior: sort by creation date (active status handled in JS)
+      query = query.order('createdAt', { ascending: false })
+    }
+
+    const { data: races, error: racesError } = await query
 
     if (racesError) {
       console.error('Error fetching races:', racesError)
@@ -30,13 +43,16 @@ export async function GET(req: NextRequest) {
 
     console.log('Fetched races:', races?.length)
 
-    // Sort: Active first, then by display name
-    const sortedRaces = (races || []).sort((a, b) => {
-      if (a.isActive !== b.isActive) {
-        return a.isActive ? -1 : 1
-      }
-      return getDisplayName(a).localeCompare(getDisplayName(b))
-    })
+    // Sort: Active first, then by display name (only for non-active queries)
+    let sortedRaces = races || []
+    if (isActiveParam !== 'true') {
+      sortedRaces = sortedRaces.sort((a, b) => {
+        if (a.isActive !== b.isActive) {
+          return a.isActive ? -1 : 1
+        }
+        return getDisplayName(a).localeCompare(getDisplayName(b))
+      })
+    }
 
     return NextResponse.json({ races: sortedRaces })
   } catch (error) {

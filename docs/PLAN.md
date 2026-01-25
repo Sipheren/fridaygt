@@ -168,6 +168,26 @@ Tonight Page → Shows all races where isActive = true
 - **Responsive Width**: Dropdowns now match trigger button width on all screen sizes
 - **Performance**: All dropdowns optimized for mobile with smooth scrolling and fast rendering
 
+### Phase 12: Tonight Page Race Reordering ✅
+- **Drag-and-Drop Reordering**: Mobile-first race reordering on Tonight page using @dnd-kit
+- **Database Changes**: Added `order` field to Race table with sequential ordering
+- **API Enhancements**:
+  - GET /api/races?isActive=true: Returns races sorted by order
+  - POST /api/races/reorder: Updates race order with validation
+  - PATCH /api/races/[id]: Sets order to MAX+1 when activating races
+- **Frontend Components**:
+  - DragHandle: 44px touch target, WCAG compliant
+  - SortableRaceCard: Wraps race cards with drag functionality
+  - SortableRaceList: Manages DndContext with optimistic updates and rollback
+- **UX Features**:
+  - Smooth 60fps animations during drag
+  - Visual feedback (elevation, shadow, ring)
+  - Debounced API calls (500ms)
+  - Automatic rollback on error
+  - Haptic feedback on mobile
+  - Keyboard navigation support
+- **Interaction Fix**: Only "View Race Details" text navigates; drag handle clicks don't trigger navigation
+
 ---
 
 ## Database Schema
@@ -277,6 +297,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-25 | #25 | Tonight page race reordering - Drag-and-drop with @dnd-kit, mobile-first UX, optimistic updates, API enhancements |
 | 2026-01-25 | #24 | Complete dropdown standardization with mobile-first virtualization - SearchableComboBox enhancement, VirtualizedList component, helper functions, responsive width, track grouping fixes |
 | 2026-01-24 | #22 | Fixed gear columns implementation - migrated from CarBuildSetting to direct CarBuild columns, support for 20 gears, preserved formatting |
 | 2026-01-24 | #21 | Build detail page layout refinement - consistent item heights (72px), transmission 50% width, orange badges on all parts |

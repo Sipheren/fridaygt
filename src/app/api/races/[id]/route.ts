@@ -260,10 +260,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Get race to check permissions
+    // Get race to check permissions and current state
     const { data: existingRace } = await supabase
       .from('Race')
-      .select('createdById')
+      .select('createdById, isActive')
       .eq('id', id)
       .single()
 
@@ -289,6 +289,7 @@ export async function PATCH(
       laps: number | null
       weather: string | null
       isActive: boolean
+      order: number
       updatedAt: string
     }> = {
       updatedAt: now
@@ -299,6 +300,20 @@ export async function PATCH(
     if (laps !== undefined) updates.laps = laps || null
     if (weather !== undefined) updates.weather = weather || null
     if (isActive !== undefined) updates.isActive = isActive
+
+    // When activating a race, set order to MAX(order) + 1 among active races
+    if (isActive === true && existingRace.isActive === false) {
+      const { data: maxOrderResult } = await supabase
+        .from('Race')
+        .select('order')
+        .eq('isActive', true)
+        .order('order', { ascending: false })
+        .limit(1)
+        .single()
+
+      const newOrder = (maxOrderResult?.order ?? 0) + 1
+      updates.order = newOrder
+    }
     // Note: trackId is NOT updatable - track is immutable for races
 
     // Update race basic info

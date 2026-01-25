@@ -168,6 +168,7 @@ export interface DbRace {
   laps: number | null
   weather: string | null
   isActive: boolean
+  order: number | null
   createdById: string
   createdAt: string
   updatedAt: string

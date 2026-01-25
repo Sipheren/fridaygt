@@ -133,6 +133,7 @@ export const UpdateRaceSchema = z.object({
   laps: z.number().int().positive().optional(),
   weather: z.enum(['dry', 'wet']).optional(),
   isActive: z.boolean().optional(),
+  order: z.number().int().positive().optional(),
   buildIds: z.array(z.string().min(1)).min(1).optional(),
 }).strict()
 
