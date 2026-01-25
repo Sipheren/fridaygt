@@ -1,3 +1,17 @@
+/**
+ * Zod Validation Schemas
+ *
+ * This file contains all Zod schemas for validating API request bodies.
+ * Schemas are organized by entity type (Build, Race, LapTime, User, etc.)
+ *
+ * Debugging Tips:
+ * - .transform() runs before validation, modifying input values
+ * - .trim() removes leading/trailing whitespace from strings
+ * - .optional() = field can be undefined, .nullable() = field can be null
+ * - .optional().nullable() = field can be undefined OR null
+ * - Use validateBody() helper in API routes for consistent error handling
+ */
+
 import { z } from 'zod'
 
 // ============================================

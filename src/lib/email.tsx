@@ -1,3 +1,18 @@
+/**
+ * Email Utilities
+ *
+ * Functions for sending transactional emails via Resend:
+ * - sendVerificationEmail: Magic link for user authentication
+ * - sendApprovalNotification: User account approval/denial notice
+ * - sendUserRemovalNotification: Admin notification when user is deleted
+ *
+ * Debugging Tips:
+ * - Uses React Email templates for HTML rendering
+ * - sendUserRemovalNotification uses Promise.allSettled (partial failure tolerance)
+ * - Check RESEND_API_KEY and EMAIL_FROM env vars if emails fail
+ * - Email failures are logged but don't throw (non-blocking)
+ */
+
 import { Resend } from 'resend'
 import { render } from '@react-email/components'
 import { VerificationEmail } from '@/emails/verification-email'

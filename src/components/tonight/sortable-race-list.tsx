@@ -1,3 +1,19 @@
+/**
+ * Sortable Race List Component
+ *
+ * Draggable race list on the Tonight page with optimistic updates and rollback.
+ * Uses @dnd-kit for drag-and-drop functionality.
+ *
+ * Debugging Tips:
+ * - Drag activation: Must move 8px before drag starts (prevents accidental drags)
+ * - Optimistic updates: UI updates immediately, API call debounced by 500ms
+ * - Rollback on error: If API fails, restores previousRaces state
+ * - Haptic feedback: Mobile devices vibrate on drag start
+ * - Keyboard navigation: Arrow keys + Space/Enter for keyboard users
+ * - Saving indicator: Shows "Saving new order..." during API call
+ * - Only shows drag handle if 2+ races (canReorder check)
+ */
+
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
@@ -71,6 +87,13 @@ export function SortableRaceList({ initialRaces }: SortableRaceListProps) {
   const [isSaving, setIsSaving] = useState(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
+  // ============================================================
+  // EFFECT CLEANUP
+  // ============================================================
+  // Clear any pending save timeout when component unmounts
+  // Prevents memory leaks and saves after component is gone
+  // ============================================================
+
   // Cleanup timeout on component unmount
   useEffect(() => {
     return () => {
@@ -79,6 +102,14 @@ export function SortableRaceList({ initialRaces }: SortableRaceListProps) {
       }
     }
   }, [])
+
+  // ============================================================
+  // DRAG SENSORS CONFIGURATION
+  // ============================================================
+  // PointerSensor: Mouse/touch input with 8px movement threshold
+  // - Prevents accidental drags when tapping on mobile
+  // KeyboardSensor: Arrow keys + Space/Enter for accessibility
+  // ============================================================
 
   // Configure sensors for drag and drop
   // Using long-press activation for touch to prevent accidental drags
@@ -92,6 +123,13 @@ export function SortableRaceList({ initialRaces }: SortableRaceListProps) {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   )
+
+  // ============================================================
+  // DRAG HANDLERS
+  // ============================================================
+  // handleDragStart: Haptic feedback on mobile (50ms vibration)
+  // handleDragEnd: Optimistic update + debounced API call + rollback on error
+  // ============================================================
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     // Haptic feedback for mobile

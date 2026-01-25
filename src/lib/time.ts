@@ -1,4 +1,21 @@
 /**
+ * Time Utilities
+ *
+ * Functions for formatting and parsing lap times:
+ * - formatLapTime: Convert milliseconds to "mm:ss.sss" format
+ * - parseLapTime: Parse "mm:ss.sss" or "ss.sss" to milliseconds
+ * - getTimeDifference: Calculate difference between two times
+ * - isValidLapTime: Validate millisecond value is reasonable
+ * - formatDate: Format ISO date string to localized format
+ *
+ * Debugging Tips:
+ * - Lap times stored in database as milliseconds (integer)
+ * - Format: "1:23.456" = 1 minute, 23 seconds, 456 milliseconds
+ * - parseLapTime supports optional minutes: "23.456" = 23.456 seconds
+ * - isValidLapTime range: 10 seconds to 30 minutes (sanity check)
+ */
+
+/**
  * Convert milliseconds to formatted lap time string (mm:ss.sss)
  * @param ms - Time in milliseconds
  * @returns Formatted time string (e.g., "1:23.456")

@@ -1,3 +1,18 @@
+/**
+ * Error Boundary Component
+ *
+ * Catches JavaScript errors in child component tree, displays fallback UI.
+ * Class component (required for React error boundaries).
+ *
+ * Debugging Tips:
+ * - Catches errors during rendering, in lifecycle methods, and in constructors
+ * - Does NOT catch errors in event handlers (use try/catch there)
+ * - Error logged to console with full errorInfo component stack
+ * - Recovery options: "Retry" reloads page, "Go Home" returns to index
+ * - Custom fallback: Pass fallback prop to override default error UI
+ * - onError callback: Optional prop for custom error logging (e.g., to error tracking service)
+ */
+
 'use client'
 
 import React from 'react'

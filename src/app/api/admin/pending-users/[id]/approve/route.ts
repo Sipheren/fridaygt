@@ -1,3 +1,16 @@
+/**
+ * User Approval API
+ *
+ * POST /api/admin/pending-users/[id]/approve - Approve pending user (admin only)
+ *
+ * Debugging Tips:
+ * - Admin-only endpoint
+ * - Only PENDING users can be approved (role check)
+ * - Role changed from PENDING to USER
+ * - Approval email sent via Resend (non-blocking failure)
+ * - Email contains login link for profile completion
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'

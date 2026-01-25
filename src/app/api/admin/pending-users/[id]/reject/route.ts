@@ -1,3 +1,17 @@
+/**
+ * User Rejection API
+ *
+ * POST /api/admin/pending-users/[id]/reject - Reject and delete pending user (admin only)
+ *
+ * Debugging Tips:
+ * - Admin-only endpoint
+ * - Only PENDING users can be rejected (role check)
+ * - Rejection reason (optional) logged for audit trail
+ * - User is deleted from database (no soft delete)
+ * - next_auth records cascade deleted via foreign key
+ * - No email sent to rejected user (security/privacy)
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'

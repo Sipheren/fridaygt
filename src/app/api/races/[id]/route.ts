@@ -1,3 +1,18 @@
+/**
+ * Single Race Details API
+ *
+ * GET /api/races/[id] - Get race with leaderboard, user stats, and statistics
+ * PATCH /api/races/[id] - Update race (name, description, buildIds, laps, weather, isActive)
+ * DELETE /api/races/[id] - Delete race (cascade deletes RaceCar entries)
+ *
+ * Debugging Tips:
+ * - Leaderboard filtered to ONLY builds in this race at this track
+ * - buildIds extracted from RaceCar table for filtering
+ * - Statistics: totalLaps, uniqueDrivers, fastestTime, averageTime, worldRecord
+ * - User stats: personal best, position, recent laps
+ * - Permission: creator or admin can edit/delete
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
@@ -81,6 +96,14 @@ export async function GET(
       createdBy,
       RaceCar: raceCars || [],
     }
+
+    // ============================================================
+    // LEADERBOARD CALCULATION
+    // ============================================================
+    // Filters lap times to ONLY builds in this race at this track
+    // Key: userId-carId-buildId (each combination gets separate entry)
+    // This allows same user to have multiple entries with different cars/builds
+    // ============================================================
 
     // Get all lap times for this race (ONLY from builds in this race at this track)
     const trackId = track?.id || race.trackId

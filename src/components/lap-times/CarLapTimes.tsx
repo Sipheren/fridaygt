@@ -1,3 +1,17 @@
+/**
+ * Car Lap Times Component
+ *
+ * Displays all lap times for a specific car, grouped by track.
+ * Shows statistics, personal bests, and recent laps.
+ *
+ * Debugging Tips:
+ * - Fetches from /api/cars/[carSlug]/lap-times?userOnly=true
+ * - Groups lap times by track with personal best calculation
+ * - Trophy icon indicates personal best lap time for that track
+ * - Shows build name (Wrench icon) if buildId exists on lap time
+ * - Statistics: total laps, unique tracks, fastest time across all tracks
+ */
+
 'use client'
 
 import { useEffect, useState } from 'react'

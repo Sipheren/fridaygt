@@ -1,3 +1,17 @@
+/**
+ * Race Management API
+ *
+ * GET /api/races - List all races (optional: ?isActive=true for active races only)
+ * POST /api/races - Create a new race with track and builds
+ *
+ * Debugging Tips:
+ * - Active races (isActive=true) are sorted by 'order' field first
+ * - Race creation requires: trackId + array of buildIds
+ * - RaceCar junction table links Race ↔ Car ↔ Build (many-to-many)
+ * - buildId is NOT NULL (build-centric architecture)
+ * - Race creator (createdById) is tracked for permission checks
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
@@ -107,6 +121,15 @@ export async function POST(req: NextRequest) {
 
     const supabase = createServiceRoleClient()
 
+    // ============================================================
+    // RACE CREATION VALIDATION
+    // ============================================================
+    // 1. Track must exist in Track table
+    // 2. All builds must exist and be accessible
+    // 3. buildIds array contains the builds to add to this race
+    // 4. createdById is set to current authenticated user
+    // ============================================================
+
     // Verify track exists
     const { data: track, error: trackError } = await supabase
       .from('Track')
@@ -162,6 +185,14 @@ export async function POST(req: NextRequest) {
       console.error('Error creating race:', raceError)
       return NextResponse.json({ error: 'Failed to create race' }, { status: 500 })
     }
+
+    // ============================================================
+    // RACECAR JUNCTION TABLE INSERTION
+    // ============================================================
+    // RaceCar links races to builds via cars (many-to-many)
+    // Each entry: raceId + carId + buildId (buildId is required)
+    // If insertion fails, we rollback the entire race creation
+    // ============================================================
 
     // Create RaceCar entries for each build
     const raceCarEntries = builds.map((build: any) => ({

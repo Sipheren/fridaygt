@@ -1,3 +1,14 @@
+/**
+ * Single Lap Time API
+ *
+ * DELETE /api/lap-times/[id] - Delete a specific lap time (ownership verified)
+ *
+ * Debugging Tips:
+ * - Only the lap time owner can delete their own lap times
+ * - Admins do NOT have special delete permissions for lap times
+ * - Ownership check: lapTime.userId === current user's id
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'

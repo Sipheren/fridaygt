@@ -1,3 +1,19 @@
+/**
+ * NextAuth Configuration
+ *
+ * This file configures authentication for FridayGT using:
+ * - NextAuth.js v5 with email magic links (Resend provider)
+ * - Supabase adapter for database session storage
+ * - Custom session callback for role-based access control
+ *
+ * Debugging Tips:
+ * - Session callback runs on every request with a valid session
+ * - Role is fetched from User table (not in next_auth schema)
+ * - Admin notifications sent via atomic update (prevents duplicates)
+ * - DEFAULT_ADMIN_EMAIL is auto-promoted to ADMIN role
+ * - PENDING users trigger admin email notifications (once per user)
+ */
+
 import NextAuth from "next-auth"
 import Resend from "next-auth/providers/resend"
 import { SupabaseAdapter } from "@auth/supabase-adapter"

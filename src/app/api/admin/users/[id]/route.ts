@@ -1,3 +1,17 @@
+/**
+ * Admin User Management API
+ *
+ * PATCH /api/admin/users/[id] - Update user role or profile (admin only)
+ * DELETE /api/admin/users/[id] - Delete user including next_auth records (admin only)
+ *
+ * Debugging Tips:
+ * - Admin-only endpoints (verified via isAdmin())
+ * - PATCH supports both role changes (PENDING→USER) and profile updates (name, gamertag)
+ * - Email notification sent on PENDING→USER role change only
+ * - DELETE handles foreign key dependencies: sessions → accounts → users → User
+ * - All admins notified when a user is deleted
+ */
+
 import { NextResponse, NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
@@ -53,6 +67,14 @@ export async function PATCH(
   const validationResult2 = await validateBody(UpdateUserProfileSchema, body)
   if (validationResult2.success) {
     const { gamertag, name } = validationResult2.data
+
+    // ============================================================
+    // GAMERTAG UNIQUENESS CHECK
+    // ============================================================
+    // Gamertags must be unique across all users
+    // Check excludes current user (neq('id', id))
+    // This allows users to keep their existing gamertag
+    // ============================================================
 
     // Check gamertag uniqueness if it's being updated
     if (gamertag !== undefined) {
@@ -151,6 +173,16 @@ export async function DELETE(
     .from('User')
     .select('email')
     .eq('role', 'ADMIN')
+
+  // ============================================================
+  // NEXT_AUTH FOREIGN KEY DELETION
+  // ============================================================
+  // Deletion order is critical due to foreign key constraints:
+  // 1. sessions (references userId)
+  // 2. accounts (references userId)
+  // 3. users (next_auth schema) - uses 'id' column, not 'userId'
+  // 4. User (public schema) - done last via main query
+  // ============================================================
 
   // Delete from next_auth schema first (foreign key dependencies)
   // Order matters: sessions → accounts → users

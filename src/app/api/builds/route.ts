@@ -1,3 +1,17 @@
+/**
+ * Build Management API
+ *
+ * GET /api/builds - List builds with filtering (carId, userId, ids, public, myBuilds)
+ * POST /api/builds - Create a new build with upgrades, settings, and gear ratios
+ *
+ * Debugging Tips:
+ * - Check 'carId' filter returns builds for specific car only
+ * - 'ids' parameter for batch fetching (comma-separated)
+ * - Build creation fails if carId doesn't exist in Car table
+ * - Admin users can set userId to create builds for other active users
+ * - Gear ratios (gear1-20, finalDrive) stored as text to preserve formatting (e.g., "2.500")
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
@@ -86,7 +100,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Apply rate limiting
+    // Rate limiting: 20 requests per minute to prevent abuse
     const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
 
     if (!rateLimit.success) {
@@ -129,6 +143,14 @@ export async function POST(request: NextRequest) {
     }
 
     const { carId, name, description, isPublic, upgrades, settings, userId: requestedUserId, ...gearFields } = validationResult.data
+
+    // ============================================================
+    // BUILD CREATOR LOGIC
+    // ============================================================
+    // Admin users can assign builds to other active users (USER or ADMIN role)
+    // This is used for admin tools and build management
+    // PENDING users cannot be assigned builds (security restriction)
+    // ============================================================
 
     // Determine the build creator userId
     // - If userId is provided and current user is ADMIN, validate and use it
@@ -192,6 +214,15 @@ export async function POST(request: NextRequest) {
     const buildId = crypto.randomUUID()
     const now = new Date().toISOString()
 
+    // ============================================================
+    // GEAR RATIO STORAGE
+    // ============================================================
+    // Gear ratios are stored directly on CarBuild as TEXT columns
+    // This preserves formatting like "2.500" (leading zeros, decimals)
+    // Supports up to 20 gears for GT7's high-end transmissions
+    // Empty strings converted to null for cleaner database state
+    // ============================================================
+
     // Prepare gear fields (empty string becomes null)
     const gearData: Record<string, string | null> = {}
     for (const [key, value] of Object.entries(gearFields)) {
@@ -223,6 +254,14 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // ============================================================
+    // PARTS UPGRADES INSERTION
+    // ============================================================
+    // Parts are validated against the Part catalog before insertion
+    // Each upgrade includes: partId (FK), category name, part name
+    // Debug: Check PartCategory and Part tables if insertion fails
+    // ============================================================
 
     // Insert upgrades if provided
     if (upgrades && Array.isArray(upgrades) && upgrades.length > 0) {
@@ -267,6 +306,15 @@ export async function POST(request: NextRequest) {
         }
       }
     }
+
+    // ============================================================
+    // TUNING SETTINGS INSERTION
+    // ============================================================
+    // Two types of settings:
+    // 1. Standard settings: Referenced by settingId FK to TuningSetting table
+    // 2. Custom gears: settingId=null, stored as "custom:GearName" for user-added gears
+    // Note: Transmission gears are NOT here - they use direct CarBuild columns (gear1-20)
+    // ============================================================
 
     // Insert tuning settings if provided
     if (settings && Array.isArray(settings) && settings.length > 0) {

@@ -1,3 +1,16 @@
+/**
+ * Lap Time Management API
+ *
+ * GET /api/lap-times - Get current user's lap times (filters: trackId, carId, limit)
+ * POST /api/lap-times - Create a new lap time (requires trackId, carId, buildId, timeMs)
+ *
+ * Debugging Tips:
+ * - GET returns only current user's lap times (RLS enforced via userId filter)
+ * - buildName is stored as a snapshot (copied from CarBuild at creation time)
+ * - timeMs must be in milliseconds (e.g., 92345 = 1:32.345)
+ * - sessionType: 'R' = Race, 'P' = Practice, 'Q' = Qualifying
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
@@ -144,6 +157,14 @@ export async function POST(request: NextRequest) {
     if (!car) {
       return NextResponse.json({ error: 'Car not found' }, { status: 404 })
     }
+
+    // ============================================================
+    // BUILD NAME SNAPSHOT
+    // ============================================================
+    // buildName is stored as a snapshot at time of lap time creation
+    // This preserves the build name even if the build is later renamed or deleted
+    // If buildId is provided but build doesn't exist, buildName remains null
+    // ============================================================
 
     // Fetch build name if buildId is provided (store as snapshot)
     let buildName = null
