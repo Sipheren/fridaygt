@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { MapPin, Car, Plus, List, Trash2, Power } from 'lucide-react'
+import { MapPin, Car, Plus, List, Trash2, Power, Loader2 } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 import { PageWrapper, PageHeader, EmptyState, SearchBar } from '@/components/layout'
 import Link from 'next/link'
@@ -66,6 +66,7 @@ export default function RacesPage() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [showErrorDialog, setShowErrorDialog] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [togglingRaceId, setTogglingRaceId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchRaces()
@@ -145,6 +146,8 @@ export default function RacesPage() {
   }
 
   const toggleActiveRace = async (raceId: string, currentState: boolean) => {
+    setTogglingRaceId(raceId)
+
     try {
       const res = await fetch(`/api/races/${raceId}`, {
         method: 'PATCH',
@@ -159,7 +162,7 @@ export default function RacesPage() {
         return
       }
 
-      // Optimistically update the UI
+      // Update the UI with the new state
       setRaces(races.map(race =>
         race.id === raceId ? { ...race, isActive: !currentState } : race
       ))
@@ -167,6 +170,8 @@ export default function RacesPage() {
       console.error('Error toggling race active status:', error)
       setErrorMessage('Failed to update race')
       setShowErrorDialog(true)
+    } finally {
+      setTogglingRaceId(null)
     }
   }
 
@@ -342,14 +347,19 @@ export default function RacesPage() {
                   e.stopPropagation()
                   toggleActiveRace(race.id, race.isActive)
                 }}
+                disabled={togglingRaceId === race.id}
                 className={`shrink-0 h-11 w-11 sm:h-9 sm:w-9 ${
                   race.isActive
                     ? 'gt-hover-icon-btn-primary'
                     : 'text-muted-foreground hover:text-foreground'
-                }`}
+                } ${togglingRaceId === race.id ? 'animate-pulse' : ''}`}
                 title={race.isActive ? 'Deactivate race' : 'Activate race'}
               >
-                <Power className="h-4 w-4" />
+                {togglingRaceId === race.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Power className="h-4 w-4" />
+                )}
               </Button>
 
               {/* Delete Button */}
