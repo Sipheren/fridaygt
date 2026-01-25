@@ -453,11 +453,18 @@
 | trackId | text | NO | - | FK → Track |
 | name | text | YES | - | Race name |
 | description | text | YES | - | Race description |
+| laps | integer | YES | - | Number of laps (NEW - 2026-01-19) |
+| weather | text | YES | - | Weather: dry/wet (NEW - 2026-01-19) |
+| isActive | boolean | NO | false | Active for tonight's races (NEW - 2026-01-19) |
+| order | integer | YES | - | Display order on Tonight page (NEW - 2026-01-25) |
 | createdById | text | NO | - | FK → User (creator) |
 | createdAt | timestamp | NO | CURRENT_TIMESTAMP | - |
 | updatedAt | timestamp | NO | - | - |
 
+**Indexes:** createdById, createdAt, order
+
 **Purpose:** Central entity for track + car combinations. Can be reused across multiple run lists.
+**Tonight Page:** Shows all races where `isActive = true`, sorted by `order` ASC.
 
 ### RaceCar
 | Column | Type | Nullable | Default | Description |
