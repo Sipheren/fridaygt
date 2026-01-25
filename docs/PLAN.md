@@ -287,7 +287,7 @@ DEFAULT_ADMIN_EMAIL="admin@yourdomain.com"
 ## Development Logs
 
 For detailed session-by-session progress, see:
-- [`docs/SESSION-LOG.md`](SESSION-LOG.md) — Development session history (23 sessions)
+- [`docs/SESSION-LOG.md`](SESSION-LOG.md) — Development session history (26 sessions)
 - [`docs/DATABASE-SCHEMA.md`](DATABASE-SCHEMA.md) — Complete database structure
 - [`docs/DESIGN-SYSTEM.md`](DESIGN-SYSTEM.md) — UI/UX design system and patterns
 
@@ -297,6 +297,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-26 | #26 | Race detail page build navigation fix - Conditional linking to builds, deleted build handling with visual feedback |
 | 2026-01-25 | #25 | Tonight page race reordering - Drag-and-drop with @dnd-kit, mobile-first UX, optimistic updates, API enhancements |
 | 2026-01-25 | #24 | Complete dropdown standardization with mobile-first virtualization - SearchableComboBox enhancement, VirtualizedList component, helper functions, responsive width, track grouping fixes |
 | 2026-01-24 | #22 | Fixed gear columns implementation - migrated from CarBuildSetting to direct CarBuild columns, support for 20 gears, preserved formatting |
