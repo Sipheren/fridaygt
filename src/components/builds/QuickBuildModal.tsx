@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -56,6 +56,12 @@ export function QuickBuildModal({
   const [error, setError] = useState<string | null>(null)
 
   // Fetch cars when modal opens
+  useEffect(() => {
+    if (open && cars.length === 0) {
+      fetchCars()
+    }
+  }, [open])
+
   const fetchCars = async () => {
     try {
       setCarsLoading(true)
@@ -71,11 +77,8 @@ export function QuickBuildModal({
     }
   }
 
-  // Load cars when modal opens
+  // Pass through open change to parent
   const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen && cars.length === 0) {
-      fetchCars()
-    }
     onOpenChange(newOpen)
   }
 

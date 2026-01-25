@@ -57,7 +57,7 @@ Tonight Page → Shows all races where isActive = true
 
 ## Current Status
 
-**Date**: 2026-01-24
+**Date**: 2026-01-25
 **Branch**: `main`
 **Production URL**: https://fridaygt.vercel.app
 **Status**: Core features complete and deployed
@@ -250,7 +250,7 @@ DEFAULT_ADMIN_EMAIL="admin@yourdomain.com"
 ## Development Logs
 
 For detailed session-by-session progress, see:
-- [`docs/SESSION-LOG.md`](SESSION-LOG.md) — Development session history (17 sessions)
+- [`docs/SESSION-LOG.md`](SESSION-LOG.md) — Development session history (23 sessions)
 - [`docs/DATABASE-SCHEMA.md`](DATABASE-SCHEMA.md) — Complete database structure
 - [`docs/DESIGN-SYSTEM.md`](DESIGN-SYSTEM.md) — UI/UX design system and patterns
 
@@ -260,6 +260,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-25 | #23 | Fixed QuickBuildModal car list bug - added useEffect to fetch cars when dialog opens |
 | 2026-01-24 | #22 | Fixed gear columns implementation - migrated from CarBuildSetting to direct CarBuild columns, support for 20 gears, preserved formatting |
 | 2026-01-24 | #21 | Build detail page layout refinement - consistent item heights (72px), transmission 50% width, orange badges on all parts |
 | 2026-01-24 | #20 | Build detail page improvements - front/rear labels, units, gear ordering, orange values, responsive layout |
