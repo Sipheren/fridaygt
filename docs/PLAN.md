@@ -207,13 +207,17 @@ Tonight Page → Shows all races where isActive = true
 
 ## 🔜 Remaining Work
 
+### In Progress
+1. **Dropdown Standardization** — Consistent searchable, grouped dropdowns across all pages
+   - See [`docs/DROPDOWN-STANDARDIZATION-PLAN.md`](DROPDOWN-STANDARDIZATION-PLAN.md) for details
+
 ### Low Priority
-1. **Global Leaderboards Page** — Cross-race leaderboard view
-2. **Build Comparison** — Compare two builds side-by-side
-3. **Admin Dashboard** — Statistics and data management
-4. **Data Visualizations** — Lap time progress charts
-5. **Build Ratings/Favorites** — Community engagement
-6. **Redis Integration** — Production-ready rate limiting (currently using in-memory)
+2. **Global Leaderboards Page** — Cross-race leaderboard view
+3. **Build Comparison** — Compare two builds side-by-side
+4. **Admin Dashboard** — Statistics and data management
+5. **Data Visualizations** — Lap time progress charts
+6. **Build Ratings/Favorites** — Community engagement
+7. **Redis Integration** — Production-ready rate limiting (currently using in-memory)
 
 ---
 
