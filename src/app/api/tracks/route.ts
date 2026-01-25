@@ -19,7 +19,12 @@ export async function GET() {
       )
     }
 
-    return NextResponse.json({ tracks: data })
+    return NextResponse.json({ tracks: data }, {
+      headers: {
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+        'CDN-Cache-Control': 'public, max-age=3600',
+      }
+    })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json(

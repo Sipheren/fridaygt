@@ -3,16 +3,25 @@ import { NextRequest, NextResponse } from 'next/server'
 // In-memory store for rate limiting (use Redis for production)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
-// Clean up expired entries periodically
-setInterval(() => {
+/**
+ * Clean up expired entries from the rate limit store
+ * This is called lazily during rate limit checks instead of using a global interval
+ * to avoid memory leaks in serverless environments
+ */
+function cleanupExpiredEntries() {
   const now = Date.now()
   const entries = Array.from(rateLimitStore.entries())
+  let cleaned = 0
+
   for (const [key, value] of entries) {
     if (now > value.resetTime) {
       rateLimitStore.delete(key)
+      cleaned++
     }
   }
-}, 60000) // Clean up every minute
+
+  return cleaned
+}
 
 export interface RateLimitOptions {
   /** Number of requests allowed in the time window */
@@ -86,6 +95,12 @@ export async function checkRateLimit(
   request: NextRequest,
   options: RateLimitOptions = {}
 ): Promise<RateLimitResult> {
+  // Clean up expired entries (lazy cleanup to avoid memory leaks from global intervals)
+  // Only run cleanup periodically to avoid performance impact on every request
+  if (Math.random() < 0.1) { // 10% chance to run cleanup on each request
+    cleanupExpiredEntries()
+  }
+
   const opts = { ...defaultOptions, ...options }
 
   // Get identifier

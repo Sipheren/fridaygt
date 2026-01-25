@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth-utils'
 import { CreateLapTimeSchema, validateBody } from '@/lib/validation'
+import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 
 // GET /api/lap-times - Get user's lap times with optional filtering
 export async function GET(request: NextRequest) {
@@ -15,14 +17,19 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const trackId = searchParams.get('trackId')
     const carId = searchParams.get('carId')
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined
+    const limitParam = searchParams.get('limit')
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined
+
+    // Validate limit is a valid number
+    if (limitParam && (isNaN(limit as number) || (limit as number) < 1)) {
+      return NextResponse.json(
+        { error: 'Limit must be a positive number' },
+        { status: 400 }
+      )
+    }
 
     // Get user's ID
-    const { data: userData } = await supabase
-      .from('User')
-      .select('id')
-      .eq('email', session.user.email)
-      .single()
+    const userData = await getCurrentUser(session)
 
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -81,11 +88,19 @@ export async function GET(request: NextRequest) {
 // POST /api/lap-times - Create a new lap time
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      )
+    }
+
     const session = await auth()
-    console.log('[LAP TIME API] Session:', session?.user?.email)
 
     if (!session?.user?.email) {
-      console.log('[LAP TIME API] Unauthorized - no session')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -94,21 +109,15 @@ export async function POST(request: NextRequest) {
     // Validate request body with Zod
     const validationResult = await validateBody(CreateLapTimeSchema, body)
     if (!validationResult.success) {
-      console.log('[LAP TIME API] Validation failed:', validationResult.error)
       return NextResponse.json({ error: validationResult.error }, { status: 400 })
     }
 
     const { trackId, carId, buildId, timeMs, notes, conditions, sessionType } = validationResult.data
-    console.log('[LAP TIME API] Request:', { trackId, carId, buildId, timeMs, sessionType })
 
     const supabase = createServiceRoleClient()
 
     // Get user's ID
-    const { data: userData } = await supabase
-      .from('User')
-      .select('id')
-      .eq('email', session.user.email)
-      .single()
+    const userData = await getCurrentUser(session)
 
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -191,7 +200,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[LAP TIME API] Success! Created lap time:', lapTime?.id)
     return NextResponse.json({ lapTime }, { status: 201 })
   } catch (error) {
     console.error('[LAP TIME API] Unexpected error:', error)

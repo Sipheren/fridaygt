@@ -3,6 +3,7 @@ import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
 import type { DbRaceWithRelations, DbCarBuild } from '@/types/database'
 import { CreateRaceSchema, UpdateRaceSchema, validateBody } from '@/lib/validation'
+import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 
 // GET /api/races - List all races with run list associations
 export async function GET(req: NextRequest) {
@@ -41,8 +42,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch races' }, { status: 500 })
     }
 
-    console.log('Fetched races:', races?.length)
-
     // Sort: Active first, then by display name (only for non-active queries)
     let sortedRaces = races || []
     if (isActiveParam !== 'true') {
@@ -80,6 +79,16 @@ function getDisplayName(race: DbRaceWithRelations): string {
 // POST /api/races - Create a new race with builds
 export async function POST(req: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimit = await checkRateLimit(req, RateLimit.Mutation())
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      )
+    }
+
     // Check authentication
     const session = await auth()
     if (!session?.user?.id) {

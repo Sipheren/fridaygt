@@ -3,6 +3,10 @@ import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { isAdmin } from '@/lib/auth-utils'
 
+interface RejectUserBody {
+  reason?: string
+}
+
 // POST /api/admin/pending-users/[id]/reject - Reject a pending user
 export async function POST(
   request: NextRequest,
@@ -15,8 +19,31 @@ export async function POST(
     }
 
     const { id: userId } = await params
-    const body = await request.json()
+
+    // Parse and validate request body
+    let body: RejectUserBody = {}
+    try {
+      body = await request.json()
+    } catch {
+      // Body is optional, default to empty object
+    }
+
     const { reason } = body
+
+    // Validate reason if provided
+    if (reason !== undefined && typeof reason !== 'string') {
+      return NextResponse.json(
+        { error: 'Reason must be a string' },
+        { status: 400 }
+      )
+    }
+
+    if (reason !== undefined && reason.length > 500) {
+      return NextResponse.json(
+        { error: 'Reason must be 500 characters or less' },
+        { status: 400 }
+      )
+    }
 
     const supabase = createServiceRoleClient()
 
@@ -35,6 +62,10 @@ export async function POST(
       return NextResponse.json({ error: 'User is not pending' }, { status: 400 })
     }
 
+    // Log rejection with reason for audit trail
+    const adminEmail = session?.user?.email || 'unknown'
+    console.error(`[USER REJECTION] Admin: ${adminEmail} | User: ${user.email} (${user.id}) | Reason: ${reason || 'No reason provided'}`)
+
     // Delete the user (cascade will handle next_auth records)
     const { error: deleteError } = await supabase
       .from('User')
@@ -45,9 +76,6 @@ export async function POST(
       console.error('Error rejecting user:', deleteError)
       return NextResponse.json({ error: 'Failed to reject user' }, { status: 500 })
     }
-
-    // Optionally send rejection email
-    // (Skipping for now, but could be added)
 
     return NextResponse.json({
       success: true,

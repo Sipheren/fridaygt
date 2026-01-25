@@ -66,3 +66,16 @@ export function isValidLapTime(ms: number): boolean {
   // Between 10 seconds and 30 minutes
   return ms >= 10000 && ms <= 1800000
 }
+
+/**
+ * Format a date string to a localized date format
+ * @param dateString - ISO date string
+ * @returns Formatted date string (e.g., "Jan 15, 2025")
+ */
+export function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}

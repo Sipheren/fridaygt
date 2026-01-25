@@ -47,6 +47,7 @@ export default function AdminUsersPage() {
   })
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<Message | null>(null)
+  const [isForbidden, setIsForbidden] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -66,6 +67,11 @@ export default function AdminUsersPage() {
       const res = await fetch('/api/admin/users')
       if (res.status === 401) {
         router.push('/')
+        return
+      }
+      if (res.status === 403) {
+        setIsForbidden(true)
+        setLoading(false)
         return
       }
       const data = await res.json()
@@ -193,6 +199,27 @@ export default function AdminUsersPage() {
     return (
       <PageWrapper>
         <LoadingSection text="Loading users..." />
+      </PageWrapper>
+    )
+  }
+
+  if (isForbidden) {
+    return (
+      <PageWrapper>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+            <Shield className="h-10 w-10 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold">Access Denied</h1>
+            <p className="text-muted-foreground text-lg">Admin access required</p>
+            <p className="text-muted-foreground text-sm">This page is only accessible to administrators.</p>
+          </div>
+          <Button onClick={() => router.push('/')} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+        </div>
       </PageWrapper>
     )
   }

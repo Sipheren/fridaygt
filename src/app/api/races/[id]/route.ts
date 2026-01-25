@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
+import { getCurrentUser, isAdmin } from '@/lib/auth-utils'
 import { UpdateRaceSchema, validateBody } from '@/lib/validation'
 import type { DbRace, DbRaceCar, DbCarBuild, DbUser, DbTrack, DbLapTime, DbCar } from '@/types/database'
+import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 
 // Enriched lap time type with nested user and car data
 type DbLapTimeWithRelations = DbLapTime & {
@@ -167,11 +169,7 @@ export async function GET(
     const session = await auth()
     let userStats = null
     if (session?.user?.email) {
-      const { data: userData } = await supabase
-        .from('User')
-        .select('id')
-        .eq('email', session.user.email)
-        .single()
+      const userData = await getCurrentUser(session)
 
       if (userData) {
         const userLapTimes = (lapTimes || []).filter((lt: any) => lt.user?.id === userData.id)
@@ -231,6 +229,16 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Apply rate limiting
+    const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      )
+    }
+
     const { id } = await params
     const session = await auth()
     if (!session?.user?.email) {
@@ -249,12 +257,8 @@ export async function PATCH(
 
     const supabase = createServiceRoleClient()
 
-    // Get user's ID
-    const { data: userData } = await supabase
-      .from('User')
-      .select('id, role')
-      .eq('email', session.user.email)
-      .single()
+    // Get user's ID and role
+    const userData = await getCurrentUser(session, ['id', 'role'])
 
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -273,9 +277,8 @@ export async function PATCH(
 
     // Check if user is creator or admin
     const isCreator = existingRace.createdById === userData.id
-    const isAdmin = userData.role === 'ADMIN'
 
-    if (!isCreator && !isAdmin) {
+    if (!isCreator && !isAdmin(session)) {
       return NextResponse.json(
         { error: 'Access denied - only the creator or admins can edit this race' },
         { status: 403 }
@@ -434,6 +437,16 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Apply rate limiting
+    const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      )
+    }
+
     const { id } = await params
     const session = await auth()
     if (!session?.user?.email) {
@@ -442,12 +455,8 @@ export async function DELETE(
 
     const supabase = createServiceRoleClient()
 
-    // Get user's ID
-    const { data: userData } = await supabase
-      .from('User')
-      .select('id, role')
-      .eq('email', session.user.email)
-      .single()
+    // Get user's ID and role
+    const userData = await getCurrentUser(session, ['id', 'role'])
 
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -466,9 +475,8 @@ export async function DELETE(
 
     // Check if user is creator or admin
     const isCreator = existingRace.createdById === userData.id
-    const isAdmin = userData.role === 'ADMIN'
 
-    if (!isCreator && !isAdmin) {
+    if (!isCreator && !isAdmin(session)) {
       return NextResponse.json(
         { error: 'Access denied - only the creator or admins can delete this race' },
         { status: 403 }

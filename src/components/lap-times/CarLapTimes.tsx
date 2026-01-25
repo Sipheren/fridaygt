@@ -6,53 +6,18 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Clock, Trophy, Plus, MapPin, Target, Wrench } from 'lucide-react'
 import Link from 'next/link'
-
-interface Track {
-  id: string
-  name: string
-  slug: string
-  location: string | null
-  length: number | null
-}
-
-interface LapTime {
-  id: string
-  timeMs: number
-  notes: string | null
-  conditions: string | null
-  createdAt: string
-  buildId: string | null
-  buildName: string | null
-  user: {
-    id: string
-    name: string | null
-    email: string
-  }
-}
-
-interface TrackLapData {
-  track: Track
-  personalBest: number
-  totalLaps: number
-  recentLapTimes: LapTime[]
-}
-
-interface Statistics {
-  totalLaps: number
-  fastestTime: number | null
-  averageTime: number | null
-  uniqueTracks: number
-  uniqueDrivers: number
-}
-
-interface CarLapTimesProps {
-  carSlug: string
-  carName: string
-}
+import { formatLapTime, formatDate } from '@/lib/time'
+import type {
+  ComponentTrack,
+  ComponentLapTime,
+  TrackLapData,
+  LapTimeStatistics,
+  CarLapTimesProps,
+} from '@/types/components'
 
 export function CarLapTimes({ carSlug, carName }: CarLapTimesProps) {
   const [lapTimesByTrack, setLapTimesByTrack] = useState<TrackLapData[]>([])
-  const [statistics, setStatistics] = useState<Statistics | null>(null)
+  const [statistics, setStatistics] = useState<LapTimeStatistics | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -72,24 +37,6 @@ export function CarLapTimes({ carSlug, carName }: CarLapTimesProps) {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatLapTime = (timeMs: number): string => {
-    const totalSeconds = timeMs / 1000
-    const minutes = Math.floor(totalSeconds / 60)
-    const seconds = Math.floor(totalSeconds % 60)
-    const milliseconds = timeMs % 1000
-
-    return `${minutes}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`
-  }
-
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    })
   }
 
   if (loading) {

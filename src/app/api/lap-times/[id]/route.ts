@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth-utils'
 
 // DELETE /api/lap-times/[id] - Delete a lap time
 export async function DELETE(
@@ -17,11 +18,7 @@ export async function DELETE(
     const supabase = createServiceRoleClient()
 
     // Get user's ID
-    const { data: userData } = await supabase
-      .from('User')
-      .select('id')
-      .eq('email', session.user.email)
-      .single()
+    const userData = await getCurrentUser(session)
 
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })

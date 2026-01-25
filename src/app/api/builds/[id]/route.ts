@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
-import { nanoid } from 'nanoid'
+import { getCurrentUser, isAdmin } from '@/lib/auth-utils'
 import { UpdateBuildSchema, validateBody } from '@/lib/validation'
 import type {
   DbCarBuildUpgrade,
@@ -11,6 +11,7 @@ import type {
   DbTuningSetting,
   DbTuningSection,
 } from '@/types/database'
+import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 
 export async function GET(
   request: NextRequest,
@@ -62,11 +63,7 @@ export async function GET(
     let canView = build.isPublic
 
     if (session?.user?.email) {
-      const { data: userData } = await supabase
-        .from('User')
-        .select('id')
-        .eq('email', session.user.email)
-        .single()
+      const userData = await getCurrentUser(session)
 
       if (userData && userData.id === build.userId) {
         canView = true
@@ -80,25 +77,39 @@ export async function GET(
       )
     }
 
-    // Get lap time statistics for this build
-    const { data: lapTimes } = await supabase
+    // Get lap time statistics for this build using optimized queries
+    // Run COUNT and MIN queries in parallel (both database-level operations)
+    const [{ count: totalLaps }, { data: fastestLap }] = await Promise.all([
+      // Count total laps using Supabase count (database-level, no data transfer)
+      supabase
+        .from('LapTime')
+        .select('id', { count: 'exact', head: true })
+        .eq('buildId', id),
+
+      // Get fastest time using optimized query (ORDER BY + LIMIT 1 uses index)
+      supabase
+        .from('LapTime')
+        .select('timeMs')
+        .eq('buildId', id)
+        .order('timeMs', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+    ])
+
+    // Fetch only timeMs and trackId for remaining calculations (smaller dataset)
+    const { data: lapTimesData } = await supabase
       .from('LapTime')
       .select('timeMs, trackId')
       .eq('buildId', id)
 
     const statistics = {
-      totalLaps: lapTimes?.length || 0,
-      fastestTime: lapTimes && lapTimes.length > 0
-        ? Math.min(...lapTimes.map(lt => lt.timeMs))
+      totalLaps: totalLaps || 0,
+      fastestTime: fastestLap?.timeMs || null,
+      averageTime: lapTimesData && lapTimesData.length > 0
+        ? Math.round(lapTimesData.reduce((sum, lt) => sum + lt.timeMs, 0) / lapTimesData.length)
         : null,
-      averageTime: lapTimes && lapTimes.length > 0
-        ? Math.round(lapTimes.reduce((sum, lt) => sum + lt.timeMs, 0) / lapTimes.length)
-        : null,
-      uniqueTracks: new Set(lapTimes?.map(lt => lt.trackId)).size,
+      uniqueTracks: new Set(lapTimesData?.map(lt => lt.trackId)).size,
     }
-
-    console.log('[GET] Build settings from DB:', settings?.length || 0, 'settings')
-    console.log('[GET] Settings data:', JSON.stringify(settings, null, 2))
 
     // Transform settings to use 'section' instead of 'category' for frontend compatibility
     const transformedSettings = settings?.map((setting: any) => {
@@ -127,6 +138,16 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Apply rate limiting
+    const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      )
+    }
+
     const { id } = await params
     const session = await auth()
 
@@ -139,12 +160,8 @@ export async function PATCH(
 
     const supabase = createServiceRoleClient()
 
-    // Get current user
-    const { data: userData } = await supabase
-      .from('User')
-      .select('id')
-      .eq('email', session.user.email)
-      .single()
+    // Get current user (with id and role fields for authorization)
+    const userData = await getCurrentUser(session, ['id', 'role'])
 
     if (!userData) {
       return NextResponse.json(
@@ -167,18 +184,10 @@ export async function PATCH(
       )
     }
 
-    // Get current user's role to determine permissions
-    const { data: currentUserData } = await supabase
-      .from('User')
-      .select('role')
-      .eq('id', userData.id)
-      .single()
-
-    const isAdmin = currentUserData?.role === 'ADMIN'
     const isOwner = existingBuild.userId === userData.id
 
     // User must be admin or owner to modify the build
-    if (!isAdmin && !isOwner) {
+    if (!isAdmin(session) && !isOwner) {
       return NextResponse.json(
         { error: 'Unauthorized to modify this build' },
         { status: 403 }
@@ -324,27 +333,15 @@ export async function PATCH(
 
         let partDetails: any[] = []
         if (partIds.length > 0) {
-          // Fetch parts with category details using a separate query
+          // Fetch parts with category details using JOIN query
           const { data: parts } = await supabase
             .from('Part')
-            .select('id, name, categoryId')
+            .select('id, name, category:PartCategory(id, name)')
             .in('id', partIds)
 
-          // Fetch categories separately
-          const categoryIds = parts?.map(p => p.categoryId) || []
-          let categories: any[] = []
-          if (categoryIds.length > 0) {
-            const { data: cats } = await supabase
-              .from('PartCategory')
-              .select('id, name')
-              .in('id', categoryIds)
-            categories = cats || []
-          }
-
-          const categoryMap = new Map(categories.map(c => [c.id, c.name]))
           partDetails = (parts || []).map(p => ({
             ...p,
-            categoryName: categoryMap.get(p.categoryId) || ''
+            categoryName: (p.category as any)?.name || ''
           }))
         }
 
@@ -355,7 +352,7 @@ export async function PATCH(
           .map((upgrade) => {
             const part = partMap.get(upgrade.partId!)
             return {
-              id: nanoid(),
+              id: crypto.randomUUID(),
               buildId: id,
               partId: upgrade.partId,
               category: part?.categoryName || '',
@@ -407,27 +404,15 @@ export async function PATCH(
 
         let settingDetails: any[] = []
         if (settingIds.length > 0) {
-          // Fetch settings with section details using separate queries
+          // Fetch settings with section details using JOIN query
           const { data: tuningSettings } = await supabase
             .from('TuningSetting')
-            .select('id, name, sectionId')
+            .select('id, name, section:TuningSection(id, name)')
             .in('id', settingIds)
 
-          // Fetch sections separately
-          const sectionIds = tuningSettings?.map(s => s.sectionId) || []
-          let sections: any[] = []
-          if (sectionIds.length > 0) {
-            const { data: secs } = await supabase
-              .from('TuningSection')
-              .select('id, name')
-              .in('id', sectionIds)
-            sections = secs || []
-          }
-
-          const sectionMap = new Map(sections.map(s => [s.id, s.name]))
           settingDetails = (tuningSettings || []).map(s => ({
             ...s,
-            sectionName: sectionMap.get(s.sectionId) || ''
+            sectionName: (s.section as any)?.name || ''
           }))
         }
 
@@ -438,7 +423,7 @@ export async function PATCH(
           .map((setting: any) => {
             const tuningSetting = settingMap.get(setting.settingId!)
             return {
-              id: nanoid(),
+              id: crypto.randomUUID(),
               buildId: id,
               settingId: setting.settingId,
               category: tuningSetting?.sectionName || '',
@@ -476,9 +461,6 @@ export async function PATCH(
       .select('id, buildId, settingId, category, setting, value')
       .eq('buildId', id)
 
-    console.log('[PATCH] Updated build settings:', updatedSettings?.length || 0, 'settings')
-    console.log('[PATCH] Settings data:', JSON.stringify(updatedSettings, null, 2))
-
     // Transform settings to use 'section' instead of 'category' for frontend compatibility
     const transformedSettings = updatedSettings?.map((setting: any) => {
       return {
@@ -486,8 +468,6 @@ export async function PATCH(
         section: setting.setting?.section?.name || setting.category,
       }
     }) || []
-
-    console.log('[PATCH] Transformed settings:', transformedSettings.length)
 
     return NextResponse.json({
       ...updatedBuild,
@@ -507,6 +487,16 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Apply rate limiting
+    const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      )
+    }
+
     const { id } = await params
     const session = await auth()
 
@@ -520,11 +510,7 @@ export async function DELETE(
     const supabase = createServiceRoleClient()
 
     // Get current user
-    const { data: userData } = await supabase
-      .from('User')
-      .select('id')
-      .eq('email', session.user.email)
-      .single()
+    const userData = await getCurrentUser(session)
 
     if (!userData) {
       return NextResponse.json(

@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 
-export const dynamic = 'force-dynamic'
-
 export async function GET() {
   try {
     const supabase = createServiceRoleClient()
@@ -14,7 +12,12 @@ export async function GET() {
 
     if (error) throw error
 
-    return NextResponse.json({ categories })
+    return NextResponse.json({ categories }, {
+      headers: {
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+        'CDN-Cache-Control': 'public, max-age=3600',
+      }
+    })
   } catch (error) {
     console.error('Error fetching part categories:', error)
     return NextResponse.json(

@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
+import { isAdmin } from '@/lib/auth-utils'
 
 export async function GET(request: NextRequest) {
   try {
     const session = await auth()
+
+    // Check authentication
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check authorization - only admins can view users list
+    if (!isAdmin(session)) {
+      return NextResponse.json({ error: 'Forbidden - admin access required' }, { status: 403 })
+    }
+
     const supabase = createServiceRoleClient()
     const { searchParams } = new URL(request.url)
     const activeOnly = searchParams.get('active') === 'true'

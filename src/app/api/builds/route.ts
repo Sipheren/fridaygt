@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
-import { nanoid } from 'nanoid'
+import { getCurrentUser } from '@/lib/auth-utils'
 import type { DbPart, DbPartCategory, DbTuningSetting, DbTuningSection } from '@/types/database'
 import { CreateBuildSchema, validateBody } from '@/lib/validation'
+import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
 
     const carId = searchParams.get('carId')
     const userId = searchParams.get('userId')
+    const ids = searchParams.get('ids')
     const publicOnly = searchParams.get('public') === 'true'
     const myBuilds = searchParams.get('myBuilds') === 'true'
 
@@ -29,6 +31,14 @@ export async function GET(request: NextRequest) {
         car:Car(id, name, slug, manufacturer, year)
       `)
       .order('createdAt', { ascending: false })
+
+    // Filter by multiple IDs if specified (for batch fetching)
+    if (ids) {
+      const idArray = ids.split(',').filter(id => id.trim().length > 0)
+      if (idArray.length > 0) {
+        query = query.in('id', idArray)
+      }
+    }
 
     // Filter by car if specified
     if (carId) {
@@ -47,11 +57,7 @@ export async function GET(request: NextRequest) {
 
     // Filter to current user's builds
     if (myBuilds && session?.user?.email) {
-      const { data: userData } = await supabase
-        .from('User')
-        .select('id')
-        .eq('email', session.user.email)
-        .single()
+      const userData = await getCurrentUser(session)
 
       if (userData) {
         query = query.eq('userId', userData.id)
@@ -80,6 +86,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      )
+    }
+
     const session = await auth()
 
     if (!session?.user?.email) {
@@ -92,13 +108,9 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceRoleClient()
 
     // Get current user
-    const { data: userData, error: userError } = await supabase
-      .from('User')
-      .select('id')
-      .eq('email', session.user.email)
-      .single()
+    const userData = await getCurrentUser(session)
 
-    if (userError || !userData) {
+    if (!userData) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -177,7 +189,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the build with gear fields
-    const buildId = nanoid()
+    const buildId = crypto.randomUUID()
     const now = new Date().toISOString()
 
     // Prepare gear fields (empty string becomes null)
@@ -218,27 +230,15 @@ export async function POST(request: NextRequest) {
 
       let partDetails: any[] = []
       if (partIds.length > 0) {
-        // Fetch parts with category details
+        // Fetch parts with category details using JOIN query
         const { data: parts } = await supabase
           .from('Part')
-          .select('id, name, categoryId')
+          .select('id, name, category:PartCategory(id, name)')
           .in('id', partIds)
 
-        // Fetch categories separately
-        const categoryIds = parts?.map(p => p.categoryId) || []
-        let categories: any[] = []
-        if (categoryIds.length > 0) {
-          const { data: cats } = await supabase
-            .from('PartCategory')
-            .select('id, name')
-            .in('id', categoryIds)
-          categories = cats || []
-        }
-
-        const categoryMap = new Map(categories.map(c => [c.id, c.name]))
         partDetails = (parts || []).map(p => ({
           ...p,
-          categoryName: categoryMap.get(p.categoryId) || ''
+          categoryName: (p.category as any)?.name || ''
         }))
       }
 
@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
         .map(upgrade => {
           const part = partMap.get(upgrade.partId)
           return {
-            id: nanoid(),
+            id: crypto.randomUUID(),
             buildId,
             partId: upgrade.partId,
             category: part?.categoryName || '',
@@ -279,27 +279,15 @@ export async function POST(request: NextRequest) {
 
       let settingDetails: any[] = []
       if (settingIds.length > 0) {
-        // Fetch settings with section details
+        // Fetch settings with section details using JOIN query
         const { data: tuningSettings } = await supabase
           .from('TuningSetting')
-          .select('id, name, sectionId')
+          .select('id, name, section:TuningSection(id, name)')
           .in('id', settingIds)
 
-        // Fetch sections separately
-        const sectionIds = tuningSettings?.map(s => s.sectionId) || []
-        let sections: any[] = []
-        if (sectionIds.length > 0) {
-          const { data: secs } = await supabase
-            .from('TuningSection')
-            .select('id, name')
-            .in('id', sectionIds)
-          sections = secs || []
-        }
-
-        const sectionMap = new Map(sections.map(s => [s.id, s.name]))
         settingDetails = (tuningSettings || []).map(s => ({
           ...s,
-          sectionName: sectionMap.get(s.sectionId) || ''
+          sectionName: (s.section as any)?.name || ''
         }))
       }
 
@@ -309,7 +297,7 @@ export async function POST(request: NextRequest) {
         .map((setting: any) => {
           const tuningSetting = settingMap.get(setting.settingId)
           return {
-            id: nanoid(),
+            id: crypto.randomUUID(),
             buildId,
             settingId: setting.settingId,
             category: tuningSetting?.sectionName || '',
@@ -323,7 +311,7 @@ export async function POST(request: NextRequest) {
       const customGearRecords = customGears.map((gear: any) => {
         const gearName = gear.settingId.replace('custom:', '')
         return {
-          id: nanoid(),
+          id: crypto.randomUUID(),
           buildId,
           settingId: null,
           category: 'Transmission',

@@ -158,29 +158,3 @@ export function handleApiError(error: unknown): NextResponse {
     { status: 500 }
   )
 }
-
-// Wrapper for API route handlers
-export function withErrorHandler<T>(
-  handler: (args: T) => Promise<NextResponse>
-): (args: T) => Promise<NextResponse> {
-  return async (args: T): Promise<NextResponse> => {
-    try {
-      return await handler(args)
-    } catch (error) {
-      return handleApiError(error)
-    }
-  }
-}
-
-// Async wrapper for API routes with request/response
-export function asyncHandler(
-  handler: (req: Request, context?: any) => Promise<NextResponse>
-) {
-  return async (req: Request, context?: any): Promise<NextResponse> => {
-    try {
-      return await handler(req, context)
-    } catch (error) {
-      return handleApiError(error)
-    }
-  }
-}

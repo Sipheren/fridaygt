@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,6 +27,16 @@ export default function ProfilePage() {
   const [name, setName] = useState('')
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const successTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     fetchProfile()
@@ -74,6 +84,16 @@ export default function ProfilePage() {
 
       setProfile(data.user)
       setSuccess(true)
+
+      // Clear existing timeout before setting a new one
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current)
+      }
+
+      // Auto-hide success message after 3 seconds
+      successTimeoutRef.current = setTimeout(() => {
+        setSuccess(false)
+      }, 3000)
 
       // Update session
       await update({

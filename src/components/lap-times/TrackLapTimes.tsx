@@ -6,40 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatLapTime } from '@/lib/time'
 import { Clock, Trophy, Plus, Car as CarIcon, TrendingDown } from 'lucide-react'
-
-interface Car {
-  id: string
-  name: string
-  slug: string
-  manufacturer: string
-  year: number | null
-}
-
-interface LapTime {
-  id: string
-  timeMs: number
-  notes: string | null
-  conditions: string | null
-  createdAt: string
-  user: {
-    id: string
-    name: string | null
-    email: string
-  }
-  car: Car
-}
-
-interface LapTimesByCarGroup {
-  car: Car
-  personalBest: number
-  totalLaps: number
-  recentLapTimes: LapTime[]
-}
-
-interface TrackLapTimesProps {
-  trackSlug: string
-  trackName: string
-}
+import type {
+  ComponentCar,
+  ComponentLapTime,
+  LapTimesByCarGroup,
+  TrackLapTimesProps,
+} from '@/types/components'
 
 export function TrackLapTimes({ trackSlug, trackName }: TrackLapTimesProps) {
   const [lapTimesByCar, setLapTimesByCar] = useState<LapTimesByCarGroup[]>([])

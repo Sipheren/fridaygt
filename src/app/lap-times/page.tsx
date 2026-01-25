@@ -69,13 +69,17 @@ export default function LapTimesPage() {
     )
   }, [lapTimes, searchQuery])
 
-  // Memoized personal best calculator
-  const getPersonalBest = useCallback((trackId: string, carId: string) => {
-    const times = lapTimes.filter(
-      (lap) => lap.track.id === trackId && lap.car.id === carId
-    )
-    if (times.length === 0) return null
-    return Math.min(...times.map((t) => t.timeMs))
+  // Pre-compute personal bests for all track/car combinations
+  const personalBestsMap = useMemo(() => {
+    const map = new Map<string, number>()
+    lapTimes.forEach((lap) => {
+      const key = `${lap.track.id}-${lap.car.id}`
+      const currentBest = map.get(key)
+      if (!currentBest || lap.timeMs < currentBest) {
+        map.set(key, lap.timeMs)
+      }
+    })
+    return map
   }, [lapTimes])
 
   // Load lap times
@@ -179,7 +183,8 @@ export default function LapTimesPage() {
       ) : (
         <div className="space-y-3">
           {filteredLapTimes.map((lap) => {
-            const personalBest = getPersonalBest(lap.track.id, lap.car.id)
+            const key = `${lap.track.id}-${lap.car.id}`
+            const personalBest = personalBestsMap.get(key)
             const isPersonalBest = lap.timeMs === personalBest
 
             return (

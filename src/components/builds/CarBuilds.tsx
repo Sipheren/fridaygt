@@ -6,30 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Wrench, Plus, Globe, Lock, User, Calendar } from 'lucide-react'
 import Link from 'next/link'
-
-interface Build {
-  id: string
-  name: string
-  description: string | null
-  isPublic: boolean
-  createdAt: string
-  updatedAt: string
-  user: {
-    id: string
-    name: string | null
-    email: string
-  }
-  _count?: {
-    upgrades: number
-    settings: number
-  }
-}
-
-interface Statistics {
-  totalBuilds: number
-  publicBuilds: number
-  privateBuilds: number
-}
+import { formatDate } from '@/lib/time'
+import type {
+  ComponentBuild,
+  BuildStatistics,
+} from '@/types/components'
 
 interface CarBuildsProps {
   carId: string
@@ -37,8 +18,8 @@ interface CarBuildsProps {
 }
 
 export function CarBuilds({ carId, carName }: CarBuildsProps) {
-  const [builds, setBuilds] = useState<Build[]>([])
-  const [statistics, setStatistics] = useState<Statistics | null>(null)
+  const [builds, setBuilds] = useState<ComponentBuild[]>([])
+  const [statistics, setStatistics] = useState<BuildStatistics | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -54,11 +35,21 @@ export function CarBuilds({ carId, carName }: CarBuildsProps) {
       const buildsData = data.builds || []
       setBuilds(buildsData)
 
-      // Calculate statistics
+      // Calculate statistics (optimized: single pass through array)
+      let publicCount = 0
+      let privateCount = 0
+      for (const build of buildsData) {
+        if (build.isPublic) {
+          publicCount++
+        } else {
+          privateCount++
+        }
+      }
+
       const stats = {
         totalBuilds: buildsData.length,
-        publicBuilds: buildsData.filter((b: Build) => b.isPublic).length,
-        privateBuilds: buildsData.filter((b: Build) => !b.isPublic).length,
+        publicBuilds: publicCount,
+        privateBuilds: privateCount,
       }
       setStatistics(stats)
     } catch (error) {
@@ -66,15 +57,6 @@ export function CarBuilds({ carId, carName }: CarBuildsProps) {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    })
   }
 
   if (loading) {

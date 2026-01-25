@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
+import { isAdmin } from '@/lib/auth-utils'
 import { z } from 'zod'
 
 // Validation schema for reorder request
@@ -15,6 +16,11 @@ export async function POST(req: NextRequest) {
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check authorization - only admins can reorder races
+    if (!isAdmin(session)) {
+      return NextResponse.json({ error: 'Forbidden - admin access required' }, { status: 403 })
     }
 
     const body = await req.json()
@@ -50,17 +56,20 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Update order for each race (first ID = 1, second = 2, etc.)
-    for (let i = 0; i < raceIds.length; i++) {
-      const { error: updateError } = await supabase
-        .from('Race')
-        .update({ order: i + 1 })
-        .eq('id', raceIds[i])
+    // Update order atomically using RPC function to prevent race conditions
+    // This performs all updates in a single database transaction
+    const orderValues = raceIds.map((_, i) => i + 1)
+    const { error: updateError } = await supabase.rpc('reorder_races_atomic', {
+      race_ids: raceIds,
+      new_order: orderValues
+    })
 
-      if (updateError) {
-        console.error('Error updating race order:', updateError)
-        return NextResponse.json({ error: 'Failed to update race order' }, { status: 500 })
-      }
+    if (updateError) {
+      console.error('Error updating race order:', updateError)
+      return NextResponse.json(
+        { error: 'Failed to update race order', details: updateError.message },
+        { status: 500 }
+      )
     }
 
     // Fetch and return updated races

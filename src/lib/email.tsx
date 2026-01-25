@@ -45,7 +45,8 @@ export async function sendUserRemovalNotification(adminEmails: string[], removed
     />
   )
 
-  await Promise.all(
+  // Use Promise.allSettled to ensure all emails are attempted even if some fail
+  const results = await Promise.allSettled(
     adminEmails.map((email) =>
       resend.emails.send({
         from: process.env.EMAIL_FROM!,
@@ -55,4 +56,10 @@ export async function sendUserRemovalNotification(adminEmails: string[], removed
       })
     )
   )
+
+  // Log any failures without throwing
+  const failures = results.filter((r) => r.status === 'rejected')
+  if (failures.length > 0) {
+    console.error(`Failed to send ${failures.length} of ${adminEmails.length} user removal notifications:`, failures)
+  }
 }

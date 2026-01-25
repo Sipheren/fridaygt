@@ -1,15 +1,26 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { sendApprovalNotification, sendUserRemovalNotification } from '@/lib/email'
 import { isAdmin } from '@/lib/auth-utils'
 import { UpdateUserRoleSchema, UpdateUserProfileSchema, validateBody } from '@/lib/validation'
 import type { DbUser } from '@/types/database'
+import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Apply rate limiting
+  const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
+
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: rateLimitHeaders(rateLimit) }
+    )
+  }
+
   const session = await auth()
 
   if (!isAdmin(session)) {
@@ -105,9 +116,19 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Apply rate limiting
+  const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
+
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: rateLimitHeaders(rateLimit) }
+    )
+  }
+
   const session = await auth()
 
   if (!isAdmin(session)) {
@@ -168,16 +189,11 @@ export async function DELETE(
       .map((a: any) => a.email)
       .filter((e: string | null): e is string => e !== null && e !== '')
 
-    console.log(`Sending user removal notification to ${adminEmails.length} admins:`, adminEmails)
-
     try {
       await sendUserRemovalNotification(adminEmails, user.email, session.user?.email || 'Admin')
-      console.log('User removal notification sent successfully')
     } catch (emailError) {
       console.error('Failed to send removal notification email:', emailError)
     }
-  } else {
-    console.log('Skipping user removal notification - no admins found or no user email')
   }
 
   return NextResponse.json({ success: true })

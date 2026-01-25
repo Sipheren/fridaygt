@@ -89,8 +89,6 @@ export async function POST(
           </html>
         `,
       })
-
-      console.log(`Approval email sent to ${user.email}`)
     } catch (emailError) {
       console.error('Error sending approval email:', emailError)
       // Don't fail the request if email fails

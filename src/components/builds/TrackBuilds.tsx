@@ -6,38 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Wrench, Globe, Lock, User, Calendar, Trophy } from 'lucide-react'
 import Link from 'next/link'
-import { formatLapTime } from '@/lib/time'
-
-interface Build {
-  id: string
-  name: string
-  description: string | null
-  isPublic: boolean
-  createdAt: string
-  user: {
-    id: string
-    name: string | null
-    email: string
-  }
-  car: {
-    id: string
-    name: string
-    slug: string
-    manufacturer: string
-  }
-  stats?: {
-    lapCount: number
-    bestTime: number | null
-  }
-}
-
-interface TrackBuildsProps {
-  trackId: string
-  trackName: string
-}
+import { formatLapTime, formatDate } from '@/lib/time'
+import type { BuildWithCarStats, TrackBuildsProps } from '@/types/components'
 
 export function TrackBuilds({ trackId, trackName }: TrackBuildsProps) {
-  const [builds, setBuilds] = useState<Build[]>([])
+  const [builds, setBuilds] = useState<BuildWithCarStats[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -75,36 +48,24 @@ export function TrackBuilds({ trackId, trackName }: TrackBuildsProps) {
         return
       }
 
-      // Fetch build details for each buildId
-      const buildPromises = Array.from(buildIds).map(buildId =>
-        fetch(`/api/builds/${buildId}`)
-          .then(res => res.json())
-          .catch(() => null)
-      )
+      // Batch fetch build details in a single request
+      const idsParam = Array.from(buildIds).join(',')
+      const buildsResponse = await fetch(`/api/builds?ids=${idsParam}`)
+      const buildsData = await buildsResponse.json()
 
-      const buildResponses = await Promise.all(buildPromises)
-      const buildsData = buildResponses
-        .filter(data => data && !data.error)
-        .map(data => ({
+      const enrichedBuilds = buildsData.builds
+        .filter((data: any) => data && !data.error)
+        .map((data: any) => ({
           ...data,
           stats: buildStats.get(data.id)
         }))
 
-      setBuilds(buildsData)
+      setBuilds(enrichedBuilds)
     } catch (error) {
       console.error('Error fetching builds:', error)
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    })
   }
 
   if (loading) {

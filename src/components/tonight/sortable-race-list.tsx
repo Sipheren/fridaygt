@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import {
   DndContext,
   DragEndEvent,
@@ -70,6 +70,15 @@ export function SortableRaceList({ initialRaces }: SortableRaceListProps) {
   const [previousRaces, setPreviousRaces] = useState<Race[]>(initialRaces)
   const [isSaving, setIsSaving] = useState(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+
+  // Cleanup timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Configure sensors for drag and drop
   // Using long-press activation for touch to prevent accidental drags

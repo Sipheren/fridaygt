@@ -1,14 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
-import { nanoid } from 'nanoid'
 import type { DbCarBuildUpgrade, DbCarBuildSetting } from '@/types/database'
+import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Apply rate limiting
+    const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      )
+    }
+
     const { id } = await params
     const session = await auth()
 
@@ -66,7 +76,7 @@ export async function POST(
     }
 
     // Create the cloned build
-    const newBuildId = nanoid()
+    const newBuildId = crypto.randomUUID()
     const now = new Date().toISOString()
     const { data: newBuild, error: buildError } = await supabase
       .from('CarBuild')
@@ -96,31 +106,43 @@ export async function POST(
     // Clone upgrades
     if (originalBuild.upgrades && originalBuild.upgrades.length > 0) {
       const upgradeRecords = originalBuild.upgrades.map((upgrade: any) => ({
-        id: nanoid(),
+        id: crypto.randomUUID(),
         buildId: newBuildId,
         category: upgrade.category,
         part: upgrade.part,
         value: upgrade.value,
       }))
 
-      await supabase
+      const { error: upgradesError } = await supabase
         .from('CarBuildUpgrade')
         .insert(upgradeRecords)
+
+      if (upgradesError) {
+        console.error('Error cloning upgrades:', upgradesError)
+        // Don't fail the entire operation, but log the error
+        // The build is created, just without upgrades
+      }
     }
 
     // Clone settings
     if (originalBuild.settings && originalBuild.settings.length > 0) {
       const settingRecords = originalBuild.settings.map((setting: any) => ({
-        id: nanoid(),
+        id: crypto.randomUUID(),
         buildId: newBuildId,
         category: setting.category,
         setting: setting.setting,
         value: setting.value,
       }))
 
-      await supabase
+      const { error: settingsError } = await supabase
         .from('CarBuildSetting')
         .insert(settingRecords)
+
+      if (settingsError) {
+        console.error('Error cloning settings:', settingsError)
+        // Don't fail the entire operation, but log the error
+        // The build is created, just without settings
+      }
     }
 
     // Fetch the complete cloned build

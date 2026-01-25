@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 
-export const dynamic = 'force-dynamic'
-
 export async function GET() {
   try {
     const supabase = createServiceRoleClient()
@@ -17,7 +15,12 @@ export async function GET() {
     // Filter out Tyres section as tyres are already selected in the parts area
     const filteredSections = sections?.filter(s => s.name !== 'Tyres') || []
 
-    return NextResponse.json({ sections: filteredSections })
+    return NextResponse.json({ sections: filteredSections }, {
+      headers: {
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+        'CDN-Cache-Control': 'public, max-age=3600',
+      }
+    })
   } catch (error) {
     console.error('Error fetching tuning sections:', error)
     return NextResponse.json(

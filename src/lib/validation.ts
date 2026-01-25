@@ -158,13 +158,6 @@ export const CreateLapTimeSchema = z.object({
   buildName: z.string().optional().nullable(),
 })
 
-export const UpdateLapTimeSchema = z.object({
-  timeMs: z.number().int().positive().optional(),
-  notes: z.string().max(500).optional().nullable(),
-  conditions: z.string().max(200).optional().nullable(),
-  sessionType: z.enum(['Q', 'R']).optional(),
-}).strict()
-
 // ============================================
 // User Profile Schemas
 // ============================================
@@ -196,7 +189,7 @@ export const UpdateUserRoleSchema = z.object({
 // Validation Error Helpers
 // ============================================
 
-export function formatValidationError(error: z.ZodError): string {
+function formatValidationError(error: z.ZodError): string {
   const issues = error.issues.map((issue) => {
     const path = issue.path.join('.')
     const message = issue.message
