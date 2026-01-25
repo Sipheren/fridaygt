@@ -14,7 +14,7 @@ export interface VirtualizedListItem {
 interface VirtualizedListProps {
   items: VirtualizedListItem[]
   onSelect: (value: string) => void
-  selectedValue: string
+  selectedValue?: string
   estimateSize?: number
   className?: string
 }

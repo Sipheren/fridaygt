@@ -377,10 +377,12 @@ export default function RaceDetailPage() {
                 <Award className="h-5 w-5" />
                 Your Stats
               </CardTitle>
-              <Button onClick={() => router.push('/lap-times/new')} size="sm" className="gap-2 w-full sm:w-auto min-h-[44px]">
-                <Plus className="h-4 w-4" />
-                Add Lap Time
-              </Button>
+              <Link href="/lap-times/new">
+                <Button size="sm" className="gap-2 w-full sm:w-auto min-h-[44px]">
+                  <Plus className="h-4 w-4" />
+                  Add Lap Time
+                </Button>
+              </Link>
             </div>
           </CardHeader>
           <CardContent>
