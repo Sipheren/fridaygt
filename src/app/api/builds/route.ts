@@ -116,7 +116,51 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { carId, name, description, isPublic, upgrades, settings, ...gearFields } = validationResult.data
+    const { carId, name, description, isPublic, upgrades, settings, userId: requestedUserId, ...gearFields } = validationResult.data
+
+    // Determine the build creator userId
+    // - If userId is provided and current user is ADMIN, validate and use it
+    // - Otherwise, default to current user
+    let buildUserId = userData.id
+
+    if (requestedUserId) {
+      // Check if current user is admin
+      const { data: currentUserData } = await supabase
+        .from('User')
+        .select('role')
+        .eq('id', userData.id)
+        .single()
+
+      if (currentUserData?.role !== 'ADMIN') {
+        return NextResponse.json(
+          { error: 'Only admins can set a custom creator' },
+          { status: 403 }
+        )
+      }
+
+      // Validate that requested userId is an active user (USER or ADMIN)
+      const { data: requestedUser } = await supabase
+        .from('User')
+        .select('id, role')
+        .eq('id', requestedUserId)
+        .single()
+
+      if (!requestedUser) {
+        return NextResponse.json(
+          { error: 'Requested user not found' },
+          { status: 404 }
+        )
+      }
+
+      if (requestedUser.role === 'PENDING') {
+        return NextResponse.json(
+          { error: 'Cannot assign builds to pending users' },
+          { status: 400 }
+        )
+      }
+
+      buildUserId = requestedUserId
+    }
 
     // Verify car exists
     const { data: car, error: carError } = await supabase
@@ -148,7 +192,7 @@ export async function POST(request: NextRequest) {
       .from('CarBuild')
       .insert({
         id: buildId,
-        userId: userData.id,
+        userId: buildUserId,
         carId,
         name,
         description: description || null,

@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
+import { SearchableComboBox } from '@/components/ui/searchable-combobox'
 import {
   Tabs,
   TabsContent,
@@ -28,7 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ArrowLeft, Save, Wrench, Settings } from 'lucide-react'
+import { ArrowLeft, Save, Wrench, Settings, User } from 'lucide-react'
 import { BuildUpgradesTab } from '@/components/builds/BuildUpgradesTab'
 import { BuildTuningTab } from '@/components/builds/BuildTuningTab'
 import { LoadingSection } from '@/components/ui/loading'
@@ -56,12 +57,20 @@ interface BuildSetting {
   settingId?: string
 }
 
+interface ApiUser {
+  id: string
+  name: string | null
+  email: string
+  role: 'PENDING' | 'USER' | 'ADMIN'
+}
+
 interface Build {
   id: string
   name: string
   description: string | null
   isPublic: boolean
   carId: string
+  userId: string
   car: {
     id: string
     name: string
@@ -97,6 +106,8 @@ interface Build {
 export default function EditBuildPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const [id, setId] = useState<string>('')
+  const [users, setUsers] = useState<ApiUser[]>([])
+  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showErrorDialog, setShowErrorDialog] = useState(false)
@@ -108,6 +119,7 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
   const [description, setDescription] = useState('')
   const [isPublic, setIsPublic] = useState(false)
   const [carName, setCarName] = useState('')
+  const [selectedUserId, setSelectedUserId] = useState('')
   const [selectedUpgrades, setSelectedUpgrades] = useState<Record<string, boolean>>({})
   const [tuningSettings, setTuningSettings] = useState<Record<string, string>>({})
   // Gear ratios as direct fields
@@ -126,9 +138,32 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
   useEffect(() => {
     params.then((p) => {
       setId(p.id)
+      fetchUsers()
       fetchBuild(p.id)
     })
   }, [])
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/users?active=true')
+      const data = await response.json()
+
+      // Get current user info
+      const sessionRes = await fetch('/api/auth/session')
+      const sessionData = await sessionRes.json()
+
+      if (sessionData.user) {
+        const activeUsers = data.users || []
+        setUsers(activeUsers)
+        const currentUserInList = activeUsers.find((u: ApiUser) => u.email === sessionData.user.email)
+        if (currentUserInList) {
+          setCurrentUser({ id: currentUserInList.id, role: currentUserInList.role })
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+    }
+  }
 
   const fetchBuild = async (buildId: string) => {
     try {
@@ -143,6 +178,7 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
       setDescription(data.description || '')
       setIsPublic(data.isPublic)
       setCarName(`${data.car.manufacturer} ${data.car.name}${data.car.year ? ` '${String(data.car.year).slice(-2)}` : ''}`)
+      setSelectedUserId(data.userId)
 
       // Convert upgrades to checkbox state
       const upgradesMap: Record<string, boolean> = {}
@@ -193,6 +229,15 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
       setLoading(false)
     }
   }
+
+  // Format user options for SearchableComboBox
+  const userOptions = useMemo(() => {
+    return users.map(user => ({
+      value: user.id,
+      label: user.name || user.email,
+      subtitle: user.email,
+    }))
+  }, [users])
 
   const handleUpgradeToggle = (partId: string) => {
     setSelectedUpgrades((prev) => ({
@@ -267,6 +312,7 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
           name,
           description: description || null,
           isPublic,
+          userId: currentUser?.role === 'ADMIN' && selectedUserId ? selectedUserId : undefined,
           upgrades,
           settings,
           // Include gears as direct fields
@@ -356,6 +402,24 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
               rows={4}
             />
           </div>
+
+          {/* Creator Selection (Admin only) */}
+          {currentUser?.role === 'ADMIN' && (
+            <div className="space-y-2">
+              <Label htmlFor="creator">Creator</Label>
+              <SearchableComboBox
+                options={userOptions}
+                value={selectedUserId}
+                onValueChange={setSelectedUserId}
+                placeholder="Select creator"
+                searchPlaceholder="Search users..."
+                disabled={saving}
+              />
+              <p className="text-xs text-muted-foreground">
+                As an admin, you can change the creator of this build
+              </p>
+            </div>
+          )}
 
           {/* Public Toggle */}
           <div className="flex items-center justify-between space-x-2 border border-border rounded-lg p-4">

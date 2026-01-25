@@ -9,6 +9,7 @@ export const CreateBuildSchema = z.object({
   name: z.string().min(1, 'Build name is required').max(100, 'Build name must be less than 100 characters').transform(val => val.trim()),
   description: z.string().max(500, 'Description must be less than 500 characters').transform(val => val.trim()).optional().nullable(),
   isPublic: z.boolean().optional(),
+  userId: z.string().optional().nullable(), // Creator user ID (admins only)
   upgrades: z.array(z.object({
     partId: z.string().optional(),
     category: z.string().optional(),
@@ -77,6 +78,7 @@ export const UpdateBuildSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters').transform(val => val.trim()).optional(),
   description: z.string().max(500, 'Description must be less than 500 characters').transform(val => val.trim()).optional().nullable(),
   isPublic: z.boolean().optional(),
+  userId: z.string().optional().nullable(), // Creator user ID (admins only)
   upgrades: z.array(z.object({
     partId: z.string().optional(),
     category: z.string().optional(),

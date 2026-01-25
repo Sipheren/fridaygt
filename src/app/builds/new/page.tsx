@@ -29,17 +29,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ArrowLeft, Save, Wrench, Settings } from 'lucide-react'
+import { ArrowLeft, Save, Wrench, Settings, User } from 'lucide-react'
 import { BuildUpgradesTab } from '@/components/builds/BuildUpgradesTab'
 import { BuildTuningTab } from '@/components/builds/BuildTuningTab'
 import { LoadingSection } from '@/components/ui/loading'
 import { formatCarOptions } from '@/lib/dropdown-helpers'
 import type { DbCar } from '@/types/database'
 
+interface ApiUser {
+  id: string
+  name: string | null
+  email: string
+  role: 'PENDING' | 'USER' | 'ADMIN'
+}
+
 export default function NewBuildPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [cars, setCars] = useState<DbCar[]>([])
+  const [users, setUsers] = useState<ApiUser[]>([])
+  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showErrorDialog, setShowErrorDialog] = useState(false)
@@ -51,6 +60,7 @@ export default function NewBuildPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [isPublic, setIsPublic] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState('')
   const [selectedUpgrades, setSelectedUpgrades] = useState<Record<string, boolean>>({})
   const [tuningSettings, setTuningSettings] = useState<Record<string, string>>({})
   // Gear ratios as direct fields
@@ -67,6 +77,7 @@ export default function NewBuildPage() {
   const [visibleGearCount, setVisibleGearCount] = useState(6) // Start with 6 gears
 
   useEffect(() => {
+    fetchUsers()
     fetchCars()
 
     // Pre-select car if carId is in query params
@@ -75,6 +86,30 @@ export default function NewBuildPage() {
       setCarId(preselectedCarId)
     }
   }, [])
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/users?active=true')
+      const data = await response.json()
+
+      // Get current user info
+      const sessionRes = await fetch('/api/auth/session')
+      const sessionData = await sessionRes.json()
+
+      if (sessionData.user) {
+        // Find current user in the list and set as default
+        const activeUsers = data.users || []
+        setUsers(activeUsers)
+        const currentUserInList = activeUsers.find((u: ApiUser) => u.email === sessionData.user.email)
+        if (currentUserInList) {
+          setCurrentUser({ id: currentUserInList.id, role: currentUserInList.role })
+          setSelectedUserId(currentUserInList.id)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+    }
+  }
 
   const fetchCars = async () => {
     try {
@@ -90,6 +125,15 @@ export default function NewBuildPage() {
 
   // Format car options for SearchableComboBox
   const carOptions = useMemo(() => formatCarOptions(cars), [cars])
+
+  // Format user options for SearchableComboBox
+  const userOptions = useMemo(() => {
+    return users.map(user => ({
+      value: user.id,
+      label: user.name || user.email,
+      subtitle: user.email,
+    }))
+  }, [users])
 
   const handleUpgradeToggle = (partId: string) => {
     setSelectedUpgrades((prev) => ({
@@ -165,6 +209,7 @@ export default function NewBuildPage() {
           name,
           description: description || null,
           isPublic,
+          userId: currentUser?.role === 'ADMIN' && selectedUserId !== currentUser.id ? selectedUserId : null,
           upgrades,
           settings,
           // Include gears as direct fields
@@ -262,6 +307,24 @@ export default function NewBuildPage() {
               rows={4}
             />
           </div>
+
+          {/* Creator Selection (Admin only) */}
+          {currentUser?.role === 'ADMIN' && (
+            <div className="space-y-2">
+              <Label htmlFor="creator">Creator</Label>
+              <SearchableComboBox
+                options={userOptions}
+                value={selectedUserId}
+                onValueChange={setSelectedUserId}
+                placeholder="Select creator"
+                searchPlaceholder="Search users..."
+                disabled={saving}
+              />
+              <p className="text-xs text-muted-foreground">
+                As an admin, you can create builds on behalf of other users
+              </p>
+            </div>
+          )}
 
           {/* Public Toggle */}
           <div className="flex items-center justify-between space-x-2 border border-border rounded-lg p-4">

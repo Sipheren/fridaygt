@@ -153,7 +153,7 @@ export async function PATCH(
       )
     }
 
-    // Check if build exists and user owns it
+    // Check if build exists and get user role for authorization
     const { data: existingBuild, error: fetchError } = await supabase
       .from('CarBuild')
       .select('userId')
@@ -167,7 +167,18 @@ export async function PATCH(
       )
     }
 
-    if (existingBuild.userId !== userData.id) {
+    // Get current user's role to determine permissions
+    const { data: currentUserData } = await supabase
+      .from('User')
+      .select('role')
+      .eq('id', userData.id)
+      .single()
+
+    const isAdmin = currentUserData?.role === 'ADMIN'
+    const isOwner = existingBuild.userId === userData.id
+
+    // User must be admin or owner to modify the build
+    if (!isAdmin && !isOwner) {
       return NextResponse.json(
         { error: 'Unauthorized to modify this build' },
         { status: 403 }
@@ -182,13 +193,51 @@ export async function PATCH(
       return NextResponse.json({ error: validationResult.error }, { status: 400 })
     }
 
-    const { name, description, isPublic, upgrades, settings, ...gearFields } = validationResult.data
+    const { name, description, isPublic, upgrades, settings, userId: requestedUserId, ...gearFields } = validationResult.data
+
+    // Determine if userId can be changed
+    // - Only admins can change the creator
+    // - Owners cannot change the creator (must be admin)
+    let newUserId: string | null | undefined = undefined
+
+    if (requestedUserId !== undefined) {
+      if (!isAdmin) {
+        return NextResponse.json(
+          { error: 'Only admins can change the creator' },
+          { status: 403 }
+        )
+      }
+
+      // Validate that requested userId is an active user (USER or ADMIN)
+      const { data: requestedUser } = await supabase
+        .from('User')
+        .select('id, role')
+        .eq('id', requestedUserId)
+        .single()
+
+      if (!requestedUser) {
+        return NextResponse.json(
+          { error: 'Requested user not found' },
+          { status: 404 }
+        )
+      }
+
+      if (requestedUser.role === 'PENDING') {
+        return NextResponse.json(
+          { error: 'Cannot assign builds to pending users' },
+          { status: 400 }
+        )
+      }
+
+      newUserId = requestedUserId
+    }
 
     // Update the build
     const updateData: Partial<{
       name: string
       description: string | null
       isPublic: boolean
+      userId: string | null
       updatedAt: string
       finalDrive: string | null
       gear1: string | null
@@ -218,6 +267,7 @@ export async function PATCH(
     if (name !== undefined) updateData.name = name
     if (description !== undefined) updateData.description = description
     if (isPublic !== undefined) updateData.isPublic = isPublic
+    if (newUserId !== undefined) updateData.userId = newUserId
 
     // Add gear fields if provided (stored as text to preserve formatting)
     for (const [key, value] of Object.entries(gearFields)) {

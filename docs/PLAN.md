@@ -57,10 +57,10 @@ Tonight Page → Shows all races where isActive = true
 
 ## Current Status
 
-**Date**: 2026-01-25
+**Date**: 2026-01-26
 **Branch**: `main`
 **Production URL**: https://fridaygt.vercel.app
-**Status**: Core features complete and deployed
+**Status**: Core features complete and deployed, admin tools enhanced
 
 ---
 
@@ -188,6 +188,22 @@ Tonight Page → Shows all races where isActive = true
   - Keyboard navigation support
 - **Interaction Fix**: Only "View Race Details" text navigates; drag handle clicks don't trigger navigation
 
+### Phase 13: Admin User Management Enhancement ✅
+- **User Profile Editing**: Admins can now edit user name and gamertag from admin users page
+  - Clickable user cards with edit dialog
+  - Gamertag uniqueness validation
+  - Dual schema validation (role + profile updates)
+  - Fixed email notification logic (only on PENDING → USER)
+- **Build Creator Selection**: Admins can set/change build creator
+  - Creator dropdown in build create/edit forms (admin only)
+  - Filters to active users (USER + ADMIN, excludes PENDING)
+  - Admin permission validation with database checks
+  - API endpoint: GET /api/users?active=true
+- **Global UI Improvements**:
+  - Increased outline button hover visibility (destructive/5 → destructive/10)
+  - Fixed user card hover effects (border-primary/30 + bg-primary/5)
+  - Design system compliance (no page-specific styling)
+
 ---
 
 ## Database Schema
@@ -287,7 +303,7 @@ DEFAULT_ADMIN_EMAIL="admin@yourdomain.com"
 ## Development Logs
 
 For detailed session-by-session progress, see:
-- [`docs/SESSION-LOG.md`](SESSION-LOG.md) — Development session history (26 sessions)
+- [`docs/SESSION-LOG.md`](SESSION-LOG.md) — Development session history (27 sessions)
 - [`docs/DATABASE-SCHEMA.md`](DATABASE-SCHEMA.md) — Complete database structure
 - [`docs/DESIGN-SYSTEM.md`](DESIGN-SYSTEM.md) — UI/UX design system and patterns
 
@@ -297,6 +313,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-26 | #27 | Admin user management enhancement - User profile editing (name/gamertag), build creator selection, global hover improvements |
 | 2026-01-26 | #26 | Race detail page build navigation fix - Conditional linking to builds, deleted build handling with visual feedback |
 | 2026-01-25 | #25 | Tonight page race reordering - Drag-and-drop with @dnd-kit, mobile-first UX, optimistic updates, API enhancements |
 | 2026-01-25 | #24 | Complete dropdown standardization with mobile-first virtualization - SearchableComboBox enhancement, VirtualizedList component, helper functions, responsive width, track grouping fixes |

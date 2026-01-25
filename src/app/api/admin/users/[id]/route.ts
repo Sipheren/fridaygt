@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { sendApprovalNotification, sendUserRemovalNotification } from '@/lib/email'
 import { isAdmin } from '@/lib/auth-utils'
-import { UpdateUserRoleSchema, validateBody } from '@/lib/validation'
+import { UpdateUserRoleSchema, UpdateUserProfileSchema, validateBody } from '@/lib/validation'
 import type { DbUser } from '@/types/database'
 
 export async function PATCH(
@@ -19,30 +19,70 @@ export async function PATCH(
   const { id } = await params
   const body = await request.json()
 
-  // Validate request body with Zod
-  const validationResult = await validateBody(UpdateUserRoleSchema, body)
-  if (!validationResult.success) {
-    return NextResponse.json({ error: validationResult.error }, { status: 400 })
-  }
-
-  const { role } = validationResult.data
-
   const supabase = createServiceRoleClient()
 
-  // Get user before update to send email
+  // Build update data - supports both role and profile updates
+  const updateData: {
+    role?: string
+    name?: string | null
+    gamertag?: string | null
+    updatedAt: string
+  } = {
+    updatedAt: new Date().toISOString()
+  }
+
+  // Validate role update
+  const validationResult1 = await validateBody(UpdateUserRoleSchema, body)
+  if (validationResult1.success) {
+    const { role } = validationResult1.data
+    updateData.role = role
+  }
+
+  // Validate profile update
+  const validationResult2 = await validateBody(UpdateUserProfileSchema, body)
+  if (validationResult2.success) {
+    const { gamertag, name } = validationResult2.data
+
+    // Check gamertag uniqueness if it's being updated
+    if (gamertag !== undefined) {
+      const { data: existingUser } = await supabase
+        .from('User')
+        .select('id')
+        .eq('gamertag', gamertag)
+        .neq('id', id)
+        .single()
+
+      if (existingUser) {
+        return NextResponse.json({ error: 'Gamertag already taken' }, { status: 400 })
+      }
+
+      updateData.gamertag = gamertag
+    }
+
+    if (name !== undefined) {
+      updateData.name = name
+    }
+  }
+
+  // If neither validation passed, return error
+  if (!validationResult1.success && !validationResult2.success) {
+    return NextResponse.json(
+      { error: validationResult1.error || validationResult2.error },
+      { status: 400 }
+    )
+  }
+
+  // Get user before update to send email (only if role is being changed)
   const { data: user } = await supabase
     .from('User')
-    .select('email')
+    .select('email, role')
     .eq('id', id)
     .single()
 
-  // Update user role
+  // Update user
   const { data, error } = await supabase
     .from('User')
-    .update({
-      role,
-      updatedAt: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('id', id)
     .select()
     .single()
@@ -53,7 +93,7 @@ export async function PATCH(
   }
 
   // Send approval email if changing from PENDING to USER
-  if (user?.email && role === 'USER') {
+  if (user?.email && updateData.role === 'USER' && user.role === 'PENDING') {
     try {
       await sendApprovalNotification(user.email, true)
     } catch (emailError) {

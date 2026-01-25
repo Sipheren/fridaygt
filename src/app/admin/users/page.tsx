@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
@@ -12,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ArrowLeft, UserCheck, UserX, Shield, User, Clock, AlertTriangle, Loader2, Users } from 'lucide-react'
+import { ArrowLeft, UserCheck, UserX, Shield, User, Clock, AlertTriangle, Loader2, Users, Edit, Gamepad2 } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 import { PageWrapper, PageHeader } from '@/components/layout'
 
@@ -20,6 +22,7 @@ type User = {
   id: string
   email: string
   name: string | null
+  gamertag: string | null
   role: string
   createdAt: string
 }
@@ -36,6 +39,13 @@ export default function AdminUsersPage() {
   const [processingAction, setProcessingAction] = useState<'approve' | 'delete' | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [editForm, setEditForm] = useState({
+    name: '',
+    gamertag: ''
+  })
+  const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<Message | null>(null)
   const router = useRouter()
 
@@ -132,6 +142,50 @@ export default function AdminUsersPage() {
       setProcessingAction(null)
       setDeleteDialogOpen(false)
       setUserToDelete(null)
+    }
+  }
+
+  function openEditDialog(user: User) {
+    setEditingUser(user)
+    setEditForm({
+      name: user.name || '',
+      gamertag: user.gamertag || ''
+    })
+    setEditDialogOpen(true)
+    setMessage(null)
+  }
+
+  async function handleSaveProfile(e: React.FormEvent) {
+    e.preventDefault()
+
+    if (!editingUser) return
+
+    setSaving(true)
+    setMessage(null)
+
+    try {
+      const res = await fetch(`/api/admin/users/${editingUser.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editForm.name || null,
+          gamertag: editForm.gamertag
+        })
+      })
+
+      if (res.ok) {
+        showMessage('success', 'Profile updated successfully')
+        await fetchUsers()
+        setEditDialogOpen(false)
+      } else {
+        const data = await res.json()
+        showMessage('error', data.error || 'Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Failed to update profile:', error)
+      showMessage('error', 'Failed to update profile')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -288,14 +342,28 @@ export default function AdminUsersPage() {
         ) : (
           <div className="space-y-3">
             {activeUsers.map(user => (
-              <div key={user.id} className="border border-border rounded-lg p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
+              <div
+                key={user.id}
+                className="border border-border rounded-lg p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-4 flex-wrap cursor-pointer hover:border-primary/30 hover:bg-primary/5 transition-colors"
+                onClick={() => openEditDialog(user)}
+              >
                 <div className="space-y-1">
-                  <p className="font-semibold font-mono text-sm break-all">{user.email}</p>
+                  <p className="font-semibold font-mono text-sm break-all">
+                    {user.name || user.email}
+                    {user.name && user.email !== user.name && (
+                      <span className="text-muted-foreground text-xs ml-2">
+                        ({user.email})
+                      </span>
+                    )}
+                  </p>
                   <p className="text-sm text-muted-foreground">
-                    Member since: {new Date(user.createdAt).toLocaleDateString()}
+                    {user.gamertag ? `GT: ${user.gamertag}` : 'No gamertag set'} • Member since: {new Date(user.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <div
+                  className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Button
                     onClick={() => updateUserRole(user.id, 'ADMIN')}
                     variant="outline"
@@ -349,31 +417,47 @@ export default function AdminUsersPage() {
         ) : (
           <div className="space-y-3">
             {admins.map(user => (
-              <div key={user.id} className="border border-border rounded-lg p-4 flex items-center justify-between gap-4 flex-wrap bg-primary/5">
+              <div
+                key={user.id}
+                className="border border-border rounded-lg p-4 flex items-center justify-between gap-4 flex-wrap bg-primary/5 cursor-pointer hover:border-primary/30 hover:bg-primary/10 transition-colors"
+                onClick={() => openEditDialog(user)}
+              >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold font-mono">{user.email}</p>
+                    <p className="font-semibold font-mono">
+                      {user.name || user.email}
+                      {user.name && user.email !== user.name && (
+                        <span className="text-muted-foreground text-xs ml-2">
+                          ({user.email})
+                        </span>
+                      )}
+                    </p>
                     <Badge variant="default" className="text-xs">ADMIN</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Admin since: {new Date(user.createdAt).toLocaleDateString()}
+                    {user.gamertag ? `GT: ${user.gamertag}` : 'No gamertag set'} • Admin since: {new Date(user.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                <Button
-                  onClick={() => updateUserRole(user.id, 'USER')}
-                  size="sm"
-                  variant="outline"
-                  disabled={processingId === user.id}
+                <div
+                  className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  {processingId === user.id && processingAction === 'approve' ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    'Remove Admin'
-                  )}
-                </Button>
+                  <Button
+                    onClick={() => updateUserRole(user.id, 'USER')}
+                    size="sm"
+                    variant="outline"
+                    disabled={processingId === user.id}
+                  >
+                    {processingId === user.id && processingAction === 'approve' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      'Remove Admin'
+                    )}
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -427,6 +511,82 @@ export default function AdminUsersPage() {
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Edit User Profile
+            </DialogTitle>
+            <DialogDescription>
+              Update profile information for <strong>{editingUser?.email}</strong>
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveProfile} className="space-y-4">
+            {/* Name Field */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Display Name</Label>
+              <Input
+                id="edit-name"
+                value={editForm.name}
+                onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                placeholder="Enter display name"
+                maxLength={100}
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional display name (max 100 characters)
+              </p>
+            </div>
+
+            {/* Gamertag Field */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-gamertag" className="flex items-center gap-2">
+                <Gamepad2 className="h-4 w-4" />
+                Gamertag <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="edit-gamertag"
+                value={editForm.gamertag}
+                onChange={(e) => setEditForm({...editForm, gamertag: e.target.value})}
+                placeholder="Enter gamertag"
+                pattern="[a-zA-Z0-9_-]{3,20}"
+                required
+                disabled={saving}
+              />
+              <p className="text-xs text-muted-foreground">
+                3-20 characters, letters, numbers, hyphens, and underscores only
+              </p>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </PageWrapper>
