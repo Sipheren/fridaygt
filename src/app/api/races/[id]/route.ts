@@ -208,7 +208,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-      race,
+      race: enrichedRace,
       leaderboard,
       userStats,
       statistics,

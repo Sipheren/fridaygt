@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
 
     // Generate build ID
     const buildId = crypto.randomUUID()
+    const now = new Date().toISOString()
 
     // Create build (no upgrades or settings initially)
     const { data: build, error: buildError } = await supabase
@@ -61,6 +62,8 @@ export async function POST(req: NextRequest) {
         name,
         description,
         isPublic: false, // Quick builds are private by default
+        createdAt: now,
+        updatedAt: now,
       })
       .select()
       .single()
