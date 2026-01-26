@@ -5,6 +5,7 @@ import { Header } from "@/components/header";
 import { auth } from "@/lib/auth";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthSessionProvider } from "@/components/session-provider";
+import packageJson from "../../package.json";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,19 @@ export default async function RootLayout({
             <main className="container mx-auto px-4 py-6">
               {children}
             </main>
+            <footer className="py-6 text-sm">
+              <div className="grid grid-cols-3 items-center">
+                <div className="text-center">
+                  <span className="text-secondary">sipheren.com</span>
+                </div>
+                <div className="text-center">
+                  <span className="text-muted-foreground">{new Date().getFullYear()}</span>
+                </div>
+                <div className="text-center">
+                  <span className="text-primary">v{packageJson.version}</span>
+                </div>
+              </div>
+            </footer>
           </ThemeProvider>
         </AuthSessionProvider>
       </body>
