@@ -19,7 +19,7 @@
 import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -71,6 +71,8 @@ interface RaceMemberCardProps {
   tyreOptions: Part[]
   onTyreChange: (memberId: string, partId: string) => void
   onDelete: (memberId: string) => void
+  isDeleting: boolean
+  isUpdatingTyre: boolean
 }
 
 export function RaceMemberCard({
@@ -81,6 +83,8 @@ export function RaceMemberCard({
   tyreOptions,
   onTyreChange,
   onDelete,
+  isDeleting,
+  isUpdatingTyre,
 }: RaceMemberCardProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
@@ -131,65 +135,90 @@ export function RaceMemberCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'w-full h-auto p-4 border border-border rounded-lg flex items-center justify-between gap-4 gt-hover-card',
-        isDragging && 'opacity-50 shadow-lg'
+        'w-full h-auto p-4 border border-border rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 gt-hover-card transition-all duration-200',
+        isDragging && 'opacity-50 shadow-lg',
+        isDeleting && 'opacity-50 animate-pulse'
       )}
     >
-      {/* Position number */}
-      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 font-bold text-primary shrink-0">
-        {index + 1}
+      {/* Row 1: Position + Gamertag (full width on mobile) */}
+      <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto sm:flex-1 sm:min-w-0">
+        {/* Position number */}
+        <div className="flex items-center justify-center w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-primary/10 font-bold text-primary shrink-0">
+          {index + 1}
+        </div>
+
+        {/* User info - gamertag only */}
+        <div className="flex-1 min-w-0">
+          <p className="font-medium truncate">{member.user.gamertag}</p>
+        </div>
       </div>
 
-      {/* User info - gamertag only */}
-      <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{member.user.gamertag}</p>
-      </div>
-
-      {/* Tyre selector (admin only) */}
+      {/* Row 2: Controls (stacked on mobile, horizontal on desktop) */}
       {isAdmin && (
-        <Select value={member.partid} onValueChange={handleTyreChange}>
-          <SelectTrigger size="sm" className="w-fit">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(tyresByCategory).map(([category, tyres]) => (
-              <div key={category}>
-                <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
-                  {category}
+        <div className="flex items-center justify-between w-full sm:w-auto sm:flex-shrink-0 gap-3 sm:gap-4">
+          {/* Tyre selector */}
+          <Select
+            value={member.partid}
+            onValueChange={handleTyreChange}
+            disabled={isUpdatingTyre}
+          >
+            <SelectTrigger
+              size="sm"
+              className={cn(
+                "w-full sm:w-fit transition-all duration-200",
+                isUpdatingTyre && "opacity-50"
+              )}
+            >
+              <SelectValue />
+              {isUpdatingTyre && (
+                <Loader2 className="h-3 w-3 ml-2 animate-spin" />
+              )}
+            </SelectTrigger>
+            <SelectContent className="w-full">
+              {Object.entries(tyresByCategory).map(([category, tyres]) => (
+                <div key={category}>
+                  <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
+                    {category}
+                  </div>
+                  {tyres.map((tyre) => (
+                    <SelectItem key={tyre.id} value={tyre.id}>
+                      {tyre.name}
+                    </SelectItem>
+                  ))}
                 </div>
-                {tyres.map((tyre) => (
-                  <SelectItem key={tyre.id} value={tyre.id}>
-                    {tyre.name}
-                  </SelectItem>
-                ))}
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* Delete button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="gt-hover-icon-btn"
+            >
+              {isDeleting ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+            </Button>
+
+            {/* Drag handle (only when 2+ members) */}
+            {canReorder && (
+              <div
+                {...attributes}
+                {...listeners}
+                className="flex-shrink-0"
+                style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DragHandle isDragging={isDragging} />
               </div>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      {/* Delete button (admin only) */}
-      {isAdmin && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleDelete}
-          className="gt-hover-icon-btn"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      )}
-
-      {/* Drag handle (admin only, 2+ members) */}
-      {isAdmin && canReorder && (
-        <div
-          {...attributes}
-          {...listeners}
-          className="flex-shrink-0"
-          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <DragHandle isDragging={isDragging} />
+            )}
+          </div>
         </div>
       )}
     </div>

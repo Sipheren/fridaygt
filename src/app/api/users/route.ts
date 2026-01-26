@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('User')
-      .select('id, name, email, role')
+      .select('id, name, email, role, gamertag')
       .order('name', { ascending: true })
 
     // Filter to only active users (USER or ADMIN, not PENDING)

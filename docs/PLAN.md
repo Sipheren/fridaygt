@@ -275,6 +275,34 @@ Tonight Page → Shows all races where isActive = true
   - Saving indicator during reorder
   - Empty state handling
   - Optimistic updates with rollback on error
+- **Add Member Button** (2026-01-26):
+  - Admin-only "Add Member" button in Race Members card header
+  - Opens shadcn Dialog with user dropdown (eligible active users not in race)
+  - Displays gamertag with fallback (gamertag → name → email) for privacy
+  - Calls existing POST /api/races/[id]/members endpoint
+  - Refreshes member list after successful add
+  - Loading states with Loader2 spinner
+  - Empty state when all users already in race
+  - Error handling for duplicate users, API failures
+  - 100% design system compliance (Dialog, Button, Select patterns)
+  - Mobile-responsive: Full-width user selector on both mobile and desktop
+- **Components**:
+  - `src/components/race-members/add-member-button.tsx` - Button with fetch logic and dialog state management
+  - `src/components/race-members/add-member-dialog.tsx` - Dialog with user dropdown, loading, empty states
+- **API Enhancement**:
+  - Updated GET /api/users?active=true to include `gamertag` field in SELECT query
+  - Ensures proper user display in Add Member dropdown
+- **Mobile Responsiveness** (2026-01-26):
+  - Race member cards now mobile-responsive with two-row layout on small screens
+  - Position badge: 40px (w-10 h-10) on mobile, 32px (w-8 h-8) on desktop
+  - Layout: `flex-col sm:flex-row` pattern matching design system
+  - Mobile layout:
+    - Row 1: Position badge + Gamertag (full width)
+    - Row 2: Tyre selector (full width) + Delete button + Drag handle
+  - Desktop layout: Single horizontal row (unchanged visual)
+  - Tyre selector: Full-width on mobile (`w-full sm:w-fit`), full-width dropdown content on both mobile and desktop
+  - Drag handle: Remains on right side (consistency)
+  - Add Member dialog: Full-width user selector on both mobile and desktop
 
 ---
 
@@ -386,8 +414,8 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-26 | #30 | Race members mobile responsiveness - Two-row layout on mobile, larger position badge (40px), full-width tyre selector and Add Member dialog dropdown, follows design system responsive patterns |
 | 2026-01-26 | #29 | Race members feature + fixes + verification - Member management, drag-and-drop reordering, tyre selection, auto-population, design system compliance fixes, SQL function column name bug fix, delete functionality fix, verified all fixes correctly implemented |
-| 2026-01-26 | #28 | Comprehensive code review - Security fixes (P0), bug fixes (P1), code quality improvements (P2), type consolidation, unused code removal |
 | 2026-01-26 | #28 | Comprehensive code review - Security fixes (P0), bug fixes (P1), code quality improvements (P2), type consolidation, unused code removal |
 | 2026-01-26 | #27 | Admin user management enhancement - User profile editing (name/gamertag), build creator selection, global hover improvements |
 | 2026-01-26 | #26 | Race detail page build navigation fix - Conditional linking to builds, deleted build handling with visual feedback |

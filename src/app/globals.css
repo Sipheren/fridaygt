@@ -162,6 +162,11 @@
     @apply hover:border-primary hover:bg-destructive/5;
   }
 
+  .gt-hover-icon-btn {
+    @apply text-muted-foreground transition-all duration-200;
+    @apply hover:text-destructive hover:bg-destructive/5 hover:scale-110;
+  }
+
   .gt-hover-icon-btn-destructive {
     @apply text-destructive transition-colors;
     @apply hover:bg-destructive/5;

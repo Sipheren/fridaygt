@@ -349,18 +349,7 @@ export default function RaceDetailPage() {
       )}
 
       {/* Race Members */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Race Members
-          </CardTitle>
-          <CardDescription>Member list with tyre selection</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <RaceMemberList raceId={race.id} isAdmin={currentUser?.role === 'ADMIN'} />
-        </CardContent>
-      </Card>
+      <RaceMemberList raceId={race.id} isAdmin={currentUser?.role === 'ADMIN'} />
 
       {/* Leaderboard */}
       <Card>

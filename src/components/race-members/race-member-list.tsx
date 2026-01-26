@@ -38,6 +38,8 @@ import {
 import { Users } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 import { RaceMemberCard, type Part, type RaceMember } from './race-member-card'
+import { AddMemberButton } from './add-member-button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface RaceMemberListProps {
   raceId: string
@@ -50,6 +52,8 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [tyreOptions, setTyreOptions] = useState<Part[]>([])
+  const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null)
+  const [updatingTyreMemberId, setUpdatingTyreMemberId] = useState<string | null>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   // ============================================================
@@ -195,6 +199,21 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
   // ============================================================
 
   const handleTyreChange = async (memberId: string, partId: string) => {
+    const member = members.find((m) => m.id === memberId)
+    if (!member) return
+
+    const previousPartId = member.partid
+
+    // Optimistic: Update UI immediately
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === memberId
+          ? { ...m, partid: partId, part: { ...m.part, id: partId } }
+          : m
+      )
+    )
+    setUpdatingTyreMemberId(memberId)
+
     try {
       const res = await fetch(`/api/races/${raceId}/members/${memberId}/tyre`, {
         method: 'PATCH',
@@ -205,17 +224,26 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
       })
 
       if (!res.ok) {
+        // Rollback on error
+        setMembers((prev) =>
+          prev.map((m) =>
+            m.id === memberId ? { ...m, partid: previousPartId } : m
+          )
+        )
         throw new Error('Failed to update tyre')
       }
 
       const updatedMember = await res.json()
 
-      // Update local state
+      // Update with server response
       setMembers((prev) =>
         prev.map((m) => (m.id === memberId ? updatedMember : m))
       )
     } catch (error) {
       console.error('Failed to update tyre:', error)
+      // Rollback already handled above
+    } finally {
+      setUpdatingTyreMemberId(null)
     }
   }
 
@@ -224,6 +252,8 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
   // ============================================================
 
   const handleDelete = async (memberId: string) => {
+    setDeletingMemberId(memberId)
+
     try {
       const res = await fetch(`/api/races/${raceId}/members/${memberId}`, {
         method: 'DELETE',
@@ -237,8 +267,32 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
       setMembers((prev) => prev.filter((m) => m.id !== memberId))
     } catch (error) {
       console.error('Failed to delete member:', error)
+    } finally {
+      setDeletingMemberId(null)
     }
   }
+
+  // ============================================================
+  // REFRESH MEMBERS
+  // ============================================================
+
+  const refreshMembers = async () => {
+    try {
+      const res = await fetch(`/api/races/${raceId}/members`)
+      if (!res.ok) throw new Error('Failed to fetch members')
+      const data = await res.json()
+      setMembers(data.members || [])
+      setPreviousMembers(data.members || [])
+    } catch (error) {
+      console.error('Failed to refresh members:', error)
+    }
+  }
+
+  // ============================================================
+  // DERIVE CURRENT MEMBER IDs
+  // ============================================================
+
+  const currentMemberIds = members.map((m) => m.userid)
 
   // ============================================================
   // RENDER
@@ -250,56 +304,78 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
     return <LoadingSection text="Loading members..." />
   }
 
-  if (members.length === 0) {
-    return (
-      <div className="text-center py-12 border border-border rounded-lg">
-        <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground text-lg">No members in this race yet</p>
-      </div>
-    )
-  }
-
   return (
-    <div className="space-y-3">
-      {/* Saving indicator */}
-      {isSaving && (
-        <div className="text-center text-sm text-muted-foreground animate-pulse">
-          Saving new order...
-        </div>
-      )}
-
-      {/* Sortable member list */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={members.map((m) => m.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {members.map((member, index) => (
-            <RaceMemberCard
-              key={member.id}
-              member={member}
-              index={index}
-              isAdmin={isAdmin}
-              canReorder={canReorder}
-              tyreOptions={tyreOptions}
-              onTyreChange={handleTyreChange}
-              onDelete={handleDelete}
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Race Members
+            </CardTitle>
+            <CardDescription>Member list with tyre selection</CardDescription>
+          </div>
+          {isAdmin && (
+            <AddMemberButton
+              raceId={raceId}
+              currentMemberIds={currentMemberIds}
+              onMemberAdded={refreshMembers}
             />
-          ))}
-        </SortableContext>
-      </DndContext>
-
-      {/* Helper text for drag functionality */}
-      {isAdmin && canReorder && (
-        <div className="text-center text-sm text-muted-foreground">
-          Drag members to reorder • Changes save automatically
+          )}
         </div>
-      )}
-    </div>
+      </CardHeader>
+      <CardContent>
+        {members.length === 0 ? (
+          <div className="text-center py-12">
+            <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground text-lg">No members in this race yet</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {/* Saving indicator */}
+            {isSaving && (
+              <div className="text-center text-sm text-muted-foreground animate-pulse">
+                Saving new order...
+              </div>
+            )}
+
+            {/* Sortable member list */}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={members.map((m) => m.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {members.map((member, index) => (
+                  <RaceMemberCard
+                    key={member.id}
+                    member={member}
+                    index={index}
+                    isAdmin={isAdmin}
+                    canReorder={canReorder}
+                    tyreOptions={tyreOptions}
+                    onTyreChange={handleTyreChange}
+                    onDelete={handleDelete}
+                    isDeleting={deletingMemberId === member.id}
+                    isUpdatingTyre={updatingTyreMemberId === member.id}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+
+            {/* Helper text for drag functionality */}
+            {isAdmin && canReorder && (
+              <div className="text-center text-sm text-muted-foreground">
+                Drag members to reorder • Changes save automatically
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
