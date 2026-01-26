@@ -1,3 +1,24 @@
+/**
+ * Build Clone API
+ *
+ * POST /api/builds/[id]/clone - Clone an existing build to current user
+ *
+ * Purpose: Create a deep copy of a build with all upgrades and settings
+ * - Users can clone public builds or their own builds
+ * - Private builds cannot be cloned by other users
+ * - Cloned build is assigned to current user (userId changes)
+ * - Name appended with " (Copy)" to distinguish from original
+ * - Description includes attribution to original creator
+ * - Cloned builds are private by default (isPublic = false)
+ *
+ * Debugging Tips:
+ * - Common error: "Build not found" - verify buildId exists in CarBuild table
+ * - Common error: "Cannot clone private build" - check build.isPublic flag
+ * - Upgrades and settings copied with new IDs to maintain referential integrity
+ * - If upgrades/settings fail to copy, build is still created (logged error)
+ * - Check console logs for partial clone errors
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
@@ -9,7 +30,13 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Apply rate limiting
+    // ============================================================
+    // RATE LIMITING & AUTHENTICATION
+    // ============================================================
+    // Apply rate limiting: 20 requests per minute to prevent abuse
+    // Debugging: Check rate limit headers in response if 429 errors occur
+    // ============================================================
+
     const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
 
     if (!rateLimit.success) {
@@ -45,7 +72,14 @@ export async function POST(
       )
     }
 
-    // Fetch the original build
+    // ============================================================
+    // FETCH ORIGINAL BUILD
+    // ============================================================
+    // Fetch complete build data including all upgrades and settings
+    // Used for deep copy - all data will be duplicated with new IDs
+    // Debugging: Check buildId exists in CarBuild table
+    // ============================================================
+
     const { data: originalBuild, error: fetchError } = await supabase
       .from('CarBuild')
       .select(`
@@ -65,7 +99,16 @@ export async function POST(
       )
     }
 
-    // Check if build is public or owned by user
+    // ============================================================
+    // AUTHORIZATION CHECK
+    // ============================================================
+    // Users can clone:
+    // - Public builds (isPublic = true)
+    // - Their own builds (userId = current user)
+    // Private builds of other users cannot be cloned
+    // Debugging: Check build.isPublic flag and originalBuild.userId match
+    // ============================================================
+
     const canClone = originalBuild.isPublic || originalBuild.userId === userData.id
 
     if (!canClone) {
@@ -75,7 +118,22 @@ export async function POST(
       )
     }
 
-    // Create the cloned build
+    // ============================================================
+    // CREATE CLONED BUILD
+    // ============================================================
+    // Create new CarBuild record with:
+    // - New UUID (newBuildId) - unique identifier for cloned build
+    // - Current user as owner (userData.id) - build assigned to cloner
+    // - Same carId - duplicate of same car setup
+    // - Name appended with " (Copy)" - distinguishes from original
+    // - Attribution in description - credits original creator
+    // - isPublic = false - cloned builds are private by default
+    //
+    // Debugging Tips:
+    // - Check carId exists in Car table
+    // - Verify userData.id is valid User table ID
+    // ============================================================
+
     const newBuildId = crypto.randomUUID()
     const now = new Date().toISOString()
     const { data: newBuild, error: buildError } = await supabase
@@ -103,7 +161,20 @@ export async function POST(
       )
     }
 
-    // Clone upgrades
+    // ============================================================
+    // CLONE UPGRADES
+    // ============================================================
+    // Copy all CarBuildUpgrade records with new IDs
+    // Each upgrade gets a new UUID but references newBuildId
+    // Preserves: category, part name, value
+    // Note: partId FK is NOT preserved in this version (uses legacy columns)
+    //
+    // Debugging Tips:
+    // - Check console logs for upgrade clone errors
+    // - Build is still created if upgrades fail (partial clone)
+    // - Verify CarBuildUpgrade table has proper FK constraints
+    // ============================================================
+
     if (originalBuild.upgrades && originalBuild.upgrades.length > 0) {
       const upgradeRecords = originalBuild.upgrades.map((upgrade: any) => ({
         id: crypto.randomUUID(),
@@ -124,7 +195,20 @@ export async function POST(
       }
     }
 
-    // Clone settings
+    // ============================================================
+    // CLONE SETTINGS
+    // ============================================================
+    // Copy all CarBuildSetting records with new IDs
+    // Each setting gets a new UUID but references newBuildId
+    // Preserves: category, setting name, value
+    // Note: settingId FK is NOT preserved in this version (uses legacy columns)
+    //
+    // Debugging Tips:
+    // - Check console logs for setting clone errors
+    // - Build is still created if settings fail (partial clone)
+    // - Verify CarBuildSetting table has proper FK constraints
+    // ============================================================
+
     if (originalBuild.settings && originalBuild.settings.length > 0) {
       const settingRecords = originalBuild.settings.map((setting: any) => ({
         id: crypto.randomUUID(),
@@ -145,7 +229,14 @@ export async function POST(
       }
     }
 
-    // Fetch the complete cloned build
+    // ============================================================
+    // FETCH COMPLETE CLONED BUILD FOR RESPONSE
+    // ============================================================
+    // Fetch the newly created build with all relationships
+    // Returns complete build data to frontend for immediate use
+    // Includes: user, car, upgrades, settings
+    // ============================================================
+
     const { data: completeBuild } = await supabase
       .from('CarBuild')
       .select(`

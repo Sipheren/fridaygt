@@ -1,14 +1,44 @@
 /**
  * Lap Time Management API
  *
- * GET /api/lap-times - Get current user's lap times (filters: trackId, carId, limit)
- * POST /api/lap-times - Create a new lap time (requires trackId, carId, buildId, timeMs)
+ * GET /api/lap-times - Get current user's lap times with optional filtering
+ * POST /api/lap-times - Record a new lap time (build-centric with snapshot)
+ *
+ * Purpose: Track lap times with build-centric architecture and snapshot data
+ * - Users can only view their own lap times (RLS enforced via userId filter)
+ * - buildName stored as snapshot (preserves name even if build renamed/deleted)
+ * - Personal best tracking per car/track/build combination
+ * - Session types: Race (R), Practice (P), Qualifying (Q)
+ *
+ * GET Endpoint:
+ * - Filters: trackId, carId, limit (optional)
+ * - Returns only current user's lap times (no admin override)
+ * - Sorted by createdAt descending (newest first)
+ * - Includes track and car relationship data
+ *
+ * POST Endpoint:
+ * - Required: trackId, carId, buildId (optional), timeMs
+ * - Optional: notes, conditions, sessionType (defaults to 'R')
+ * - buildName snapshot: Copied from CarBuild.name at creation time
+ * - Personal best: Application-level feature (calculated on frontend)
+ *
+ * Time Format:
+ * - timeMs in milliseconds (e.g., 92345 = 1:32.345)
+ * - Display format: mm:ss.sss (handled by frontend)
+ *
+ * Build Snapshot Strategy:
+ * - buildName copied from CarBuild at creation time
+ * - Preserves historical data even if build is renamed or deleted
+ * - buildId can be null (lap times without build association)
+ * - If buildId provided but build not found, buildName = null
  *
  * Debugging Tips:
- * - GET returns only current user's lap times (RLS enforced via userId filter)
- * - buildName is stored as a snapshot (copied from CarBuild at creation time)
- * - timeMs must be in milliseconds (e.g., 92345 = 1:32.345)
- * - sessionType: 'R' = Race, 'P' = Practice, 'Q' = Qualifying
+ * - GET: Check userId filter returns only current user's times
+ * - POST: Verify trackId and carId exist in respective tables
+ * - POST: buildName snapshot prevents broken references
+ * - Common error: "Track not found" - verify trackId exists in Track table
+ * - Common error: "Car not found" - verify carId exists in Car table
+ * - Personal best: Calculated by frontend comparing times per car/track/build
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -21,6 +51,14 @@ import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 // GET /api/lap-times - Get user's lap times with optional filtering
 export async function GET(request: NextRequest) {
   try {
+    // ============================================================
+    // AUTHENTICATION
+    // ============================================================
+    // User must be authenticated to view lap times
+    // RLS ensures users can only see their own lap times
+    // Debugging: Check session.user.email is set
+    // ============================================================
+
     const session = await auth()
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -33,7 +71,14 @@ export async function GET(request: NextRequest) {
     const limitParam = searchParams.get('limit')
     const limit = limitParam ? parseInt(limitParam, 10) : undefined
 
-    // Validate limit is a valid number
+    // ============================================================
+    // VALIDATION
+    // ============================================================
+    // Validate limit parameter (if provided)
+    // Must be positive integer
+    // Debugging: Check limit is valid number > 0
+    // ============================================================
+
     if (limitParam && (isNaN(limit as number) || (limit as number) < 1)) {
       return NextResponse.json(
         { error: 'Limit must be a positive number' },
@@ -41,14 +86,33 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get user's ID
+    // Get user's ID for filtering
     const userData = await getCurrentUser(session)
 
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Build query
+    // ============================================================
+    // BUILD QUERY WITH FILTERS
+    // ============================================================
+    // Build base query with:
+    // - userId filter (RLS enforcement - only current user's times)
+    // - Track relationship data
+    // - Car relationship data
+    // - Sorted by createdAt descending (newest first)
+    //
+    // Optional Filters:
+    // - trackId: Filter to specific track
+    // - carId: Filter to specific car
+    // - limit: Limit number of results
+    //
+    // Debugging Tips:
+    // - Check userId matches userData.id
+    // - Verify trackId/carId exist in respective tables
+    // - Test with/without limit parameter
+    // ============================================================
+
     let query = supabase
       .from('LapTime')
       .select(`
@@ -101,7 +165,13 @@ export async function GET(request: NextRequest) {
 // POST /api/lap-times - Create a new lap time
 export async function POST(request: NextRequest) {
   try {
-    // Apply rate limiting
+    // ============================================================
+    // RATE LIMITING & AUTHENTICATION
+    // ============================================================
+    // Apply rate limiting: 20 requests per minute to prevent abuse
+    // Debugging: Check rate limit headers in response if 429 errors occur
+    // ============================================================
+
     const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
 
     if (!rateLimit.success) {
@@ -117,9 +187,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // ============================================================
+    // VALIDATION
+    // ============================================================
+    // Validate request body with Zod schema
+    // CreateLapTimeSchema validates:
+    // - trackId (required, valid UUID)
+    // - carId (required, valid UUID)
+    // - buildId (optional, valid UUID)
+    // - timeMs (required, positive integer)
+    // - notes (optional, string)
+    // - conditions (optional, string)
+    // - sessionType (optional, 'R' | 'P' | 'Q')
+    // ============================================================
+
     const body = await request.json()
 
-    // Validate request body with Zod
     const validationResult = await validateBody(CreateLapTimeSchema, body)
     if (!validationResult.success) {
       return NextResponse.json({ error: validationResult.error }, { status: 400 })
@@ -129,14 +212,25 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceRoleClient()
 
-    // Get user's ID
+    // Get user's ID for ownership
     const userData = await getCurrentUser(session)
 
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Verify track exists
+    // ============================================================
+    // TRACK & CAR VERIFICATION
+    // ============================================================
+    // Verify track exists before creating lap time
+    // Prevents orphaned lap times with invalid trackId
+    // Debugging: Check Track table for trackId
+    //
+    // Verify car exists before creating lap time
+    // Prevents orphaned lap times with invalid carId
+    // Debugging: Check Car table for carId
+    // ============================================================
+
     const { data: track } = await supabase
       .from('Track')
       .select('id')
@@ -147,7 +241,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Track not found' }, { status: 404 })
     }
 
-    // Verify car exists
     const { data: car } = await supabase
       .from('Car')
       .select('id')
@@ -163,10 +256,24 @@ export async function POST(request: NextRequest) {
     // ============================================================
     // buildName is stored as a snapshot at time of lap time creation
     // This preserves the build name even if the build is later renamed or deleted
-    // If buildId is provided but build doesn't exist, buildName remains null
+    //
+    // Why Snapshot Strategy?
+    // - Builds can be renamed (build name changes)
+    // - Builds can be deleted (build becomes inaccessible)
+    // - Snapshot preserves historical accuracy of lap time records
+    // - Allows "What build did I use for this lap?" even after changes
+    //
+    // Implementation:
+    // - If buildId provided: Fetch CarBuild.name and store as buildName
+    // - If buildId not provided: buildName = null (lap time without build)
+    // - If buildId provided but build not found: buildName = null (graceful degradation)
+    //
+    // Debugging Tips:
+    // - Check CarBuild table for buildId
+    // - buildName should match CarBuild.name at time of creation
+    // - If build deleted later, buildName still shows historical name
     // ============================================================
 
-    // Fetch build name if buildId is provided (store as snapshot)
     let buildName = null
     if (buildId) {
       const { data: build } = await supabase
@@ -180,7 +287,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create lap time
+    // ============================================================
+    // CREATE LAP TIME
+    // ============================================================
+    // Create LapTime record with snapshot data
+    // - userId: Current user (owner of the lap time)
+    // - trackId: Verified track reference
+    // - carId: Verified car reference
+    // - buildId: Optional build reference (can be null)
+    // - buildName: Snapshot of build name (preserved history)
+    // - timeMs: Lap time in milliseconds
+    // - notes: Optional user notes
+    // - conditions: Optional track conditions description
+    // - sessionType: 'R' (Race), 'P' (Practice), 'Q' (Qualifying)
+    //
+    // Debugging Tips:
+    // - Check FK constraints: LapTime.trackId → Track.id, LapTime.carId → Car.id
+    // - buildId FK constraint: LapTime.buildId → CarBuild.id (if provided)
+    // - Verify timeMs is positive integer
+    // - Personal best: Calculated by frontend, not stored here
+    // ============================================================
+
     const now = new Date().toISOString()
     const { data: lapTime, error } = await supabase
       .from('LapTime')

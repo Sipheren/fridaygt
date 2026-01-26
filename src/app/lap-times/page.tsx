@@ -1,3 +1,68 @@
+/**
+ * LAP TIMES LISTING PAGE
+ *
+ * Purpose:
+ * Displays user's recorded lap times with search, filtering, and management capabilities.
+ * Shows personal best indicators, session type badges, and allows deletion of records.
+ *
+ * Key Features:
+ * - Lap times listing with track/car/build information
+ * - Real-time search filtering by track name, location, car name/manufacturer
+ * - Personal Best (PB) badge calculation for track/car combinations
+ * - Session type indicators (Qualify/Race)
+ * - Conditions and notes display
+ * - Delete functionality with confirmation dialog
+ * - Responsive card-based layout
+ *
+ * Data Flow:
+ * 1. On mount, fetches all user's lap times via GET /api/lap-times
+ * 2. Lap times stored in state and filtered via useMemo based on search query
+ * 3. Personal bests calculated on-the-fly using Map for O(1) lookups
+ * 4. Delete operations update local state after successful API response
+ *
+ * State Management:
+ * - lapTimes: Array of all lap time records
+ * - searchQuery: Current search filter string
+ * - filteredLapTimes: Memoized filtered results
+ * - personalBestsMap: Memoized Map of track/car -> best time
+ * - deleteDialogOpen: Controls delete confirmation visibility
+ * - lapToDelete: Currently selected lap for deletion
+ * - deletingId: ID of lap being deleted (for loading state)
+ * - showErrorDialog/errorMessage: Error display state
+ *
+ * API Integration:
+ * - GET /api/lap-times: Fetch user's lap times (requires auth)
+ * - DELETE /api/lap-times/{id}: Delete specific lap time (requires ownership)
+ *
+ * Personal Best Logic:
+ * - Key format: "{trackId}-{carId}"
+ * - Calculated across all laps for each track/car combo
+ * - Displayed with trophy badge when lap.timeMs === personalBest
+ *
+ * Error Handling:
+ * - Network errors caught and logged to console
+ * - Delete errors shown in error dialog
+ * - Loading states prevent duplicate operations
+ *
+ * Styling:
+ * - Uses PageWrapper for consistent layout
+ * - Card-based design with hover effects (gt-hover-card)
+ * - Destructive button styling for delete actions (gt-hover-icon-btn-destructive)
+ * - Responsive typography and spacing
+ *
+ * Common Issues:
+ * - Empty states handled for no results and no search matches
+ * - Delete button disabled during deletion to prevent double-clicks
+ * - Search is case-insensitive
+ *
+ * Related Files:
+ * - /api/lap-times/route.ts: Lap times API endpoints
+ * - /api/lap-times/[id]/route.ts: Individual lap time operations
+ * - @/lib/time: formatLapTime utility
+ * - @/components/layout: PageWrapper, PageHeader, SearchBar components
+ * - /lap-times/new/page.tsx: Create new lap time
+ */
+
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
@@ -53,7 +118,12 @@ export default function LapTimesPage() {
   const [showErrorDialog, setShowErrorDialog] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
-  // Derived state - memoized filtering
+  // ===========================================================================
+  // DERIVED STATE - MEMOIZED FILTERING & PERSONAL BESTS
+  // ===========================================================================
+
+  // Filter lap times based on search query
+  // Searches across track name, location, car name, and manufacturer
   const filteredLapTimes = useMemo(() => {
     if (!searchQuery) {
       return lapTimes
@@ -70,6 +140,7 @@ export default function LapTimesPage() {
   }, [lapTimes, searchQuery])
 
   // Pre-compute personal bests for all track/car combinations
+  // Uses Map for O(1) lookup when rendering individual laps
   const personalBestsMap = useMemo(() => {
     const map = new Map<string, number>()
     lapTimes.forEach((lap) => {
@@ -82,7 +153,11 @@ export default function LapTimesPage() {
     return map
   }, [lapTimes])
 
-  // Load lap times
+  // ===========================================================================
+  // DATA FETCHING
+  // ===========================================================================
+
+  // Load lap times on component mount
   useEffect(() => {
     async function loadLapTimes() {
       try {
@@ -99,11 +174,17 @@ export default function LapTimesPage() {
     loadLapTimes()
   }, [])
 
+  // ===========================================================================
+  // EVENT HANDLERS
+  // ===========================================================================
+
+  // Open delete confirmation dialog
   function openDeleteDialog(lap: LapTime) {
     setLapToDelete(lap)
     setDeleteDialogOpen(true)
   }
 
+  // Confirm and execute lap time deletion
   async function confirmDelete() {
     if (!lapToDelete) return
 
@@ -119,7 +200,7 @@ export default function LapTimesPage() {
         throw new Error(data.error || 'Failed to delete lap time')
       }
 
-      // Remove from local state
+      // Remove from local state to update UI immediately
       setLapTimes(lapTimes.filter((lap) => lap.id !== lapToDelete!.id))
       setDeleteDialogOpen(false)
       setLapToDelete(null)
@@ -132,6 +213,11 @@ export default function LapTimesPage() {
     }
   }
 
+  // ===========================================================================
+  // RENDER
+  // ===========================================================================
+
+  // Show loading spinner while fetching data
   if (loading) {
     return (
       <PageWrapper>
@@ -142,7 +228,9 @@ export default function LapTimesPage() {
 
   return (
     <PageWrapper>
-      {/* Header */}
+      {/* ========================================================================
+          PAGE HEADER
+          ======================================================================== */}
       <PageHeader
         title="MY LAP TIMES"
         icon={Clock}
@@ -157,14 +245,18 @@ export default function LapTimesPage() {
         }
       />
 
-      {/* Search */}
+      {/* ========================================================================
+          SEARCH BAR
+          ======================================================================== */}
       <SearchBar
         placeholder="Search by track or car..."
         value={searchQuery}
         onChange={setSearchQuery}
       />
 
-      {/* Lap Times List */}
+      {/* ========================================================================
+          LAP TIMES LIST
+          ======================================================================== */}
       {filteredLapTimes.length === 0 ? (
         <EmptyState
           icon={Clock}
@@ -269,7 +361,9 @@ export default function LapTimesPage() {
           </div>
         )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* ========================================================================
+          DELETE CONFIRMATION DIALOG
+          ======================================================================== */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -319,7 +413,9 @@ export default function LapTimesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Error Dialog */}
+      {/* ========================================================================
+          ERROR DIALOG
+          ======================================================================== */}
       <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
         <DialogContent>
           <DialogHeader>

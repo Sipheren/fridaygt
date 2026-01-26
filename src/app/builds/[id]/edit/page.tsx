@@ -1,3 +1,157 @@
+/**
+ * Edit Build Page
+ *
+ * Purpose: Form page for editing an existing car build
+ * - Similar to new build page, but loads existing data
+ * - Car selection is read-only (cannot change car after creation)
+ * - Multi-step form with basic info, upgrades, and tuning tabs
+ * - Parts upgrades organized by category
+ * - Tuning settings with custom values
+ * - Gear ratios (1-20 gears + final drive)
+ * - Admin can change build ownership
+ * - Public/private visibility toggle
+ *
+ * **Key Features:**
+ * - Car (read-only): Display car name, prevent changes
+ * - Build name: Required text input
+ * - Description: Optional textarea
+ * - Public toggle: Switch for public/private visibility
+ * - Creator selection: Admin-only dropdown to change ownership
+ * - Upgrades tab: Checkboxes for parts by category
+ * - Tuning tab: Custom settings + gear ratios
+ * - Validation: Client-side validation before submit
+ * - Success: Redirect to /builds/[id] on save
+ *
+ * **Form Flow:**
+ * 1. Page loads → Fetch build, users, current user
+ * 2. Load existing data: upgrades, settings, gears into form
+ * 3. User edits form: Name, description, public, creator, upgrades, tuning
+ * 4. Submit: Validate → PATCH /api/builds/[id] → Redirect to build detail
+ * 5. Error: Show error dialog, user stays on form
+ *
+ * **State Management:**
+ * - id: Build ID from URL params
+ * - users: Active users from API (for admin creator selection)
+ * - currentUser: Current user info (id, role)
+ * - loading: Loading state during data fetch
+ * - saving: Loading state during form submit
+ * - showErrorDialog: Error dialog visibility
+ * - showValidationDialog: Validation dialog visibility
+ * - errorMessage: Error message to display
+ * - carName: Formatted car name (read-only display)
+ * - selectedUserId: Creator ID (admin only)
+ * - selectedUpgrades: Map of partId → boolean (checked state)
+ * - tuningSettings: Map of settingId → value
+ * - gears: Map of gear1...gear20, finalDrive → value
+ * - visibleGearCount: Number of gear inputs to show (6-20)
+ *
+ * **Data Loading:**
+ * - Build: GET /api/builds/[id] → Returns build with upgrades, settings, gears
+ * - Users: GET /api/users?active=true → For admin creator selection
+ * - Session: GET /api/auth/session → To get current user info
+ * - Upgrades: Converted to checkbox state (partId → true/false)
+ * - Settings: Converted to input state (settingId → value)
+ * - Gears: Loaded from direct fields (gear1...gear20, finalDrive)
+ * - visibleGearCount: Dynamically set based on number of gears
+ *
+ * **Upgrades Tab:**
+ * - Parts grouped by category (Engine, Drivetrain, etc.)
+ * - Checkboxes for each part
+ * - Visual: Part name, optional value badge
+ * - State: selectedUpgrades[partId] = true/false
+ * - Load: Map build.upgrades to checkbox state (partId → true)
+ * - Submit: Converts to [{ partId }] array
+ *
+ * **Tuning Tab:**
+ * - Settings grouped by section (Suspension, Brakes, etc.)
+ * - Custom inputs: Text/number/select based on setting type
+ * - Add/remove: Dynamic settings (user can add/remove)
+ * - Gear ratios: 20 gear inputs + final drive (expandable 6-20)
+ * - State: tuningSettings[settingId] = value
+ * - Load: Map build.settings to input state (settingId → value)
+ * - Submit: Converts to [{ settingId, value }] array
+ * - Gears: Spread as direct fields (gear1, gear2, ..., finalDrive)
+ *
+ * **Gear Ratios:**
+ * - Direct fields: gear1...gear20, finalDrive (text to preserve formatting)
+ * - Expandable: Start with 6, add up to 20
+ * - Optional: User can leave empty
+ * - Display: Text inputs (allow ratios like "3.500", "4.100", etc.)
+ * - Load: Load from build.gear1...gear20, build.finalDrive
+ * - visibleGearCount: Dynamically set based on highest gear with value
+ * - Submit: Spread as top-level fields in request body
+ *
+ * **Admin Creator Selection:**
+ * - Only shown: When currentUser.role === 'ADMIN'
+ * - Purpose: Change build ownership
+ * - Default: Current build owner selected
+ * - User options: name || email as label, email as subtitle
+ * - Submit: userId only sent if different from current owner
+ *
+ * **Validation:**
+ * - Name: Required (name must not be empty)
+ * - Upgrades: Optional (can save with no upgrades)
+ * - Tuning: Optional (can save with no tuning)
+ * - Gears: Optional (can save with no gears)
+ * - Dialog: Shows validation error if submit with invalid data
+ *
+ * **API Integration:**
+ * - GET /api/builds/[id]: Fetch existing build
+ *   - Response: Build object with upgrades[], settings[], gear1...gear20
+ * - GET /api/users?active=true: Fetch active users (admin)
+ * - GET /api/auth/session: Fetch current user info
+ * - PATCH /api/builds/[id]: Update build
+ *   - Request body: { name, description, isPublic, userId?, upgrades[], settings[], gears... }
+ *   - Response: Success/error
+ * - Success: router.push('/builds/[id]')
+ *
+ * **Tabs Component:**
+ * - Two tabs: Upgrades & Parts, Tuning Settings
+ * - Icons: Wrench (upgrades), Settings (tuning)
+ * - Separate components: BuildUpgradesTab, BuildTuningTab
+ * - Props: State and handlers passed down
+ * - Controlled: Parent manages all state
+ *
+ * **Error Handling:**
+ * - Fetch build: Show error dialog, redirect to /builds
+ * - Fetch users: Console log error (non-blocking)
+ * - Submit: Show error dialog with message
+ * - Validation: Show validation dialog
+ * - User stays: Can retry after error
+ *
+ * **Page Layout:**
+ * - Back button: Navigates to /builds/[id]
+ * - Header: Title "EDIT BUILD", icon, save button
+ * - Card: Build information (car, name, description, public, creator)
+ * - Tabs: Upgrades, Tuning (full width)
+ * - Bottom save: Save button (repeated for convenience)
+ * - Dialogs: Validation, error
+ *
+ * **Styling:**
+ * - Form: Standard padding and spacing
+ * - Inputs: min-h-[44px] for touch targets
+ * - Buttons: Full width on mobile, auto on desktop
+ * - Tabs: Grid layout (2 columns)
+ * - Card: Bordered with shadow
+ * - Read-only car: Muted background, border
+ *
+ * **Differences from New Build Page:**
+ * - Car: Read-only (cannot change)
+ * - Data loading: Fetch existing build and populate form
+ * - Default values: Load from build instead of empty
+ * - Back button: Navigates to build detail instead of builds list
+ * - Title: "EDIT BUILD" instead of "CREATE NEW BUILD"
+ * - API: PATCH instead of POST
+ *
+ * **Related Files:**
+ * - @/app/builds/page.tsx: Builds listing page
+ * - @/app/builds/[id]/page.tsx: Build detail page
+ * - @/app/builds/new/page.tsx: Create new build page (similar structure)
+ * - @/components/builds/BuildUpgradesTab: Upgrades tab component
+ * - @/components/builds/BuildTuningTab: Tuning tab component
+ * - @/app/api/builds/[id]/route.ts: Update build API endpoint
+ */
+
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -34,6 +188,10 @@ import { BuildUpgradesTab } from '@/components/builds/BuildUpgradesTab'
 import { BuildTuningTab } from '@/components/builds/BuildTuningTab'
 import { LoadingSection } from '@/components/ui/loading'
 
+// ============================================================
+// TYPES
+// ============================================================
+// Part interface (for new format upgrades)
 interface Part {
   id: string
   name: string
@@ -104,6 +262,38 @@ interface Build {
 }
 
 export default function EditBuildPage({ params }: { params: Promise<{ id: string }> }) {
+  // ============================================================
+  // STATE
+  // ============================================================
+  // - router: Next.js router for navigation
+  // - id: Build ID from URL params
+  // - users: Active users from API (for admin creator selection)
+  // - currentUser: Current user info (id, role)
+  // - loading: Loading state during data fetch
+  // - saving: Loading state during form submit
+  // - showErrorDialog: Error dialog visibility
+  // - showValidationDialog: Validation dialog visibility
+  // - errorMessage: Error message to display
+  //
+  // Form fields:
+  // - name: Build name
+  // - description: Build description
+  // - isPublic: Public/private flag
+  // - carName: Formatted car name (read-only display)
+  // - selectedUserId: Creator ID (admin only)
+  // - selectedUpgrades: Map of partId → boolean (checked state)
+  // - tuningSettings: Map of settingId → value
+  // - gears: Map of gear1...gear20, finalDrive → value
+  // - visibleGearCount: Number of gear inputs to show (6-20)
+  //
+  // Why this state?
+  // - users: Populate admin creator dropdown
+  // - currentUser: Check if admin for creator selection
+  // - selectedUpgrades/tuningSettings: Track form inputs
+  // - gears: Track gear ratio inputs (expandable)
+  // - visibleGearCount: Control how many gear inputs to show
+  // ============================================================
+
   const router = useRouter()
   const [id, setId] = useState<string>('')
   const [users, setUsers] = useState<ApiUser[]>([])
@@ -135,6 +325,13 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
   })
   const [visibleGearCount, setVisibleGearCount] = useState(6) // Start with 6 gears
 
+  // ============================================================
+  // DATA FETCHING
+  // ============================================================
+  // Fetch build, users, and current user on mount
+  // - Build: Load existing data (upgrades, settings, gears)
+  // - Users: For admin creator selection
+  // - Session: To get current user info and check if admin
   useEffect(() => {
     params.then((p) => {
       setId(p.id)
@@ -165,6 +362,13 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     }
   }
 
+  // Fetch build data and populate form fields
+  // - Load: name, description, isPublic, car, userId
+  // - Convert upgrades: Build.upgrades[] → selectedUpgrades map
+  // - Convert settings: Build.settings[] → tuningSettings map
+  // - Load gears: Build.gear1...gear20 → gears map
+  // - Set visibleGearCount: Based on highest gear with value
+  // - Error handling: Show dialog, redirect to /builds
   const fetchBuild = async (buildId: string) => {
     try {
       const response = await fetch(`/api/builds/${buildId}`)
@@ -230,6 +434,9 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     }
   }
 
+  // ============================================================
+  // DROPDOWN OPTIONS
+  // ============================================================
   // Format user options for SearchableComboBox
   const userOptions = useMemo(() => {
     return users.map(user => ({
@@ -239,6 +446,10 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     }))
   }, [users])
 
+  // ============================================================
+  // FORM HANDLERS - UPGRADES
+  // ============================================================
+  // Toggle upgrade checkbox
   const handleUpgradeToggle = (partId: string) => {
     setSelectedUpgrades((prev) => ({
       ...prev,
@@ -246,6 +457,10 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     }))
   }
 
+  // ============================================================
+  // FORM HANDLERS - TUNING
+  // ============================================================
+  // Update tuning setting value
   const handleTuningSetting = (settingId: string, value: string) => {
     setTuningSettings((prev) => ({
       ...prev,
@@ -261,6 +476,10 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     })
   }
 
+  // ============================================================
+  // FORM HANDLERS - GEARS
+  // ============================================================
+  // Update gear ratio value
   const handleGearChange = (gearKey: string, value: string) => {
     setGears((prev) => ({
       ...prev,
@@ -285,6 +504,17 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     }
   }
 
+  // ============================================================
+  // FORM SUBMISSION
+  // ============================================================
+  // Handle form submission
+  // - Validation: Check name is set
+  // - Convert upgrades: Map to [{ partId }] array
+  // - Convert settings: Map to [{ settingId, value }] array
+  // - Spread gears: Include gear1...gear20, finalDrive as top-level fields
+  // - API: PATCH /api/builds/[id]
+  // - Success: Redirect to /builds/[id]
+  // - Error: Show error dialog, user stays on form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -333,6 +563,10 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     }
   }
 
+  // ============================================================
+  // LOADING STATE
+  // ============================================================
+  // Show loading spinner while fetching build
   if (loading) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
@@ -341,6 +575,10 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     )
   }
 
+  // ============================================================
+  // FORM RENDER
+  // ============================================================
+  // Main form layout with back button, header, card, tabs
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-7xl px-4 py-8 space-y-6">
       {/* Back Button */}

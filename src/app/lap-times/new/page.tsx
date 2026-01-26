@@ -1,3 +1,45 @@
+/**
+ * CREATE NEW LAP TIME PAGE
+ *
+ * Purpose:
+ * Simple page wrapper for the LapTimeForm component to create new lap time records.
+ * Displays a page header with icon and contains the form within a styled card.
+ *
+ * Key Features:
+ * - Page header with clock icon and title
+ * - Form card with consistent styling
+ * - Routes to /lap-times/new
+ *
+ * Layout Structure:
+ * - Top border indicator line (primary color)
+ * - Header section with icon and title
+ * - Form card container with border and background
+ *
+ * Data Flow:
+ * - This page is a presentational wrapper only
+ * - All form logic is handled in the LapTimeForm component
+ * - Form submission handled by LapTimeForm's API integration
+ *
+ * API Integration:
+ * - Handled entirely by LapTimeForm component
+ * - POST /api/lap-times to create new lap time
+ *
+ * Styling:
+ * - Max width container (max-w-2xl) for readability
+ * - Centered layout with padding
+ * - Primary color top border for visual hierarchy
+ * - Card component for form container
+ *
+ * Common Issues:
+ * - None - this is a simple wrapper component
+ *
+ * Related Files:
+ * - @/components/lap-times/LapTimeForm: Main form component
+ * - /api/lap-times/route.ts: Create lap time API endpoint
+ * - /lap-times/page.tsx: Lap times listing page
+ * - @/components/ui/card: Card UI components
+ */
+
 import { LapTimeForm } from '@/components/lap-times/LapTimeForm'
 import { Clock } from 'lucide-react'
 

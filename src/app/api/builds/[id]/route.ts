@@ -1,3 +1,21 @@
+/**
+ * Single Build Management API
+ *
+ * GET /api/builds/[id] - Fetch single build with upgrades, settings, and statistics
+ * PATCH /api/builds/[id] - Update build details, upgrades, settings, and gear ratios
+ * DELETE /api/builds/[id] - Delete build (cascades to upgrades and settings)
+ *
+ * Debugging Tips:
+ * - GET returns statistics (total laps, fastest time, average time, unique tracks)
+ * - Statistics calculated using parallel COUNT and MIN queries for performance
+ * - PATCH requires admin OR ownership (owners can't change creator, only admins can)
+ * - DELETE cascades to CarBuildUpgrade and CarBuildSetting tables
+ * - Gear ratios (gear1-20, finalDrive) stored as text to preserve formatting
+ * - Settings fetched separately to avoid JOIN issues with NULL settingId (custom gears)
+ * - Common error: "Build not found" - verify buildId exists in CarBuild table
+ * - Common error: "Unauthorized to modify" - check user is admin or owner
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
@@ -22,7 +40,14 @@ export async function GET(
     const supabase = createServiceRoleClient()
     const session = await auth()
 
-    // Fetch the build with all related data including part/setting details
+    // ============================================================
+    // FETCH BUILD WITH RELATED DATA
+    // ============================================================
+    // Fetch build with user, car, and upgrade details in single query
+    // Settings fetched separately to avoid JOIN issues with NULL settingId (custom gears)
+    // Debugging: Check Supabase query logs if build not found
+    // ============================================================
+
     const { data: build, error } = await supabase
       .from('CarBuild')
       .select(`
@@ -59,7 +84,14 @@ export async function GET(
       )
     }
 
-    // Check if user can view this build
+    // ============================================================
+    // AUTHORIZATION CHECK
+    // ============================================================
+    // Public builds: viewable by anyone
+    // Private builds: only viewable by owner
+    // Debugging: Check build.isPublic flag and user.id match
+    // ============================================================
+
     let canView = build.isPublic
 
     if (session?.user?.email) {
@@ -77,8 +109,21 @@ export async function GET(
       )
     }
 
-    // Get lap time statistics for this build using optimized queries
-    // Run COUNT and MIN queries in parallel (both database-level operations)
+    // ============================================================
+    // STATISTICS CALCULATION
+    // ============================================================
+    // Calculate lap time statistics using optimized parallel queries
+    // 1. Total laps: Database-level COUNT (no data transfer)
+    // 2. Fastest time: ORDER BY + LIMIT 1 (uses index)
+    // 3. Average time: Calculate from timeMs data
+    // 4. Unique tracks: Count distinct trackId values
+    //
+    // Debugging Tips:
+    // - Promise.all() runs COUNT and MIN queries in parallel
+    // - Check LapTime table has records for this buildId if stats are empty
+    // - Common issue: NULL times not excluded properly
+    // ============================================================
+
     const [{ count: totalLaps }, { data: fastestLap }] = await Promise.all([
       // Count total laps using Supabase count (database-level, no data transfer)
       supabase
@@ -111,7 +156,14 @@ export async function GET(
       uniqueTracks: new Set(lapTimesData?.map(lt => lt.trackId)).size,
     }
 
-    // Transform settings to use 'section' instead of 'category' for frontend compatibility
+    // ============================================================
+    // TRANSFORM SETTINGS FOR FRONTEND
+    // ============================================================
+    // Settings stored with 'category' column, but frontend expects 'section'
+    // Transform to match frontend data structure
+    // Also handles cases where setting.setting.section is NULL (custom gears)
+    // ============================================================
+
     const transformedSettings = settings?.map((setting: any) => {
       return {
         ...setting,
@@ -138,7 +190,13 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Apply rate limiting
+    // ============================================================
+    // RATE LIMITING & AUTHENTICATION
+    // ============================================================
+    // Apply rate limiting: 20 requests per minute to prevent abuse
+    // Debugging: Check rate limit headers in response if 429 errors occur
+    // ============================================================
+
     const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
 
     if (!rateLimit.success) {
@@ -170,7 +228,15 @@ export async function PATCH(
       )
     }
 
-    // Check if build exists and get user role for authorization
+    // ============================================================
+    // AUTHORIZATION CHECK
+    // ============================================================
+    // User must be admin OR owner to modify the build
+    // - Owners can edit name, description, isPublic, upgrades, settings, gears
+    // - Only admins can change the creator (userId field)
+    // Debugging: Check userData.role and existingBuild.userId match
+    // ============================================================
+
     const { data: existingBuild, error: fetchError } = await supabase
       .from('CarBuild')
       .select('userId')
@@ -204,13 +270,19 @@ export async function PATCH(
 
     const { name, description, isPublic, upgrades, settings, userId: requestedUserId, ...gearFields } = validationResult.data
 
-    // Determine if userId can be changed
-    // - Only admins can change the creator
-    // - Owners cannot change the creator (must be admin)
+    // ============================================================
+    // BUILD CREATOR LOGIC
+    // ============================================================
+    // Admin users can assign builds to other active users (USER or ADMIN role)
+    // This is used for admin tools and build management
+    // PENDING users cannot be assigned builds (security restriction)
+    // Owners cannot change the creator - only admins can
+    // ============================================================
+
     let newUserId: string | null | undefined = undefined
 
     if (requestedUserId !== undefined) {
-      if (!isAdmin) {
+      if (!isAdmin(session)) {
         return NextResponse.json(
           { error: 'Only admins can change the creator' },
           { status: 403 }
@@ -241,7 +313,14 @@ export async function PATCH(
       newUserId = requestedUserId
     }
 
-    // Update the build
+    // ============================================================
+    // BUILD UPDATE
+    // ============================================================
+    // Update CarBuild table with provided fields
+    // Gear ratios stored as TEXT to preserve formatting (e.g., "2.500")
+    // Empty strings converted to null for cleaner database state
+    // ============================================================
+
     const updateData: Partial<{
       name: string
       description: string | null
@@ -299,7 +378,19 @@ export async function PATCH(
       )
     }
 
-    // Update upgrades if provided
+    // ============================================================
+    // PARTS UPGRADES UPDATE
+    // ============================================================
+    // Delete all existing upgrades and insert new ones
+    // Parts validated against Part catalog before insertion
+    // Foreign key relationships: CarBuildUpgrade.partId → Part.id
+    //
+    // Debugging Tips:
+    // - Check Part table exists and partId is valid
+    // - Verify FK constraint: CarBuildUpgrade.partId → Part.id
+    // - Common error: "Invalid part IDs" - check partId exists in Part table
+    // ============================================================
+
     if (upgrades !== undefined && Array.isArray(upgrades)) {
       // Validate partIds and lookup category/part names
       if (upgrades.length > 0) {
@@ -368,7 +459,19 @@ export async function PATCH(
       }
     }
 
-    // Update settings if provided (standard settings only, gears are now direct fields)
+    // ============================================================
+    // TUNING SETTINGS UPDATE
+    // ============================================================
+    // Delete all existing settings and insert new ones
+    // Settings validated against TuningSetting catalog before insertion
+    // Foreign key relationships: CarBuildSetting.settingId → TuningSetting.id
+    //
+    // Debugging Tips:
+    // - Check TuningSetting table exists and settingId is valid
+    // - Verify FK constraint: CarBuildSetting.settingId → TuningSetting.id
+    // - Common error: "Invalid setting IDs" - check settingId exists in TuningSetting table
+    // ============================================================
+
     if (settings !== undefined && Array.isArray(settings)) {
       // Validate settingIds and lookup section/setting names
       if (settings.length > 0) {
@@ -440,7 +543,14 @@ export async function PATCH(
       }
     }
 
-    // Fetch the updated build with full details
+    // ============================================================
+    // FETCH UPDATED BUILD FOR RESPONSE
+    // ============================================================
+    // Fetch complete build data with all relationships
+    // Settings fetched separately to avoid JOIN issues with NULL settingId
+    // Transform settings to match frontend expectations ('section' instead of 'category')
+    // ============================================================
+
     const { data: updatedBuild } = await supabase
       .from('CarBuild')
       .select(`
@@ -487,7 +597,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Apply rate limiting
+    // ============================================================
+    // RATE LIMITING & AUTHENTICATION
+    // ============================================================
+    // Apply rate limiting: 20 requests per minute to prevent abuse
+    // Debugging: Check rate limit headers in response if 429 errors occur
+    // ============================================================
+
     const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
 
     if (!rateLimit.success) {
@@ -519,7 +635,14 @@ export async function DELETE(
       )
     }
 
-    // Check if build exists and user owns it
+    // ============================================================
+    // AUTHORIZATION CHECK
+    // ============================================================
+    // Only the build owner can delete it (admin cannot delete others' builds)
+    // This is intentional - builds are user-owned data
+    // Debugging: Check existingBuild.userId matches userData.id
+    // ============================================================
+
     const { data: existingBuild, error: fetchError } = await supabase
       .from('CarBuild')
       .select('userId')
@@ -540,7 +663,19 @@ export async function DELETE(
       )
     }
 
-    // Delete the build (cascades to upgrades and settings)
+    // ============================================================
+    // DELETE BUILD WITH CASCADE
+    // ============================================================
+    // Delete CarBuild record, which cascades to:
+    // - CarBuildUpgrade (parts installed on build)
+    // - CarBuildSetting (tuning settings for build)
+    // - LapTime records that reference this buildId (if cascade is configured)
+    //
+    // Debugging Tips:
+    // - Check FK cascade constraints in database schema
+    // - Common error: "Foreign key violation" - check cascade rules
+    // ============================================================
+
     const { error: deleteError } = await supabase
       .from('CarBuild')
       .delete()

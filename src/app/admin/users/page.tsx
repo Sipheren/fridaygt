@@ -1,3 +1,83 @@
+/**
+ * ADMIN USER MANAGEMENT PAGE
+ *
+ * Purpose:
+ * Administrative interface for managing user accounts, approvals, and role assignments.
+ * Allows admins to approve pending users, change roles (USER/ADMIN), edit profiles, and remove users.
+ *
+ * Key Features:
+ * - Pending user approval workflow (approve/reject)
+ * - Role management (promote to ADMIN, demote to USER)
+ * - User profile editing (name, gamertag)
+ * - User account deletion
+ * - Real-time statistics (pending, active, admin counts)
+ * - Access control with 403 handling
+ * - Responsive card-based user list layout
+ *
+ * Data Flow:
+ * 1. On mount, fetch all users via GET /api/admin/users
+ * 2. Users filtered into three categories: PENDING, USER, ADMIN
+ * 3. Actions (approve/delete/update) make API calls
+ * 4. On success, refetch user list to reflect changes
+ * 5. Success/error messages displayed with auto-hide
+ *
+ * State Management:
+ * - users: Array of all users from API
+ * - loading: Initial data fetch state
+ * - processingId: ID of user being acted upon (for loading state)
+ * - processingAction: Type of action ('approve' | 'delete')
+ * - deleteDialogOpen/userToDelete: Delete confirmation state
+ * - editDialogOpen/editingUser/editForm: Edit profile state
+ * - saving: Save operation state
+ * - message: Success/error message object (auto-hides after 5s)
+ * - isForbidden: Access control state
+ *
+ * User Roles:
+ * - PENDING: New users awaiting approval
+ * - USER: Regular approved users
+ * - ADMIN: Administrative users with full access
+ *
+ * API Integration:
+ * - GET /api/admin/users: Fetch all users (requires ADMIN role)
+ * - PATCH /api/admin/users/{id}: Update user role or profile
+ * - DELETE /api/admin/users/{id}: Remove user account
+ *
+ * Access Control:
+ * - Server-side role check in API returns 403 if not admin
+ * - 401 triggers redirect to home
+ * - 403 shows "Access Denied" UI
+ *
+ * Error Handling:
+ * - Network errors logged to console
+ * - API errors shown in message banner
+ * - Auto-hide messages after 5 seconds
+ * - Loading states prevent duplicate operations
+ *
+ * Styling:
+ * - Three-column stats grid (pending, active, admins)
+ * - Color-coded badges by role
+ * - Destructive actions (reject, remove) use destructive variant
+ * - Cards with hover effects for interactive user rows
+ * - Mobile-responsive with stacked buttons
+ *
+ * Gamertag Validation:
+ * - Pattern: [a-zA-Z0-9_-]{3,20}
+ * - Required field for all users
+ * - 3-20 characters, alphanumeric, hyphens, underscores
+ *
+ * Common Issues:
+ * - Users must have unique gamertags
+ * - Cannot delete last admin (enforced on backend)
+ * - Role changes take effect immediately
+ * - Session updates not needed for admin changes
+ *
+ * Related Files:
+ * - /api/admin/users/route.ts: User management API
+ * - /api/admin/users/[id]/route.ts: Individual user operations
+ * - @/components/ui/dialog: Dialog components
+ * - @/components/layout: PageWrapper, PageHeader components
+ */
+
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -50,6 +130,11 @@ export default function AdminUsersPage() {
   const [isForbidden, setIsForbidden] = useState(false)
   const router = useRouter()
 
+  // ===========================================================================
+  // DATA FETCHING & SIDE EFFECTS
+  // ===========================================================================
+
+  // Fetch users on component mount
   useEffect(() => {
     fetchUsers()
   }, [])
@@ -62,6 +147,11 @@ export default function AdminUsersPage() {
     }
   }, [message])
 
+  // ===========================================================================
+  // API CALLS
+  // ===========================================================================
+
+  // Fetch all users from API
   async function fetchUsers() {
     try {
       const res = await fetch('/api/admin/users')
@@ -84,10 +174,12 @@ export default function AdminUsersPage() {
     }
   }
 
+  // Show success/error message
   function showMessage(type: 'success' | 'error', text: string) {
     setMessage({ type, text })
   }
 
+  // Update user role (approve pending, promote/demote)
   async function updateUserRole(userId: string, role: string) {
     setProcessingId(userId)
     setProcessingAction('approve')
@@ -116,12 +208,18 @@ export default function AdminUsersPage() {
     }
   }
 
+  // ===========================================================================
+  // EVENT HANDLERS
+  // ===========================================================================
+
+  // Open delete confirmation dialog
   function openDeleteDialog(user: User) {
     setUserToDelete(user)
     setDeleteDialogOpen(true)
     setMessage(null)
   }
 
+  // Confirm and execute user deletion/rejection
   async function confirmDelete() {
     if (!userToDelete) return
 
@@ -151,6 +249,7 @@ export default function AdminUsersPage() {
     }
   }
 
+  // Open edit profile dialog
   function openEditDialog(user: User) {
     setEditingUser(user)
     setEditForm({
@@ -161,6 +260,7 @@ export default function AdminUsersPage() {
     setMessage(null)
   }
 
+  // Handle profile save (name and gamertag)
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault()
 
@@ -195,6 +295,11 @@ export default function AdminUsersPage() {
     }
   }
 
+  // ===========================================================================
+  // RENDER
+  // ===========================================================================
+
+  // Show loading spinner while fetching data
   if (loading) {
     return (
       <PageWrapper>
@@ -203,6 +308,7 @@ export default function AdminUsersPage() {
     )
   }
 
+  // Show access denied screen if user is not admin
   if (isForbidden) {
     return (
       <PageWrapper>
@@ -224,13 +330,16 @@ export default function AdminUsersPage() {
     )
   }
 
+  // Filter users by role
   const pendingUsers = users.filter(u => u.role === 'PENDING')
   const activeUsers = users.filter(u => u.role === 'USER')
   const admins = users.filter(u => u.role === 'ADMIN')
 
   return (
     <PageWrapper>
-      {/* Success/Error Message */}
+      {/* ========================================================================
+          SUCCESS/ERROR MESSAGE BANNER
+          ======================================================================== */}
       {message && (
         <div className={`rounded-md border p-4 ${
           message.type === 'success'
@@ -248,7 +357,9 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* Header */}
+      {/* ========================================================================
+          PAGE HEADER
+          ======================================================================== */}
       <PageHeader
         title="USER MANAGEMENT"
         icon={Users}
@@ -265,7 +376,9 @@ export default function AdminUsersPage() {
         }
       />
 
-      {/* Stats Overview */}
+      {/* ========================================================================
+          STATISTICS OVERVIEW
+          ======================================================================== */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <div className="border border-border rounded-lg p-2.5 sm:p-4 bg-muted/30">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -290,7 +403,9 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Pending Users */}
+      {/* ========================================================================
+          PENDING USERS SECTION
+          ======================================================================== */}
       <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-2">
           <Clock className="h-5 w-5 text-chart-4" />
@@ -350,7 +465,9 @@ export default function AdminUsersPage() {
         )}
       </div>
 
-      {/* Active Users */}
+      {/* ========================================================================
+          ACTIVE USERS SECTION
+          ======================================================================== */}
       <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-2">
           <User className="h-5 w-5 text-accent" />
@@ -425,7 +542,9 @@ export default function AdminUsersPage() {
         )}
       </div>
 
-      {/* Administrators */}
+      {/* ========================================================================
+          ADMINISTRATORS SECTION
+          ======================================================================== */}
       <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-2">
           <Shield className="h-5 w-5 text-primary" />
@@ -491,7 +610,9 @@ export default function AdminUsersPage() {
         )}
       </div>
 
-      {/* Delete Confirmation Dialog */}
+      {/* ========================================================================
+          DELETE CONFIRMATION DIALOG
+          ======================================================================== */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -541,7 +662,9 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Profile Dialog */}
+      {/* ========================================================================
+          EDIT PROFILE DIALOG
+          ======================================================================== */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>

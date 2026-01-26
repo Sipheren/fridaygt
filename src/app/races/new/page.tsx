@@ -1,3 +1,159 @@
+/**
+ * Create New Race Page
+ *
+ * Purpose: Multi-step wizard for creating a new race
+ * - 3-step process: Select track → Select builds → Configure race
+ * - Track selection with grouped dropdown (by country)
+ * - Build selection with multi-select (allow duplicate cars)
+ * - Race configuration: Name, description, laps, weather
+ * - Quick build creation modal (create builds on the fly)
+ * - Progress indicator showing current step
+ *
+ * **Key Features:**
+ * - 3-step wizard: Track, Builds, Configure
+ * - Track selection: Grouped by country with search
+ * - Build selection: Multi-select with QuickBuildModal
+ * - Allow duplicate cars: Multiple builds from same car allowed
+ * - Quick build: Create builds without leaving the page
+ * - Validation: Step-by-step validation before proceeding
+ * - Progress: Visual indicator of current step
+ * - Success: Redirect to /races/[id] on create
+ *
+ * **Wizard Flow:**
+ * 1. Step 1 (Select Track): User selects track → Validate → Click Next
+ * 2. Step 2 (Select Builds): User selects builds → Validate → Click Next
+ * 3. Step 3 (Configure): User fills race info → Validate → Click Create Race
+ * 4. Submit: POST /api/races → Redirect to /races/[id]
+ * 5. Error: Show error message, user stays on current step
+ *
+ * **Step 1: Select Track**
+ * - Dropdown: Grouped by country (formatTrackOptions helper)
+ * - Search: Real-time filter as user types
+ * - Preview: Show selected track with details (location, category, length)
+ * - Validation: Track must be selected
+ * - Next: Enable only when track is selected
+ *
+ * **Step 2: Select Builds**
+ * - BuildSelector: Multi-select component with search
+ * - Allow duplicates: Multiple builds from same car allowed
+ * - Quick build: "Create new build" button opens QuickBuildModal
+ * - Callback: Add newly created build to selection
+ * - Reminder: Show selected track name at bottom
+ * - Validation: At least 1 build must be selected
+ * - Next: Enable only when 1+ builds selected
+ *
+ * **Step 3: Configure**
+ * - Race name: Required text input
+ * - Description: Optional textarea
+ * - Laps: Optional number input (min: 1)
+ * - Weather: Optional select (Dry/Wet)
+ * - Summary: Show track name and build count
+ * - Validation: Name is required, laps must be positive number
+ * - Create: Enable only when validation passes
+ *
+ * **State Management:**
+ * - step: Current wizard step (1 | 2 | 3)
+ * - loading: Loading state during form submit
+ * - tracks: Available tracks from API
+ * - tracksLoading: Loading state during track fetch
+ * - builds: Available builds from API
+ * - buildsLoading: Loading state during build fetch
+ * - showBuildModal: QuickBuildModal visibility
+ * - error: Error message to display
+ * - formData: Form data object (trackId, buildIds, name, description, laps, weather)
+ *
+ * **Data Fetching:**
+ * - Tracks: GET /api/tracks on mount
+ * - Builds: GET /api/builds?myBuilds=true on mount
+ * - Parallel fetch: Both fetched simultaneously with Promise.all
+ * - New build: On build created, fetch build details and add to list
+ *
+ * **Quick Build Flow:**
+ * 1. User clicks "Create new build" → Opens QuickBuildModal
+ * 2. User creates build in modal → QuickBuildModal calls onBuildCreated
+ * 3. Handle build created: Fetch build details → Add to builds list → Add to selection
+ * 4. Modal closes → User sees newly created build in selection
+ *
+ * **Validation:**
+ * - Step 1: trackId must be set
+ * - Step 2: buildIds.length must be > 0
+ * - Step 3: name must be non-empty, laps must be positive number (if set)
+ * - validateStep(): Returns boolean, sets error message
+ * - Error message: Displayed above step content
+ *
+ * **Navigation:**
+ * - Next: validateStep() → Increment step
+ * - Previous: Decrement step (no validation needed)
+ * - Back to races: Link in header
+ *
+ * **Progress Indicator:**
+ * - 3 circles: Numbered 1, 2, 3
+ * - Active step: Filled with primary color
+ * - Completed steps: Show checkmark icon
+ * - Inactive steps: Gray with muted text
+ * - Lines: Connect steps with horizontal lines
+ *
+ * **API Integration:**
+ * - GET /api/tracks: Fetch available tracks
+ * - GET /api/builds?myBuilds=true: Fetch user's builds
+ * - GET /api/builds/[id]: Fetch newly created build details
+ * - POST /api/races: Create new race
+ *   - Request body: { trackId, buildIds[], name, description, laps, weather }
+ *   - Response: { id: string } (new race ID)
+ * - Success: router.replace('/races/[id]')
+ *
+ * **Error Handling:**
+ * - Fetch tracks/builds: Set error state, show error message
+ * - Submit: Show error message from API or generic message
+ * - Validation: Show error message above step content
+ * - User stays: Can retry after error
+ *
+ * **Page Layout:**
+ * - Header: Title "Create New Race", back link, description
+ * - Progress: 3-step indicator with icons and lines
+ * - Error: Alert box with error message (if any)
+ * - Card: Step content with navigation buttons
+ * - Modal: QuickBuildModal (conditionally rendered)
+ *
+ * **Styling:**
+ * - Container: max-w-4xl centered
+ * - Progress: Flex layout with responsive sizing
+ * - Cards: Bordered with shadow
+ * - Buttons: min-h-[44px] for touch targets
+ * - Track preview: Muted background with border
+ * - Summary: Muted background with icon highlights
+ *
+ * **Helper Functions:**
+ * - formatTrackOptions: Format tracks for SearchableComboBox (grouped by country)
+ * - handleTrackSelect: Update formData.trackId
+ * - handleBuildsChange: Update formData.buildIds
+ * - handleBuildCreated: Add new build to list and selection
+ * - validateStep: Validate current step, return boolean
+ * - handleNext: Validate and advance to next step
+ * - handlePrevious: Go back to previous step
+ * - handleSubmit: Create race and redirect
+ *
+ * **BuildSelector Component:**
+ * - Multi-select: SearchableComboBox with multi-select
+ * - Search: Real-time filter as user types
+ * - On create new: Opens QuickBuildModal
+ * - Selected: Shows badges for selected builds
+ * - Loading: Shows spinner during fetch
+ *
+ * **QuickBuildModal Component:**
+ * - Modal: Dialog with form to create build
+ * - Callback: onBuildCreated(buildId) when build is created
+ * - Close: User can cancel and close modal
+ *
+ * **Related Files:**
+ * - @/app/races/page.tsx: Races listing page
+ * - @/app/races/[id]/page.tsx: Race detail page
+ * - @/components/builds/BuildSelector: Build selection component
+ * - @/components/builds/QuickBuildModal: Quick build creation modal
+ * - @/lib/dropdown-helpers: formatTrackOptions helper
+ * - @/app/api/races/route.ts: Create race API endpoint
+ */
+
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -24,6 +180,9 @@ import Link from 'next/link'
 import { formatTrackOptions } from '@/lib/dropdown-helpers'
 import type { DbTrack } from '@/types/database'
 
+// ============================================================
+// TYPES
+// ============================================================
 interface Build {
   id: string
   name: string
@@ -40,6 +199,9 @@ interface Build {
 type Step = 1 | 2 | 3
 
 export default function NewRacePage() {
+  // ============================================================
+  // STATE
+  // ============================================================
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [loading, setLoading] = useState(false)
@@ -50,7 +212,11 @@ export default function NewRacePage() {
   const [showBuildModal, setShowBuildModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Form data
+  // ============================================================
+  // DATA FETCHING
+  // ============================================================
+  // Fetch tracks and builds on mount
+  // Form data object with race configuration
   const [formData, setFormData] = useState({
     trackId: '',
     buildIds: [] as string[],
@@ -93,6 +259,9 @@ export default function NewRacePage() {
     fetchData()
   }, [])
 
+  // ============================================================
+  // DROPDOWN OPTIONS & EVENT HANDLERS
+  // ============================================================
   // Format track options for SearchableComboBox
   const trackOptions = useMemo(() => formatTrackOptions(tracks), [tracks])
 
@@ -101,7 +270,10 @@ export default function NewRacePage() {
     setFormData({ ...formData, trackId })
   }
 
-  // Handle build creation callback
+  // Handle build creation callback from QuickBuildModal
+  // - Fetch build details
+  // - Add to builds list
+  // - Add to selection
   const handleBuildCreated = async (buildId: string) => {
     // Fetch the newly created build to add it to the list
     try {
@@ -120,7 +292,15 @@ export default function NewRacePage() {
     })
   }
 
-  // Validate current step
+  // ============================================================
+  // VALIDATION & NAVIGATION
+  // ============================================================
+  // Validate current step before proceeding
+  // - Step 1: Track must be selected
+  // - Step 2: At least 1 build must be selected
+  // - Step 3: Name must be set, laps must be positive number
+  // - Returns: true if valid, false if invalid
+  // - Sets: error message if invalid
   const validateStep = (): boolean => {
     setError(null)
 
@@ -150,7 +330,9 @@ export default function NewRacePage() {
     return true
   }
 
-  // Handle next step
+  // Handle next step button click
+  // - Validate current step
+  // - Advance to next step if valid
   const handleNext = () => {
     if (validateStep()) {
       setStep(step + 1 as Step)
@@ -163,7 +345,10 @@ export default function NewRacePage() {
     setStep(step - 1 as Step)
   }
 
-  // Handle form submission
+  // Handle form submission (Create Race)
+  // - Validate step 3
+  // - POST /api/races with form data
+  // - Redirect to /races/[id] on success
   const handleSubmit = async () => {
     if (!validateStep()) return
 
@@ -199,7 +384,10 @@ export default function NewRacePage() {
     }
   }
 
-  // Get selected track info
+  // ============================================================
+  // RENDER
+  // ============================================================
+  // Get selected track info for preview
   const selectedTrack = tracks.find((t) => t.id === formData.trackId)
 
   return (

@@ -1,3 +1,61 @@
+/**
+ * ADMIN SETTINGS PAGE
+ *
+ * Purpose:
+ * Administrative settings page displaying system configuration, database statistics,
+ * and application information. Read-only dashboard for viewing system status.
+ *
+ * Key Features:
+ * - Database statistics display (tracks, cars counts)
+ * - Image management status (pending feature)
+ * - Theme/color scheme information
+ * - System technology stack information
+ * - Connection status indicators
+ *
+ * Data Flow:
+ * - Static page - no API calls or dynamic data fetching
+ * - All values are hardcoded for display purposes
+ * - Future versions may fetch real-time stats
+ *
+ * State Management:
+ * - No state - purely presentational component
+ *
+ * API Integration:
+ * - None currently
+ * - Future: May add API endpoints for dynamic stats
+ *
+ * Information Displayed:
+ * - Database: 118 tracks, 552 cars (hardcoded)
+ * - Connection: Supabase
+ * - Images: Track/car image management (pending feature)
+ * - Theme: Color scheme and typography
+ * - System: Framework, database, auth, UI, styling, email
+ *
+ * Styling:
+ * - Three main sections: Database, Images, Theme, System Info
+ * - Badge indicators for status (ACTIVE, PENDING)
+ * - Icon-based section headers
+ * - Grid layout for stats cards
+ * - Color scheme visualization
+ *
+ * Future Enhancements:
+ * - Dynamic statistics from API
+ * - Image fetching functionality
+ * - Theme customization controls
+ * - System health monitoring
+ * - Configuration management
+ *
+ * Common Issues:
+ * - Hardcoded values may become outdated
+ * - No real-time data updates
+ *
+ * Related Files:
+ * - /admin/page.tsx: Admin dashboard redirect
+ * - /admin/users/page.tsx: User management
+ * - @/components/layout: PageWrapper, PageHeader components
+ * - /settings/page.tsx: User-facing settings page
+ */
+
 'use client'
 
 import { useRouter } from 'next/navigation'
@@ -11,7 +69,9 @@ export default function AdminSettingsPage() {
 
   return (
     <PageWrapper>
-      {/* Header */}
+      {/* ========================================================================
+          PAGE HEADER
+          ======================================================================== */}
       <PageHeader
         title="SETTINGS"
         icon={SettingsIcon}
@@ -28,7 +88,9 @@ export default function AdminSettingsPage() {
         }
       />
 
-      {/* Database Section */}
+      {/* ========================================================================
+          DATABASE SECTION
+          ======================================================================== */}
       <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-2">
           <Database className="h-5 w-5 text-primary" />
@@ -55,7 +117,9 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      {/* Images Section */}
+      {/* ========================================================================
+          IMAGES SECTION
+          ======================================================================== */}
       <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-2">
           <Image className="h-5 w-5 text-secondary" />
@@ -89,7 +153,9 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      {/* Theme Section */}
+      {/* ========================================================================
+          THEME SECTION
+          ======================================================================== */}
       <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-2">
           <Palette className="h-5 w-5 text-accent" />
@@ -126,7 +192,9 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      {/* System Info */}
+      {/* ========================================================================
+          SYSTEM INFORMATION SECTION
+          ======================================================================== */}
       <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-2">
           <SettingsIcon className="h-5 w-5 text-chart-4" />

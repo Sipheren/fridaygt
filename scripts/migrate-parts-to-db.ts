@@ -1,16 +1,155 @@
 #!/usr/bin/env node
 /**
  * Migrate Parts and Tuning Settings from CSV to Database
- * Run this after creating the new tables with the SQL migration
+ *
+ * This script performs a complete migration of GT7 parts and tuning settings data
+ * from CSV files into the Supabase database. It creates normalized database tables
+ * for categories and items, then migrates existing build data to use foreign keys.
+ *
+ * Usage:
+ *   npm run migrate:parts
+ *   OR
+ *   npx tsx scripts/migrate-parts-to-db.ts
  *
  * Prerequisites:
- * 1. Run the SQL migration: supabase/migrations/20260121_add_parts_and_settings_tables.sql
- * 2. Ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set
+ *   1. Run the SQL migration: supabase/migrations/20260121_add_parts_and_settings_tables.sql
+ *      This creates the PartCategory, Part, TuningSection, and TuningSetting tables
+ *   2. Environment variables must be set:
+ *     * NEXT_PUBLIC_SUPABASE_URL - Your Supabase project URL
+ *     * SUPABASE_SERVICE_ROLE_KEY - Service role key for admin access
+ *   3. CSV files must exist:
+ *     * gt7data/gt7_parts_shop.csv
+ *     * gt7data/gt7_tuning_settings.csv
+ *   4. Existing CarBuildUpgrade and CarBuildSetting records may exist for migration
+ *
+ * Data Flow:
+ *   Step 1: Migrate Parts
+ *   1. Read gt7data/gt7_parts_shop.csv
+ *   2. Parse and group parts by category
+ *   3. Insert categories into PartCategory table (ordered)
+ *   4. Insert parts into Part table (linked to categories)
+ *
+ *   Step 2: Migrate Tuning Settings
+ *   1. Read gt7data/gt7_tuning_settings.csv
+ *   2. Parse and group settings by section
+ *   3. Insert sections into TuningSection table (ordered)
+ *   4. Insert settings into TuningSetting table (linked to sections)
+ *
+ *   Step 3: Migrate Existing Build Data
+ *   1. Fetch all CarBuildUpgrade records (old format with category/part strings)
+ *   2. Lookup part IDs from new Part table
+ *   3. Update records with partId foreign key
+ *
+ *   Step 4: Migrate Existing Settings Data
+ *   1. Fetch all CarBuildSetting records (old format with category/setting strings)
+ *   2. Lookup setting IDs from new TuningSetting table
+ *   3. Update records with settingId foreign key
+ *
+ *   Step 5: Verification
+ *   1. Count records in all tables
+ *   2. Report migration statistics
+ *   3. Compare migrated vs total records
+ *
+ * Error Handling:
+ *   - Validates environment variables on startup
+ *   - Continues migration on individual record errors
+ *   - Logs warnings for unmatched parts/settings
+ *   - Reports summary of successful vs failed migrations
+ *   - Exits with status code 1 on fatal errors
+ *
+ * Category Ordering:
+ *   Parts are ordered by performance level:
+ *   1. Sports (entry-level)
+ *   2. Club Sports
+ *   3. Semi-Racing
+ *   4. Racing
+ *   5. Extreme (highest performance)
+ *
+ *   Tuning sections are ordered by menu appearance:
+ *   Tyres, Suspension, Differential Gear, Aerodynamics, ECU,
+ *   Performance Adjustment, Transmission, Nitrous/Overtake,
+ *   Supercharger, Intake & Exhaust, Brakes, Steering, Drivetrain,
+ *   Engine Tuning, Bodywork
+ *
+ * CSV Formats:
+ *   Parts CSV (gt7_parts_shop.csv):
+ *   - Header: Category,Part
+ *   - Example: "Sports,Sports Computer"
+ *
+ *   Tuning CSV (gt7_tuning_settings.csv):
+ *   - Header: Section,Setting
+ *   - Example: "Tyres,Tyre Specifications"
+ *
+ * Database Schema:
+ *   PartCategory:
+ *   - id: UUID (primary key)
+ *   - name: text (category name)
+ *   - displayOrder: integer (sort order)
+ *
+ *   Part:
+ *   - id: UUID (primary key)
+ *   - categoryId: UUID (foreign key)
+ *   - name: text (part name)
+ *   - isActive: boolean
+ *
+ *   TuningSection:
+ *   - id: UUID (primary key)
+ *   - name: text (section name)
+ *   - displayOrder: integer (sort order)
+ *
+ *   TuningSetting:
+ *   - id: UUID (primary key)
+ *   - sectionId: UUID (foreign key)
+ *   - name: text (setting name)
+ *   - isActive: boolean
+ *
+ * Migration Strategy:
+ *   - New categories/sections are inserted with displayOrder
+ *   - Parts/settings are linked via foreign keys
+ *   - Existing build data is migrated in-place (updated)
+ *   - Old string columns remain until finalization SQL
+ *   - Lookup maps built for efficient O(1) lookups
+ *
+ * Important Notes:
+ *   - Uses service role key to bypass RLS policies
+ *   - Processes records sequentially to avoid rate limits
+ *   - Builds lookup maps for efficient data migration
+ *   - Reports unmatched records for manual review
+ *   - Does NOT delete old columns (done in finalization SQL)
+ *   - Can be run multiple times (idempotent for new data)
+ *
+ * Verification:
+ *   After migration, the script verifies:
+ *   - PartCategory count
+ *   - Part count
+ *   - TuningSection count
+ *   - TuningSetting count
+ *   - CarBuildUpgrade records with partId
+ *   - CarBuildSetting records with settingId
+ *
+ * Next Steps After Migration:
+ *   1. Review migration summary
+ *   2. Run finalization SQL to:
+ *      - Make new columns NOT NULL
+ *      - Drop old string columns
+ *      - Add foreign key constraints
+ *   3. Test application build features
+ *   4. Verify build creation and editing
+ *
+ * Dependencies:
+ *   - fs: File system access for reading CSV files
+ *   - path: Path manipulation for file locations
+ *   - @supabase/supabase-js: Supabase client for database operations
+ *   - crypto: UUID generation for primary keys
  */
 
 import fs from 'fs'
 import path from 'path'
 import { createClient } from '@supabase/supabase-js'
+
+// ============================================================================
+// Configuration
+// ============================================================================
 
 // Supabase configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -24,7 +163,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// CSV paths
+// CSV file paths
 const PARTS_CSV_PATH = path.join(process.cwd(), 'gt7data', 'gt7_parts_shop.csv')
 const TUNING_CSV_PATH = path.join(process.cwd(), 'gt7data', 'gt7_tuning_settings.csv')
 
@@ -36,6 +175,13 @@ interface CSVRow {
   [key: string]: string
 }
 
+/**
+ * Parse CSV content with quote handling
+ * Handles quoted values and empty rows
+ *
+ * @param content - Raw CSV content
+ * @returns Array of row objects
+ */
 function parseCSV(content: string): CSVRow[] {
   const lines = content.split('\n').filter(line => line.trim())
   if (lines.length === 0) return []
@@ -48,6 +194,7 @@ function parseCSV(content: string): CSVRow[] {
     let current = ''
     let inQuotes = false
 
+    // Parse each character, handling quoted values
     for (const char of lines[i]) {
       if (char === '"') {
         inQuotes = !inQuotes
@@ -60,6 +207,7 @@ function parseCSV(content: string): CSVRow[] {
     }
     values.push(current.trim())
 
+    // Create row object
     const row: CSVRow = {}
     headers.forEach((header, index) => {
       row[header] = values[index] || ''
@@ -83,8 +231,13 @@ interface PartRow {
   Part: string
 }
 
+// Predefined category ordering (matches game progression)
 const PART_CATEGORY_ORDER = ['Sports', 'Club Sports', 'Semi-Racing', 'Racing', 'Extreme']
 
+/**
+ * Migrate parts from CSV to database
+ * Creates categories and parts with proper ordering
+ */
 async function migrateParts(): Promise<void> {
   console.log('🔧 Migrating Parts Shop data...')
 
@@ -93,7 +246,7 @@ async function migrateParts(): Promise<void> {
 
   console.log(`   Found ${rows.length} parts in CSV`)
 
-  // Group by category
+  // Group parts by category
   const categoryMap = new Map<string, string[]>()
   for (const row of rows) {
     const category = row.Category?.trim()
@@ -113,7 +266,7 @@ async function migrateParts(): Promise<void> {
   let categoriesInserted = 0
   let partsInserted = 0
 
-  // Use defined order first
+  // Use defined order first, then append any new categories
   const orderedCategories = PART_CATEGORY_ORDER.filter(c => categoryMap.has(c))
   const remainingCategories = Array.from(categoryMap.keys()).filter(c => !PART_CATEGORY_ORDER.includes(c))
   const allCategories = [...orderedCategories, ...remainingCategories]
@@ -139,7 +292,7 @@ async function migrateParts(): Promise<void> {
     categoriesInserted++
     console.log(`   ✓ Inserted category: ${categoryName}`)
 
-    // Insert parts for this category
+    // Insert all parts for this category
     const partsToInsert = parts.map(partName => ({
       id: crypto.randomUUID(),
       categoryId: category.id,
@@ -169,6 +322,7 @@ interface TuningRow {
   Setting: string
 }
 
+// Predefined section ordering (matches in-game menu)
 const TUNING_SECTION_ORDER = [
   'Tyres',
   'Suspension',
@@ -187,6 +341,10 @@ const TUNING_SECTION_ORDER = [
   'Bodywork',
 ]
 
+/**
+ * Migrate tuning settings from CSV to database
+ * Creates sections and settings with proper ordering
+ */
 async function migrateTuningSettings(): Promise<void> {
   console.log('⚙️  Migrating Tuning Settings data...')
 
@@ -195,7 +353,7 @@ async function migrateTuningSettings(): Promise<void> {
 
   console.log(`   Found ${rows.length} settings in CSV`)
 
-  // Group by section
+  // Group settings by section
   const sectionMap = new Map<string, string[]>()
   for (const row of rows) {
     const section = row.Section?.trim()
@@ -215,7 +373,7 @@ async function migrateTuningSettings(): Promise<void> {
   let sectionsInserted = 0
   let settingsInserted = 0
 
-  // Use defined order first
+  // Use defined order first, then append any new sections
   const orderedSections = TUNING_SECTION_ORDER.filter(s => sectionMap.has(s))
   const remainingSections = Array.from(sectionMap.keys()).filter(s => !TUNING_SECTION_ORDER.includes(s))
   const allSections = [...orderedSections, ...remainingSections]
@@ -241,7 +399,7 @@ async function migrateTuningSettings(): Promise<void> {
     sectionsInserted++
     console.log(`   ✓ Inserted section: ${sectionName}`)
 
-    // Insert settings for this section
+    // Insert all settings for this section
     const settingsToInsert = settings.map(settingName => ({
       id: crypto.randomUUID(),
       sectionId: section.id,
@@ -266,10 +424,14 @@ async function migrateTuningSettings(): Promise<void> {
 // Migrate Existing Build Data
 // ============================================================================
 
+/**
+ * Migrate existing CarBuildUpgrade records to use foreign keys
+ * Updates records to reference Part instead of category/part strings
+ */
 async function migrateExistingBuildUpgrades(): Promise<void> {
   console.log('🔄 Migrating existing CarBuildUpgrade records...')
 
-  // Get all CarBuildUpgrade records
+  // Get all existing upgrade records
   const { data: upgrades, error: fetchError } = await supabase
     .from('CarBuildUpgrade')
     .select('id, category, part')
@@ -286,7 +448,7 @@ async function migrateExistingBuildUpgrades(): Promise<void> {
 
   console.log(`   Found ${upgrades.length} records to migrate`)
 
-  // Get all parts with their categories for lookup
+  // Build lookup map: categoryName:partName -> partId
   const { data: parts, error: partsError } = await supabase
     .from('Part')
     .select('id, name, categoryId')
@@ -297,7 +459,6 @@ async function migrateExistingBuildUpgrades(): Promise<void> {
     return
   }
 
-  // Get all categories for lookup
   const { data: categories, error: categoriesError } = await supabase
     .from('PartCategory')
     .select('id, name')
@@ -307,7 +468,7 @@ async function migrateExistingBuildUpgrades(): Promise<void> {
     return
   }
 
-  // Build lookup map: categoryName + partName -> partId
+  // Build lookup map for efficient O(1) lookups
   const partLookup = new Map<string, string>()
   for (const part of parts || []) {
     const category = categories?.find(c => c.id === part.categoryId)
@@ -317,7 +478,7 @@ async function migrateExistingBuildUpgrades(): Promise<void> {
     }
   }
 
-  // Migrate each upgrade
+  // Migrate each upgrade record
   let migrated = 0
   let failed = 0
 
@@ -331,6 +492,7 @@ async function migrateExistingBuildUpgrades(): Promise<void> {
       continue
     }
 
+    // Update record with new foreign key
     const { error: updateError } = await supabase
       .from('CarBuildUpgrade')
       .update({ partId })
@@ -347,10 +509,14 @@ async function migrateExistingBuildUpgrades(): Promise<void> {
   console.log(`✓ CarBuildUpgrade migration complete: ${migrated} migrated, ${failed} failed`)
 }
 
+/**
+ * Migrate existing CarBuildSetting records to use foreign keys
+ * Updates records to reference TuningSetting instead of category/setting strings
+ */
 async function migrateExistingBuildSettings(): Promise<void> {
   console.log('🔄 Migrating existing CarBuildSetting records...')
 
-  // Get all CarBuildSetting records
+  // Get all existing setting records
   const { data: settings, error: fetchError } = await supabase
     .from('CarBuildSetting')
     .select('id, category, setting')
@@ -367,7 +533,7 @@ async function migrateExistingBuildSettings(): Promise<void> {
 
   console.log(`   Found ${settings.length} records to migrate`)
 
-  // Get all tuning settings with their sections for lookup
+  // Build lookup map: sectionName:settingName -> settingId
   const { data: tuningSettings, error: tuningSettingsError } = await supabase
     .from('TuningSetting')
     .select('id, name, sectionId')
@@ -378,7 +544,6 @@ async function migrateExistingBuildSettings(): Promise<void> {
     return
   }
 
-  // Get all sections for lookup
   const { data: sections, error: sectionsError } = await supabase
     .from('TuningSection')
     .select('id, name')
@@ -388,7 +553,7 @@ async function migrateExistingBuildSettings(): Promise<void> {
     return
   }
 
-  // Build lookup map: sectionName + settingName -> settingId
+  // Build lookup map for efficient O(1) lookups
   const settingLookup = new Map<string, string>()
   for (const setting of tuningSettings || []) {
     const section = sections?.find(s => s.id === setting.sectionId)
@@ -398,7 +563,7 @@ async function migrateExistingBuildSettings(): Promise<void> {
     }
   }
 
-  // Migrate each setting
+  // Migrate each setting record
   let migrated = 0
   let failed = 0
 
@@ -412,6 +577,7 @@ async function migrateExistingBuildSettings(): Promise<void> {
       continue
     }
 
+    // Update record with new foreign key
     const { error: updateError } = await supabase
       .from('CarBuildSetting')
       .update({ settingId })
@@ -429,12 +595,17 @@ async function migrateExistingBuildSettings(): Promise<void> {
 }
 
 // ============================================================================
-// Verify Migration
+// Verification
 // ============================================================================
 
+/**
+ * Verify migration success by counting records
+ * Displays summary of all migrated data
+ */
 async function verifyMigration(): Promise<void> {
   console.log('\n📊 Verifying migration...')
 
+  // Count all records
   const { count: partCategoriesCount } = await supabase
     .from('PartCategory')
     .select('*', { count: 'exact', head: true })
@@ -469,6 +640,7 @@ async function verifyMigration(): Promise<void> {
     .from('CarBuildSetting')
     .select('*', { count: 'exact', head: true })
 
+  // Display migration summary
   console.log('\nMigration Summary:')
   console.log('------------------')
   console.log(`PartCategories:      ${partCategoriesCount || 0}`)
@@ -483,6 +655,10 @@ async function verifyMigration(): Promise<void> {
 // Main Migration Flow
 // ============================================================================
 
+/**
+ * Main function orchestrating the entire migration process
+ * Executes steps sequentially with error handling
+ */
 async function main() {
   console.log('========================================')
   console.log('  Parts & Tuning Migration')
@@ -521,6 +697,7 @@ async function main() {
   }
 }
 
+// Execute migration
 main()
   .then(() => {
     process.exit(0)

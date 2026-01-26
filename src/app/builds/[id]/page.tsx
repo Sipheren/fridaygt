@@ -1,3 +1,168 @@
+/**
+ * Build Detail Page
+ *
+ * Purpose: Display comprehensive details of a single car build
+ * - Shows build information (name, description, creator, visibility)
+ * - Displays associated car details with link to car page
+ * - Shows installed upgrades grouped by category
+ * - Shows tuning settings grouped by section (including gear ratios)
+ * - Displays performance statistics (total laps, fastest time, average time, tracks)
+ * - Provides edit, clone, and delete functionality
+ * - Public/private visibility badge
+ *
+ * **Key Features:**
+ * - Build header: Name, visibility badge, description, action buttons
+ * - Car info: Manufacturer, name, year, link to car detail page
+ * - Creator info: Name/email, created/updated dates
+ * - Statistics card: Total laps, fastest lap, average lap, unique tracks (if data available)
+ * - Upgrades display: Grouped by category with part names and values
+ * - Tuning settings: Grouped by section with custom values and gear ratios
+ * - Gear ratios: Special handling for transmission (gears 1-20 + final drive)
+ * - Clone functionality: Create a copy of the build
+ * - Edit functionality: Navigate to edit page
+ * - Delete functionality: Delete with confirmation dialog
+ *
+ * **Data Flow:**
+ * 1. Page loads → params.id extracted → fetchBuild(buildId) called
+ * 2. API call: GET /api/builds/[id] → Returns build with upgrades, settings, statistics
+ * 3. API call: GET /api/tuning-settings → Returns metadata for formatting settings
+ * 4. Build data stored in state → groupedUpgrades and groupedSettings computed
+ * 5. User can click edit → Navigate to /builds/[id]/edit
+ * 6. User can click clone → POST /api/builds/[id]/clone → Navigate to new build
+ * 7. User can delete → Confirm dialog → DELETE /api/builds/[id] → Navigate to /builds
+ *
+ * **State Management:**
+ * - id: Build ID from URL params
+ * - build: Build object with all details
+ * - loading: Loading state during fetch
+ * - deleting: Loading state during delete
+ * - cloning: Loading state during clone
+ * - showDeleteDialog: Delete confirmation dialog visibility
+ * - showErrorDialog: Error dialog visibility
+ * - errorMessage: Error message to display
+ * - tuningSettingsMetadata: Map of setting ID → metadata (input type, unit, etc.)
+ *
+ * **Upgrades Display:**
+ * - Grouped by: upgrade.category (Engine, Drivetrain, etc.)
+ * - Each upgrade shows: Part name, value badge (orange)
+ * - Part format: Can be string (legacy) or Part object (new)
+ * - Value display: Upgrade value or "Installed" if no value
+ * - Layout: 2-column grid for upgrades within each category
+ * - Category header: Formatted name (kebab-case to Title Case)
+ *
+ * **Tuning Settings Display:**
+ * - Grouped by: setting.section (Suspension, Brakes, Transmission, etc.)
+ * - Each setting shows: Setting name, formatted value with unit
+ * - Setting format: Can be string (legacy) or TuningSetting object (new)
+ * - Special handling for transmission: Gears 1-20 + final drive (single column, 50% width)
+ * - Value formatting: Based on metadata (text, number, dual, ratio)
+ * - Dual values: Front/Rear displayed as two lines (e.g., spring rates)
+ * - Ratio values: Front/Rear displayed as two lines (e.g., brake balance)
+ * - Regular values: Orange badge with value and unit
+ * - Layout: 2-column grid for settings within each section (except Transmission)
+ * - Section header: Formatted name (kebab-case to Title Case)
+ *
+ * **Gear Ratios Handling:**
+ * - Direct fields: gear1...gear20, finalDrive (stored as text to preserve formatting)
+ * - Transmission section: Gears sorted in order (1st, 2nd, 3rd, etc.), final drive at end
+ * - Ordinal suffixes: 1st, 2nd, 3rd, 4th, 5th, 6th, etc.
+ * - Only show: Gears with non-null values
+ * - Layout: Single column at 50% width on desktop (same width as grid items)
+ * - Sorting: Gears in numerical order, final drive last
+ *
+ * **Statistics Display:**
+ * - Total laps: Sum of all lap times for this build
+ * - Fastest lap: Best lap time formatted as MM:SS.mmm
+ * - Average lap: Average of all lap times formatted as MM:SS.mmm
+ * - Unique tracks: Count of different tracks this build has been used on
+ * - Condition: Only shown if statistics.totalLaps > 0
+ * - Data source: build.statistics from API
+ *
+ * **Clone Flow:**
+ * 1. User clicks clone → handleClone() called
+ * 2. Sets cloning state → Shows loading on clone button
+ * 3. POST /api/builds/[id]/clone → Creates copy of build
+ * 4. Response: { id: string } (new build ID)
+ * 5. Navigate to new build: /builds/[new-id]
+ * 6. Error: Show error dialog, user stays on page
+ *
+ * **Delete Flow:**
+ * 1. User clicks delete → handleDelete() called
+ * 2. Sets showDeleteDialog → Shows delete confirmation dialog
+ * 3. User confirms → confirmDelete() called
+ * 4. DELETE /api/builds/[id] → Sets deleting state
+ * 5. On success → Navigate to /builds
+ * 6. On error → Show error dialog, user stays on page
+ *
+ * **API Integration:**
+ * - GET /api/builds/[id]: Fetch build details
+ *   - Response: Build object with upgrades[], settings[], gear1...gear20, statistics
+ * - GET /api/tuning-settings: Fetch tuning settings metadata
+ *   - Response: { settings: TuningSettingMetadata[] }
+ * - POST /api/builds/[id]/clone: Clone build
+ *   - Response: { id: string } (new build ID)
+ * - DELETE /api/builds/[id]: Delete build
+ *   - Response: Success/error
+ *
+ * **Access Control:**
+ * - Authenticated: User must be logged in
+ * - View: Any user can view if build is public or they own it
+ * - Edit: Only creator can edit
+ * - Delete: Only creator can delete
+ * - Clone: Any user can clone public builds
+ *
+ * **Page Layout:**
+ * - PageWrapper: Standard container with padding
+ * - Back button: Navigates to /builds
+ * - Build header: Name, badge, description, action buttons (Clone, Edit, Delete)
+ * - Car info: Manufacturer, name (link to car), creator, dates
+ * - Statistics: Grid of 4 stat cards (if data available)
+ * - Upgrades card: Grouped by category, 2-column grid
+ * - Tuning settings card: Grouped by section, 2-column grid (transmission single column)
+ * - Empty state: "No upgrades or tuning settings configured"
+ * - Dialogs: Delete confirmation, error display
+ *
+ * **Styling:**
+ * - Cards: Bordered with shadow, rounded corners
+ * - Buttons: min-h-[44px] for touch targets
+ * - Badges: Orange (#FF7115) for values, outline for labels
+ * - Links: gt-hover-text-link for hover effects
+ * - Responsive: Mobile-first, stacked on mobile
+ * - Gear ratios: Special styling for dual/ratio values (Front/Rear)
+ *
+ * **Navigation:**
+ * - Back: /builds (from back button)
+ * - Edit: /builds/[id]/edit (from edit button)
+ * - Car: /cars/[slug] (from car name link)
+ * - Clone: /builds/[new-id] (after clone)
+ *
+ * **Error Handling:**
+ * - Fetch error: Show error dialog, navigate to /builds
+ * - Clone error: Show error dialog, user stays on page
+ * - Delete error: Show error dialog, user stays on page
+ * - Build not found: Show "Build not found" message, back button
+ *
+ * **Optimizations:**
+ * - useMemo: Grouped upgrades and settings memoized to avoid re-grouping on every render
+ * - Parallel fetch: Build and tuning settings metadata fetched in parallel
+ * - Lazy loading: Only fetch when page loads
+ *
+ * **Formatting Functions:**
+ * - formatCategoryName: Convert kebab-case to Title Case (e.g., "engine-parts" → "Engine Parts")
+ * - formatSettingName: Same as formatCategoryName for settings
+ * - formatSettingValue: Format value based on metadata (dual, ratio, or regular)
+ * - formatLapTime: Convert milliseconds to MM:SS.mmm format
+ *
+ * **Related Files:**
+ * - @/app/builds/page.tsx: Builds listing page
+ * - @/app/builds/new/page.tsx: Create new build page
+ * - @/app/builds/[id]/edit/page.tsx: Edit build page
+ * - @/app/api/builds/[id]/route.ts: Build details API endpoint
+ * - @/app/api/builds/[id]/clone/route.ts: Clone build API endpoint
+ * - @/lib/time: formatLapTime helper function
+ * - @/components/ui: Card, Button, Badge, Dialog components
+ */
+
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
@@ -38,6 +203,15 @@ import { formatLapTime } from '@/lib/time'
 import { LoadingSection } from '@/components/ui/loading'
 import { PageWrapper } from '@/components/layout'
 
+// ============================================================
+// TYPES
+// ============================================================
+// Part interface (for new format upgrades)
+// - id: Part ID
+// - name: Part display name
+// - categoryId: Category ID (e.g., "engine-parts")
+// - description: Optional part description
+// - isActive: Whether part is active/available
 interface Part {
   id: string
   name: string
@@ -46,6 +220,9 @@ interface Part {
   isActive: boolean
 }
 
+// BuildUpgrade interface (from API)
+// - Can be string (legacy) or Part object (new format)
+// - partId is included in new format for lookups
 interface BuildUpgrade {
   id: string
   category: string
@@ -54,6 +231,9 @@ interface BuildUpgrade {
   value: string | null
 }
 
+// TuningSetting interface (from API)
+// - Can be string (legacy) or TuningSetting object (new format)
+// - settingId is included in new format for lookups
 interface TuningSetting {
   id: string
   name: string
@@ -139,6 +319,27 @@ interface Build {
 }
 
 export default function BuildDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // ============================================================
+  // STATE
+  // ============================================================
+  // - router: Next.js router for navigation
+  // - id: Build ID from URL params
+  // - build: Build object from API
+  // - loading: Loading state during fetch
+  // - deleting: Loading state during delete
+  // - cloning: Loading state during clone
+  // - showDeleteDialog: Delete confirmation dialog visibility
+  // - showErrorDialog: Error dialog visibility
+  // - errorMessage: Error message to display
+  // - tuningSettingsMetadata: Map of setting ID → metadata (for formatting)
+  //
+  // Why this state?
+  // - build: Store fetched build for display
+  // - loading: Show spinner while fetching
+  // - deleting/cloning: Show loading state on buttons during operations
+  // - tuningSettingsMetadata: Format setting values correctly (units, dual/ratio values)
+  // ============================================================
+
   const router = useRouter()
   const [id, setId] = useState<string>('')
   const [build, setBuild] = useState<Build | null>(null)
@@ -150,6 +351,14 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
   const [errorMessage, setErrorMessage] = useState('')
   const [tuningSettingsMetadata, setTuningSettingsMetadata] = useState<Record<string, TuningSettingMetadata>>({})
 
+  // ============================================================
+  // DATA FETCHING
+  // ============================================================
+  // Fetch build and tuning settings metadata on mount
+  // - Parallel fetch: Build and settings metadata fetched together
+  // - Build response: Contains upgrades[], settings[], gear1...gear20, statistics
+  // - Settings metadata: For formatting setting values (units, input types)
+  // - Error handling: Show error dialog, redirect to /builds
   useEffect(() => {
     params.then((p) => {
       setId(p.id)
@@ -190,6 +399,13 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  // ============================================================
+  // ACTION HANDLERS - DELETE
+  // ============================================================
+  // Delete build with confirmation dialog
+  // - Step 1: User clicks delete → handleDelete() called
+  // - Step 2: Show dialog → User confirms → confirmDelete() called
+  // - Step 3: Delete API call → Redirect to /builds on success
   const handleDelete = async () => {
     setShowDeleteDialog(true)
   }
@@ -216,6 +432,15 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  // ============================================================
+  // ACTION HANDLERS - CLONE
+  // ============================================================
+  // Clone build to create a copy
+  // - Sets loading state → Shows "Cloning..." on button
+  // - POST /api/builds/[id]/clone → Creates copy
+  // - Response: { id: string } (new build ID)
+  // - Success: Navigate to new build
+  // - Error: Show error dialog, user stays on page
   const handleClone = async () => {
     setCloning(true)
     try {
@@ -237,7 +462,12 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  // ============================================================
+  // DERIVED STATE - GROUPED DATA
+  // ============================================================
   // Group upgrades by category - memoized to avoid re-grouping on every render
+  // - Creates: Record<category, BuildUpgrade[]>
+  // - Performance: Memoized to avoid re-group on every render
   const groupedUpgrades = useMemo(() => {
     return build?.upgrades.reduce((acc, upgrade) => {
       if (!acc[upgrade.category]) {
@@ -325,6 +555,12 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     return grouped
   }, [build?.settings, build])
 
+  // ============================================================
+  // FORMATTING HELPERS
+  // ============================================================
+  // Format category name from kebab-case to Title Case
+  // - Example: "engine-parts" → "Engine Parts"
+  // - Splits on hyphen, capitalizes first letter of each word
   const formatCategoryName = (category: string) => {
     return category
       .split('-')
@@ -332,6 +568,9 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       .join(' ')
   }
 
+  // Format setting name from kebab-case to Title Case
+  // - Handles both string and TuningSetting object formats
+  // - Example: "spring-rate" → "Spring Rate"
   const formatSettingName = (setting: string | TuningSetting) => {
     // Handle both legacy string format and new object format
     const settingName = typeof setting === 'string' ? setting : setting.name
@@ -341,6 +580,10 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       .join(' ')
   }
 
+  // Format setting value based on metadata
+  // - Dual values: Front/Rear displayed as two lines (e.g., spring rates, brake balance)
+  // - Regular values: Orange badge with value and unit
+  // - Custom color: #FF7115 (GT orange)
   const formatSettingValue = (setting: BuildSetting, metadata: TuningSettingMetadata | undefined) => {
     const value = setting.value
     const inputType = metadata?.inputType || 'text'
@@ -386,6 +629,10 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     )
   }
 
+  // ============================================================
+  // LOADING STATE
+  // ============================================================
+  // Show loading spinner while fetching build
   if (loading) {
     return (
       <PageWrapper>
@@ -394,6 +641,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     )
   }
 
+  // Show not found message if build doesn't exist
   if (!build) {
     return (
       <PageWrapper>
@@ -404,15 +652,25 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     )
   }
 
+  // ============================================================
+  // PAGE RENDER
+  // ============================================================
+  // Main page layout with back button, header, stats, upgrades, tuning
   return (
     <PageWrapper>
       {/* Back Button */}
+      {/* - Navigates to /builds */}
+      {/* - Icon: ArrowLeft */}
       <Button variant="ghost" onClick={() => router.push('/builds')} className="h-11 px-4 sm:h-9">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Builds
       </Button>
 
       {/* Build Header */}
+      {/* - Name: Large bold text */}
+      {/* - Badge: Public (Globe icon) or Private (Lock icon) */}
+      {/* - Description: Optional text below name */}
+      {/* - Actions: Clone, Edit, Delete buttons */}
       <div className="border border-border rounded-lg p-4 sm:p-6 space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2 flex-1">
@@ -475,6 +733,9 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
         <Separator />
 
         {/* Car Info */}
+        {/* - CAR: Link to car detail page */}
+        {/* - CREATOR: User name or email */}
+        {/* - CREATED/UPDATED: Formatted dates */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
           <div>
             <p className="text-muted-foreground font-mono text-xs">CAR</p>
@@ -504,7 +765,12 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      {/* Statistics */}
+      {/* Statistics Card */}
+      {/* - Only shown if build has statistics (totalLaps > 0) */}
+      {/* - TOTAL LAPS: Sum of all laps */}
+      {/* - FASTEST LAP: Best time formatted as MM:SS.mmm */}
+      {/* - AVERAGE LAP: Average of all laps formatted as MM:SS.mmm */}
+      {/* - TRACKS: Unique tracks this build has been used on */}
       {build.statistics && build.statistics.totalLaps > 0 && (
         <Card>
           <CardHeader>
@@ -547,7 +813,10 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
         </Card>
       )}
 
-      {/* Upgrades */}
+      {/* Upgrades Card */}
+      {/* - Grouped by category (Engine, Drivetrain, etc.) */}
+      {/* - 2-column grid for upgrades within each category */}
+      {/* - Shows part name and value badge (orange) */}
       {Object.keys(groupedUpgrades).length > 0 && (
         <Card>
           <CardHeader>
@@ -590,7 +859,11 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
         </Card>
       )}
 
-      {/* Tuning Settings */}
+      {/* Tuning Settings Card */}
+      {/* - Grouped by section (Suspension, Brakes, Transmission, etc.) */}
+      {/* - 2-column grid for settings within each section */}
+      {/* - Transmission: Single column at 50% width (special handling for gears) */}
+      {/* - Shows setting name and formatted value (with unit, dual/ratio values) */}
       {Object.keys(groupedSettings).length > 0 && (
         <Card>
           <CardHeader>
@@ -633,7 +906,8 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
         </Card>
       )}
 
-      {/* Empty state if no upgrades or settings */}
+      {/* Empty State */}
+      {/* - Shown when build has no upgrades or tuning settings */}
       {Object.keys(groupedUpgrades).length === 0 &&
         Object.keys(groupedSettings).length === 0 && (
           <Card>
@@ -646,6 +920,10 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
         )}
 
       {/* Delete Confirmation Dialog */}
+      {/* - Warning: "This action cannot be undone" */}
+      {/* - Shows build name and car info */}
+      {/* - Actions: Cancel (outline), Delete (destructive) */}
+      {/* - Loading: Shows spinner during delete */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
@@ -693,6 +971,8 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       </Dialog>
 
       {/* Error Dialog */}
+      {/* - Shows error message from API or generic message */}
+      {/* - Action: Close button (outline variant) */}
       <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
         <DialogContent>
           <DialogHeader>

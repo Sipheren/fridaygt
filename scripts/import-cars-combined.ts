@@ -1,19 +1,104 @@
+/**
+ * Import Cars from CSV to Database
+ *
+ * This script imports car data from the GT7 combined CSV file into the Supabase database.
+ * It reads car information including make, model, year, performance points (PP), and
+ * automatically determines the appropriate category for each car.
+ *
+ * Usage:
+ *   npm run import:cars
+ *   OR
+ *   npx tsx scripts/import-cars-combined.ts
+ *
+ * Prerequisites:
+ *   - Supabase project must be set up and accessible
+ *   - Environment variables must be set:
+ *     * NEXT_PUBLIC_SUPABASE_URL - Your Supabase project URL
+ *     * SUPABASE_SERVICE_ROLE_KEY - Service role key for admin access
+ *   - GT7 cars CSV file must exist at: gt7data/gt7_cars_combined.csv
+ *   - Car table must exist in database (see migrations)
+ *
+ * Data Flow:
+ *   1. Read CSV file from gt7data/gt7_cars_combined.csv
+ *   2. Parse CSV data using custom CSV parser
+ *   3. Delete all existing cars to avoid duplicate slug conflicts
+ *   4. Process cars in batches of 50:
+ *      - Extract make, model, year from CSV
+ *      - Determine category based on model name (GR1, GR2, GR3, GR4, RALLY, etc.)
+ *      - Generate unique slug from make, model, and year
+ *      - Create car record with UUID and timestamps
+ *   5. Insert batch into Car table
+ *   6. Report progress and final statistics
+ *
+ * Error Handling:
+ *   - Validates environment variables on startup
+ *   - Gracefully handles CSV parsing errors
+ *   - Logs batch import errors without stopping entire process
+ *   - Reports final count of successful imports vs errors
+ *
+ * Category Detection:
+ *   The script automatically assigns categories based on keywords in the model name:
+ *   - GR1/GR2/GR3/GR4: Based on "Gr.X" or "GrX" in name
+ *   - RALLY: Contains "Gr.B", "GRB", or "rally"
+ *   - VISION_GT: Contains "Vision GT" or "VGT"
+ *   - KART: Contains "kart"
+ *   - OTHER: Default category for all other cars
+ *
+ * Slug Generation:
+ *   Slugs are created from make, model, and year with special handling:
+ *   - Removes duplicate make name from model (e.g., "Ford Ford GT" -> "Ford GT")
+ *   - Converts to lowercase and replaces spaces with hyphens
+ *   - Removes special characters
+ *   - Adds year suffix when available for uniqueness
+ *   - Adds random suffix if slug is too short (< 10 chars)
+ *   - Truncates to 200 characters maximum
+ *
+ * Year Parsing:
+ *   - Handles 4-digit years (e.g., "2026")
+ *   - Handles 2-digit years with smart conversion:
+ *     * >= 50 -> 19XX (e.g., "96" -> 1996)
+ *     * < 50 -> 20XX (e.g., "26" -> 2026)
+ *   - Returns null for invalid/missing years
+ *
+ * Batch Processing:
+ *   - Processes cars in batches of 50 to avoid overwhelming the database
+ *   - Shows progress after each batch (e.g., "Imported 50/400 cars...")
+ *   - Tracks both successful imports and errors
+ *
+ * Important Notes:
+ *   - DELETES ALL EXISTING CARS before import (fresh start approach)
+ *   - Uses service role key to bypass RLS policies
+ *   - CSV format: Make,Model,Year,PP columns
+ *   - PP (Performance Points) is parsed as float, null if invalid
+ *
+ * Dependencies:
+ *   - fs: File system access for reading CSV
+ *   - path: Path manipulation for file locations
+ *   - @supabase/supabase-js: Supabase client for database operations
+ *   - crypto: UUID generation for primary keys
+ */
+
 import fs from 'fs'
 import path from 'path'
 import { createClient } from '@supabase/supabase-js'
 
+// ============================================================================
+// Configuration
+// ============================================================================
+
 // Supabase configuration
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase credentials')
-  process.exit(1)
-}
+// ============================================================================
+// CSV Parser
+// ============================================================================
 
-const supabase = createClient(supabaseUrl, supabaseKey)
-
-// Simple CSV parser
+/**
+ * Simple CSV parser that handles quoted values
+ * Parses CSV content into an array of objects
+ *
+ * @param content - Raw CSV content as string
+ * @returns Array of objects with headers as keys
+ */
 function parseCSV(content: string): any[] {
   const lines = content.trim().split('\n')
   const headers = lines[0].split(',')
@@ -44,7 +129,19 @@ function parseCSV(content: string): any[] {
   })
 }
 
-// Generate a slug from car name (with uniqueness handling)
+// ============================================================================
+// Slug Generation
+// ============================================================================
+
+/**
+ * Generate a URL-friendly slug from car make, model, and year
+ * Handles duplicate make names in model and ensures uniqueness
+ *
+ * @param make - Car manufacturer (e.g., "Ford")
+ * @param model - Car model name (e.g., "Ford GT" or "GT")
+ * @param year - Car year or null
+ * @returns URL-friendly slug (e.g., "ford-gt-2026")
+ */
 function generateSlug(make: string, model: string, year: number | null): string {
   // Remove make from model if it's duplicated (e.g., "Ford Ford GT")
   let modelName = model
@@ -60,12 +157,13 @@ function generateSlug(make: string, model: string, year: number | null): string 
     .replace(/-+/g, '-') // Replace multiple hyphens with single
     .trim()
 
-  // Add year if available for uniqueness
+  // Add year suffix for uniqueness (e.g., "2026")
   const yearSuffix = year ? `-${year}` : ''
 
+  // Combine components and truncate to 200 chars max
   let slug = `${makeSlug}-${modelSlug}${yearSuffix}`.substring(0, 200)
 
-  // Add random suffix if still too generic
+  // Add random suffix if slug is too short or generic
   if (slug.length < 10) {
     slug = `${slug}-${Math.random().toString(36).substring(2, 8)}`
   }
@@ -73,20 +171,42 @@ function generateSlug(make: string, model: string, year: number | null): string 
   return slug
 }
 
-// Extract year from car name (e.g., "'96" or "2026")
+// ============================================================================
+// Year Parsing
+// ============================================================================
+
+/**
+ * Extract and convert year from CSV data
+ * Handles both 2-digit and 4-digit year formats
+ *
+ * @param year - Year string from CSV (e.g., "2026", "96", "")
+ * @returns Parsed year as number or null if invalid
+ */
 function extractYear(year: string): number | null {
   if (!year || year.trim() === '') return null
   const yearNum = parseInt(year.trim())
   if (isNaN(yearNum)) return null
 
-  // If 2 digits, assume 19xx if >= 50, else 20xx
+  // Convert 2-digit years to 4-digit
+  // >= 50 becomes 19XX (e.g., 96 -> 1996)
+  // < 50 becomes 20XX (e.g., 26 -> 2026)
   if (yearNum < 100) {
     return yearNum >= 50 ? 1900 + yearNum : 2000 + yearNum
   }
   return yearNum
 }
 
-// Determine category based on car name
+// ============================================================================
+// Category Detection
+// ============================================================================
+
+/**
+ * Determine car category based on model name keywords
+ * Maps GT7 car classes to database enum values
+ *
+ * @param model - Car model name to analyze
+ * @returns Category enum value (GR1, GR2, GR3, GR4, RALLY, VISION_GT, KART, OTHER)
+ */
 function determineCategory(model: string): string {
   const name = model.toLowerCase()
   if (name.includes('gr.1') || name.includes('gr1')) return 'GR1'
@@ -96,11 +216,18 @@ function determineCategory(model: string): string {
   if (name.includes('gr.b') || name.includes('grb') || name.includes('rally')) return 'RALLY'
   if (name.includes('vision gt') || name.includes('vgt')) return 'VISION_GT'
   if (name.includes('kart')) return 'KART'
-  // Default to OTHER for everything else (the schema doesn't have ROAD_CAR or N_CLASS)
+  // Default to OTHER for everything else
   return 'OTHER'
 }
 
-// Parse CSV and import cars
+// ============================================================================
+// Main Import Function
+// ============================================================================
+
+/**
+ * Main function to import cars from CSV to database
+ * Coordinates the entire import process
+ */
 async function importCars() {
   const csvPath = path.join(process.cwd(), 'gt7data', 'gt7_cars_combined.csv')
   const csvContent = fs.readFileSync(csvPath, 'utf-8')
@@ -109,7 +236,8 @@ async function importCars() {
 
   console.log(`Found ${records.length} cars in CSV`)
 
-  // Delete all existing cars first to avoid duplicate slug conflicts
+  // WARNING: This deletes all existing cars before import
+  // Ensures clean slate and avoids duplicate slug conflicts
   console.log('Deleting existing cars...')
   const { error: deleteError } = await supabase.from('Car').delete().neq('id', '00000000-0000-0000-0000-000000000000')
   if (deleteError) {
@@ -118,7 +246,7 @@ async function importCars() {
     console.log('✓ Deleted existing cars')
   }
 
-  // Process cars in batches
+  // Process cars in batches to avoid overwhelming database
   const batchSize = 50
   let imported = 0
   let errors = 0
@@ -127,12 +255,13 @@ async function importCars() {
     const batch = records.slice(i, i + batchSize)
 
     const cars = batch.map((record: any) => {
+      // Extract and normalize car data
       const make = record.Make || 'Unknown'
       const model = record.Model || 'Unknown Car'
       const year = extractYear(record.Year)
       const pp = record.PP ? parseFloat(record.PP) : null
 
-      // Generate a unique slug
+      // Generate unique slug for URL routing
       const slug = generateSlug(make, model, year)
 
       return {
@@ -164,12 +293,17 @@ async function importCars() {
     }
   }
 
+  // Display final import statistics
   console.log(`\n✓ Import complete:`)
   console.log(`  - Imported: ${imported} cars`)
   console.log(`  - Errors: ${errors}`)
 }
 
-// Run import
+// ============================================================================
+// Script Entry Point
+// ============================================================================
+
+// Execute the import process
 importCars()
   .then(() => {
     console.log('Done!')

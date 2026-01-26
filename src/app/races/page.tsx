@@ -1,3 +1,135 @@
+/**
+ * Races Listing Page
+ *
+ * Purpose: Main page for viewing and managing races
+ * - Lists all races with search and filtering capabilities
+ * - Supports active/inactive races with visual badges
+ * - Toggle active status for races
+ * - Delete functionality with confirmation dialog
+ * - Navigate to race details and creation
+ *
+ * **Key Features:**
+ * - Search: Full-text search across race name, track name, car names
+ * - Filters: All races, Active only, Inactive only
+ * - Race cards: Display name, track, cars, status badges
+ * - Action buttons: Toggle active, Delete (with confirmation dialog)
+ * - Empty states: Contextual messages for no results
+ * - Loading states: Loading spinner during data fetch
+ *
+ * **Data Flow:**
+ * 1. Page loads → fetchRaces() called
+ * 2. API call: GET /api/races
+ * 3. Races stored in state → filtered by search term and active status
+ * 4. User can click race → Navigate to /races/[id]
+ * 5. User can toggle active → PATCH /api/races/[id] with { isActive: bool }
+ * 6. User can delete → Confirm dialog → DELETE /api/races/[id]
+ *
+ * **State Management:**
+ * - races: Array of all races from API
+ * - search: Search query string
+ * - filter: 'all' | 'active' | 'inactive'
+ * - loading: Loading state during fetch
+ * - deletingRaceId: ID of race being deleted (for loading state)
+ * - showDeleteDialog: Delete confirmation dialog visibility
+ * - pendingDeleteId: ID of race pending deletion
+ * - showErrorDialog: Error dialog visibility
+ * - errorMessage: Error message to display
+ * - togglingRaceId: ID of race being toggled (for loading state)
+ *
+ * **Filtering Logic:**
+ * - All: Shows all races
+ * - Active: Only races with isActive = true
+ * - Inactive: Only races with isActive = false
+ * - Search: Client-side filter by display name (race name, track, cars)
+ *
+ * **Delete Flow:**
+ * 1. User clicks delete → deleteRace(raceId) called
+ * 2. Sets pendingDeleteId → Shows delete confirmation dialog
+ * 3. User confirms → confirmDelete() called
+ * 4. DELETE /api/races/[id] → Sets deletingRaceId
+ * 5. On success → Refresh races list
+ * 6. On error → Show error dialog, user stays on page
+ *
+ * **Toggle Active Flow:**
+ * 1. User clicks power button → toggleActiveRace(raceId, currentState) called
+ * 2. Sets togglingRaceId → Shows loading on button
+ * 3. PATCH /api/races/[id] with { isActive: !currentState }
+ * 4. On success → Update local state (no need to refresh)
+ * 5. On error → Show error dialog
+ *
+ * **Display Name Logic:**
+ * - Priority 1: race.name (if set)
+ * - Priority 2: "{Track Name} + {Car Name}" (if no name)
+ * - Fallback: "Unknown Track + Unknown Car"
+ * - Memoized: To avoid re-computation on every render
+ *
+ * **Race Card Display:**
+ * - Display name (large, bold)
+ * - Track: MapPin icon with track name (link to track detail)
+ * - Cars: Car icon with count, list of up to 3 cars
+ * - Status badges: Active (default), Inactive (secondary)
+ * - Configuration badges: Laps, Weather
+ * - Action buttons: Toggle active (power icon), Delete (trash icon)
+ *
+ * **Empty State Logic:**
+ * - No races: "No races found" + "Create Your First Race"
+ * - Search/filter: "No races match your search or filter"
+ * - Icon: List icon
+ *
+ * **API Integration:**
+ * - GET /api/races: Fetch all races
+ * - DELETE /api/races/[id]: Delete a race
+ * - PATCH /api/races/[id]: Update race (toggle active)
+ * - Response: { races: Race[], error?: string }
+ *
+ * **Access Control:**
+ * - Authenticated: User must be logged in
+ * - View: Any authenticated user can view races
+ * - Delete: Any authenticated user can delete
+ * - Toggle: Any authenticated user can toggle active
+ *
+ * **Page Layout:**
+ * - PageWrapper: Standard container with padding
+ * - PageHeader: Title "RACES", icon, description, actions
+ * - SearchBar: Search input with centered icon
+ * - Filter buttons: 3-column grid (All, Active, Inactive)
+ * - Race cards: Stacked list with hover effects
+ * - Dialogs: Delete confirmation, error display
+ *
+ * **Styling:**
+ * - Cards: gt-hover-card class for hover effects
+ * - Inactive races: opacity-50 for visual distinction
+ * - Buttons: min-h-[44px] for touch targets
+ * - Badges: Active (default), Inactive (secondary)
+ * - Loading: LoadingSection component with spinner
+ * - Toggle button: gt-hover-icon-btn-primary when active
+ * - Responsive: Mobile-first, stacked on mobile
+ *
+ * **Navigation:**
+ * - Create Race: /races/new (from header button)
+ * - Race Detail: /races/[id] (from card click)
+ * - Track Detail: /tracks/[slug] (from track name link)
+ *
+ * **Error Handling:**
+ * - Fetch error: Console log, show empty state
+ * - Delete error: Show error dialog with message
+ * - Toggle error: Show error dialog with message
+ * - API returns error: Show error dialog with data.error
+ * - User stays: Can retry after error
+ *
+ * **Optimizations:**
+ * - useMemo: Filter races and getDisplayName memoized
+ * - useCallback: getDisplayName function memoized
+ * - Client-side search: Faster than API calls for search
+ * - Local state update: No need to refresh after toggle
+ *
+ * **Related Files:**
+ * - @/app/races/new/page.tsx: Create new race
+ * - @/app/races/[id]/page.tsx: Race detail page
+ * - @/app/api/races/route.ts: Races API endpoint
+ * - @/components/layout: PageWrapper, PageHeader, EmptyState, SearchBar
+ */
+
 'use client'
 
 import { useEffect, useState, useMemo, useCallback } from 'react'
@@ -18,6 +150,9 @@ import { LoadingSection } from '@/components/ui/loading'
 import { PageWrapper, PageHeader, EmptyState, SearchBar } from '@/components/layout'
 import Link from 'next/link'
 
+// ============================================================
+// TYPES
+// ============================================================
 interface Car {
   id: string
   name: string
@@ -56,6 +191,9 @@ interface Race {
 type FilterType = 'all' | 'active' | 'inactive'
 
 export default function RacesPage() {
+  // ============================================================
+  // STATE
+  // ============================================================
   const router = useRouter()
   const [races, setRaces] = useState<Race[]>([])
   const [loading, setLoading] = useState(true)
@@ -68,6 +206,9 @@ export default function RacesPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [togglingRaceId, setTogglingRaceId] = useState<string | null>(null)
 
+  // ============================================================
+  // DATA FETCHING
+  // ============================================================
   useEffect(() => {
     fetchRaces()
   }, [])
@@ -85,6 +226,9 @@ export default function RacesPage() {
     }
   }
 
+  // ============================================================
+  // DERIVED STATE - DISPLAY NAME & FILTERING
+  // ============================================================
   // Memoize display name function to avoid re-creation
   const getDisplayName = useCallback((race: Race): string => {
     if (race.name) return race.name
@@ -97,6 +241,7 @@ export default function RacesPage() {
   }, [])
 
   // Memoize filtered races to avoid re-filtering on every render
+  // - Filters by search query and active status
   const filteredRaces = useMemo(() => {
     return races.filter((race) => {
       const displayName = getDisplayName(race).toLowerCase()
@@ -110,6 +255,9 @@ export default function RacesPage() {
     })
   }, [races, search, filter, getDisplayName])
 
+  // ============================================================
+  // ACTION HANDLERS - DELETE & TOGGLE
+  // ============================================================
   const deleteRace = async (raceId: string) => {
     setPendingDeleteId(raceId)
     setShowDeleteDialog(true)
@@ -145,6 +293,8 @@ export default function RacesPage() {
     }
   }
 
+  // Toggle race active status with optimistic update
+  // - Updates local state immediately (no need to refresh)
   const toggleActiveRace = async (raceId: string, currentState: boolean) => {
     setTogglingRaceId(raceId)
 
@@ -175,6 +325,9 @@ export default function RacesPage() {
     }
   }
 
+  // ============================================================
+  // LOADING STATE
+  // ============================================================
   if (loading) {
     return (
       <PageWrapper>
@@ -183,6 +336,9 @@ export default function RacesPage() {
     )
   }
 
+  // ============================================================
+  // PAGE RENDER
+  // ============================================================
   return (
     <PageWrapper>
       {/* Header */}

@@ -1,3 +1,97 @@
+/**
+ * USER SETTINGS PAGE
+ *
+ * Purpose:
+ * User-facing settings page displaying application statistics and system information.
+ * Provides read-only view of database contents and technology stack.
+ *
+ * Key Features:
+ * - Live database statistics (tracks, cars, builds, races, lap times, users)
+ * - Image management status (pending feature)
+ * - Theme/color scheme visualization
+ * - System technology stack information
+ * - Connection status indicator
+ * - Responsive statistics grid
+ *
+ * Data Flow:
+ * 1. On mount, fetches statistics from multiple /api/stats/* endpoints
+ * 2. Uses Promise.all for parallel requests
+ * 3. Stats stored in state and displayed in grid
+ * 4. Connection status shown with animated pulse
+ *
+ * State Management:
+ * - loading: Initial data fetch state
+ * - stats: Object containing all statistics counts
+ *   - tracks: Number of tracks in database
+ *   - cars: Number of cars in database
+ *   - builds: Number of user builds
+ *   - races: Number of races
+ *   - lapTimes: Number of recorded lap times
+ *   - users: Number of registered users
+ *
+ * API Integration:
+ * - GET /api/stats/tracks: Track count
+ * - GET /api/stats/cars: Car count
+ * - GET /api/stats/builds: Build count
+ * - GET /api/stats/races: Race count
+ * - GET /api/stats/lap-times: Lap time count
+ * - GET /api/stats/users: User count
+ *
+ * Statistics Display:
+ * - Six-column grid on large screens
+ * - Responsive layout (6 cols on lg, 3 on md, 2 on sm)
+ * - Icon-enhanced labels
+ * - Bordered cards with muted backgrounds
+ * - Large bold numbers for counts
+ *
+ * Connection Status:
+ * - Animated green pulse dot
+ * - "Connected to Supabase" text
+ * - Real-time indication of database connectivity
+ *
+ * Theme Information:
+ * - Color scheme: Primary (Red), Accent (Cyan), Secondary (Orange)
+ * - Typography: System Default, Font Mono, GT Racing style
+ * - Visual color swatches with labels
+ *
+ * System Information:
+ * - Framework: Next.js 16
+ * - Database: Supabase (Postgres)
+ * - Authentication: NextAuth.js v5
+ * - UI Components: shadcn/ui
+ * - Styling: Tailwind CSS
+ * - Email: Resend
+ *
+ * Future Enhancements:
+ * - User preferences (theme toggle, units)
+ * - Notification settings
+ * - Privacy controls
+ * - Data export functionality
+ * - Account deletion
+ *
+ * Styling:
+ * - Three main sections: Database, Images, Theme, System Info
+ * - Badge indicators (LIVE, PENDING)
+ * - Icon-based section headers
+ * - Grid layouts for stats and info cards
+ * - Animated pulse effect for connection status
+ *
+ * Error Handling:
+ * - Network errors logged to console
+ * - No error dialog - silent failure
+ * - Loading state prevents race conditions
+ *
+ * Common Issues:
+ * - Stats not updating? Check API endpoints
+ * - Zero counts? Database may be empty or API failing
+ * - Connection status always green? Not checking real connectivity
+ *
+ * Related Files:
+ * - /api/stats/[type]/route.ts: Statistics API endpoints
+ * - /admin/settings/page.tsx: Admin settings page
+ * - @/components/layout: PageWrapper, PageHeader components
+ */
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -20,10 +114,16 @@ export default function SettingsPage() {
     users: 0,
   })
 
+  // ===========================================================================
+  // DATA FETCHING
+  // ===========================================================================
+
+  // Fetch all statistics on component mount
   useEffect(() => {
     fetchStats()
   }, [])
 
+  // Fetch statistics from all API endpoints in parallel
   const fetchStats = async () => {
     try {
       const responses = await Promise.all([
@@ -35,10 +135,12 @@ export default function SettingsPage() {
         fetch('/api/stats/users'),
       ])
 
+      // Parse all responses in parallel
       const [tracksData, carsData, buildsData, racesData, lapTimesData, usersData] = await Promise.all(
         responses.map(r => r.json())
       )
 
+      // Update state with fetched statistics
       setStats({
         tracks: tracksData.count || 0,
         cars: carsData.count || 0,
@@ -54,6 +156,11 @@ export default function SettingsPage() {
     }
   }
 
+  // ===========================================================================
+  // RENDER
+  // ===========================================================================
+
+  // Show loading spinner while fetching statistics
   if (loading) {
     return (
       <PageWrapper>
@@ -64,7 +171,9 @@ export default function SettingsPage() {
 
   return (
     <PageWrapper>
-      {/* Header */}
+      {/* ========================================================================
+          PAGE HEADER
+          ======================================================================== */}
       <PageHeader
         title="SETTINGS"
         icon={SettingsIcon}
@@ -81,7 +190,9 @@ export default function SettingsPage() {
         }
       />
 
-      {/* Database Section */}
+      {/* ========================================================================
+          DATABASE STATISTICS SECTION
+          ======================================================================== */}
       <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-2">
           <Database className="h-5 w-5 text-primary" />
@@ -126,7 +237,9 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Images Section */}
+      {/* ========================================================================
+          IMAGES SECTION
+          ======================================================================== */}
       <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-2">
           <Image className="h-5 w-5 text-secondary" />
@@ -160,7 +273,9 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Theme Section */}
+      {/* ========================================================================
+          THEME SECTION
+          ======================================================================== */}
       <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-2">
           <Palette className="h-5 w-5 text-accent" />
@@ -197,7 +312,9 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* System Info */}
+      {/* ========================================================================
+          SYSTEM INFORMATION SECTION
+          ======================================================================== */}
       <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-2">
           <SettingsIcon className="h-5 w-5 text-chart-4" />

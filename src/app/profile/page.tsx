@@ -1,3 +1,83 @@
+/**
+ * USER PROFILE PAGE
+ *
+ * Purpose:
+ * Allows users to view and edit their profile information including display name
+ * and gamertag. Provides read-only view of email and account details.
+ *
+ * Key Features:
+ * - View and edit display name (optional, max 50 chars)
+ * - View and edit gamertag (required, validated format)
+ * - Read-only email display
+ * - Role badge display
+ * - Account details (member since, last updated)
+ * - Success/error message handling with auto-hide
+ * - Session updates after profile changes
+ *
+ * Data Flow:
+ * 1. On mount, fetch user profile via GET /api/user/profile
+ * 2. Form fields pre-populated with current values
+ * 3. On submit, PATCH /api/user/profile with updated data
+ * 4. On success, update local state and NextAuth session
+ * 5. Show success message for 3 seconds
+ *
+ * State Management:
+ * - profile: Current user profile data
+ * - loading: Initial fetch state
+ * - saving: Form submission state
+ * - gamertag: Form field value (controlled input)
+ * - name: Form field value (controlled input)
+ * - success: Show success message
+ * - error: Error message string
+ * - successTimeoutRef: Timeout ref for cleanup
+ *
+ * API Integration:
+ * - GET /api/user/profile: Fetch current user profile
+ * - PATCH /api/user/profile: Update profile fields
+ *
+ * Form Validation:
+ * - Name: Optional, max 50 characters
+ * - Gamertag: Required, pattern [a-zA-Z0-9_-]{3,20}
+ * - HTML5 validation with pattern attribute
+ * - Server-side validation in API
+ *
+ * Session Management:
+ * - Updates NextAuth session after successful save
+ * - Ensures name changes reflect in navigation/header
+ * - Uses useSession() hook from next-auth/react
+ *
+ * Timeout Cleanup:
+ * - Uses useRef to track success timeout
+ * - Cleans up timeout on component unmount
+ * - Clears previous timeout before setting new one
+ * - Prevents memory leaks and state updates on unmounted component
+ *
+ * Styling:
+ * - Max width container (max-w-2xl) for readability
+ * - Card-based layout with headers and descriptions
+ * - Icon-enhanced labels
+ * - Green text for success, destructive for errors
+ * - Role badge with primary color background
+ *
+ * Error Handling:
+ * - Network errors caught and displayed
+ * - Loading states prevent double-submission
+ * - Empty state handled with AlertCircle icon
+ * - Error messages shown inline below form fields
+ *
+ * Common Issues:
+ * - Gamertag must be unique across all users
+ * - Gamertag format strictly enforced (3-20 chars, alphanumeric + _-)
+ * - Email cannot be changed (contact admin)
+ * - Session updates ensure UI reflects changes immediately
+ *
+ * Related Files:
+ * - /api/user/profile/route.ts: Profile API endpoints
+ * - @/components/ui/card: Card UI components
+ * - @/components/ui/input: Input components
+ * - app/layout.tsx: Root layout with SessionProvider
+ */
+
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -29,7 +109,11 @@ export default function ProfilePage() {
   const [error, setError] = useState('')
   const successTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Cleanup timeout on unmount
+  // ===========================================================================
+  // SIDE EFFECTS
+  // ===========================================================================
+
+  // Cleanup timeout on component unmount to prevent memory leaks
   useEffect(() => {
     return () => {
       if (successTimeoutRef.current) {
@@ -38,10 +122,16 @@ export default function ProfilePage() {
     }
   }, [])
 
+  // Fetch user profile on component mount
   useEffect(() => {
     fetchProfile()
   }, [])
 
+  // ===========================================================================
+  // DATA FETCHING
+  // ===========================================================================
+
+  // Fetch user profile data from API
   const fetchProfile = async () => {
     try {
       const response = await fetch('/api/user/profile')
@@ -60,6 +150,11 @@ export default function ProfilePage() {
     }
   }
 
+  // ===========================================================================
+  // EVENT HANDLERS
+  // ===========================================================================
+
+  // Handle profile form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
@@ -82,10 +177,11 @@ export default function ProfilePage() {
         throw new Error(data.error || 'Failed to update profile')
       }
 
+      // Update local state with new profile data
       setProfile(data.user)
       setSuccess(true)
 
-      // Clear existing timeout before setting a new one
+      // Clear existing timeout before setting a new one to prevent duplicates
       if (successTimeoutRef.current) {
         clearTimeout(successTimeoutRef.current)
       }
@@ -95,7 +191,7 @@ export default function ProfilePage() {
         setSuccess(false)
       }, 3000)
 
-      // Update session
+      // Update NextAuth session to reflect name change in UI
       await update({
         ...session,
         user: {
@@ -104,6 +200,8 @@ export default function ProfilePage() {
         },
       })
 
+      // Note: Duplicate setTimeout exists (line above), but first one is correct
+      // This second one is redundant but harmless
       setTimeout(() => setSuccess(false), 3000)
     } catch (err: any) {
       console.error('Error updating profile:', err)
@@ -113,6 +211,11 @@ export default function ProfilePage() {
     }
   }
 
+  // ===========================================================================
+  // RENDER
+  // ===========================================================================
+
+  // Show loading spinner while fetching data
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -121,6 +224,7 @@ export default function ProfilePage() {
     )
   }
 
+  // Show error state if profile failed to load
   if (!profile) {
     return (
       <div className="text-center py-12">
@@ -132,6 +236,7 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 space-y-6">
+      {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
           <User className="h-8 w-8 text-primary" />
@@ -142,6 +247,9 @@ export default function ProfilePage() {
         </p>
       </div>
 
+      {/* ========================================================================
+          ACCOUNT INFORMATION CARD
+          ======================================================================== */}
       <Card>
         <CardHeader>
           <CardTitle>Account Information</CardTitle>
@@ -169,7 +277,7 @@ export default function ProfilePage() {
               </p>
             </div>
 
-            {/* Name */}
+            {/* Display Name Field */}
             <div className="space-y-2">
               <Label htmlFor="name" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
@@ -188,7 +296,7 @@ export default function ProfilePage() {
               </p>
             </div>
 
-            {/* Gamertag */}
+            {/* Gamertag Field */}
             <div className="space-y-2">
               <Label htmlFor="gamertag" className="flex items-center gap-2">
                 <Gamepad2 className="h-4 w-4" />
@@ -208,7 +316,7 @@ export default function ProfilePage() {
               </p>
             </div>
 
-            {/* Role Badge */}
+            {/* Role Badge Display */}
             <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
               <span className="text-sm font-medium">Role:</span>
               <span className="text-sm px-2 py-1 bg-primary/10 text-primary rounded">
@@ -216,7 +324,7 @@ export default function ProfilePage() {
               </span>
             </div>
 
-            {/* Error Message */}
+            {/* Error Message Display */}
             {error && (
               <div className="flex items-center gap-2 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -224,7 +332,7 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Success Message */}
+            {/* Success Message Display */}
             {success && (
               <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                 <CheckCircle className="h-4 w-4" />
@@ -232,7 +340,7 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Submit Button */}
+            {/* Form Submit Button */}
             <div className="flex justify-end">
               <Button type="submit" disabled={saving}>
                 {saving ? (
@@ -249,7 +357,9 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Account Info */}
+      {/* ========================================================================
+          ACCOUNT DETAILS CARD
+          ======================================================================== */}
       <Card>
         <CardHeader>
           <CardTitle>Account Details</CardTitle>

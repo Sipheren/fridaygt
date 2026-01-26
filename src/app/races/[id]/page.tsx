@@ -1,3 +1,162 @@
+/**
+ * Race Detail Page
+ *
+ * Purpose: Display comprehensive details of a single race
+ * - Shows race information (name, track, configuration)
+ * - Displays builds participating in the race
+ * - Shows leaderboard with top 10 lap times
+ * - Displays current user's stats (position, best time, recent laps)
+ * - Shows race statistics (fastest lap, average time)
+ * - Displays race members with timezone-aware timestamps
+ * - Admin can remove members from race
+ * - "Add Lap Time" button for quick lap entry
+ *
+ * **Key Features:**
+ * - Race header: Name, track info, configuration badges
+ * - Builds card: Grid of builds participating in race
+ * - Race members: List with timezone-aware "Last Updated" display
+ * - Statistics: Fastest lap, average time (from all participants)
+ * - Leaderboard: Top 10 fastest laps with user, car, build info
+ * - Your stats: Current user's position, best time, recent laps
+ * - Add lap time: Quick link to /lap-times/new
+ * - Edit race: Link to /races/[id]/edit
+ *
+ * **Data Flow:**
+ * 1. Page loads → params.id extracted → fetchRaceData() called
+ * 2. API call: GET /api/races/[id] → Returns race, leaderboard, userStats, statistics
+ * 3. Additional call: GET /api/auth/session → Get current user info
+ * 4. Data stored in state → Rendered in components
+ * 5. User can click edit → Navigate to /races/[id]/edit
+ * 6. User can add lap time → Navigate to /lap-times/new
+ *
+ * **State Management:**
+ * - params: URL params (race ID)
+ * - race: Race object with track, RaceCar[], createdBy
+ * - leaderboard: Array of top 10 LeaderboardEntry[]
+ * - userStats: Current user's stats (position, best time, recent laps)
+ * - statistics: Overall race statistics (fastest, average)
+ * - loading: Loading state during fetch
+ * - currentUser: Current user info (id, role)
+ *
+ * **Leaderboard Display:**
+ * - Top 10: Fastest laps from all participants
+ * - Columns: Position (circle badge), User, Car/Build, Time, Laps
+ * - Position: Filled circle with primary color and number
+ * - User name: Bold text with email fallback
+ * - Car: Car manufacturer and name
+ * - Build: Build name with Wrench icon (if available)
+ * - Time: Formatted as MM:SS.mmm (monospace font)
+ * - Laps: Total number of laps submitted
+ * - Empty state: "No lap times yet" message
+ *
+ * **User Stats Display:**
+ * - Position: User's ranking in leaderboard (#1, #2, etc.)
+ * - Best time: Fastest lap formatted as MM:SS.mmm
+ * - Average time: Average of all laps formatted as MM:SS.mmm
+ * - Recent laps: Last 5 laps with time, build, date
+ * - Add Lap Time button: Link to /lap-times/new
+ * - Only shown: If user has submitted laps for this race
+ *
+ * **Statistics Display:**
+ * - Fastest Lap: Best time across all participants
+ * - Average Time: Average of all laps across all participants
+ * - Data source: statistics from API (aggregated from leaderboard)
+ * - Icons: Target (fastest), TrendingUp (average)
+ * - Colors: Purple (target), Orange (trending up)
+ * - Only shown: If statistics exist
+ *
+ * **Builds Display:**
+ * - Grid: 2-column on mobile, 3-column on desktop
+ * - Each build: Car image, name, build name, year, category
+ * - Build removed: Shows "Build removed" badge if build deleted
+ * - Link: Click to navigate to build detail page
+ * - Opacity: 60% if build removed
+ * - Hover: gt-hover-card effect
+ *
+ * **Race Members:**
+ * - Component: RaceMemberList
+ * - Display: List of users with their builds
+ * - Features:
+ *   - "Last Updated" column with timezone conversion
+ *   - User filter dropdown
+ *   - Remove member button (admin only)
+ *   - Mobile-responsive design
+ * - Props: raceId, isAdmin (boolean)
+ *
+ * **Race Header:**
+ * - Name: race.name or generated from track + builds
+ * - Track: MapPin icon, link to track detail, category badge, location
+ * - Configuration: Laps badge, Weather badge
+ * - Description: Optional text below header
+ * - Edit button: Top-right corner
+ *
+ * **API Integration:**
+ * - GET /api/races/[id]: Fetch race details
+ *   - Response: { race, leaderboard[], userStats, statistics }
+ * - GET /api/auth/session: Fetch current user info
+ *   - Response: { user: { id, role } }
+ * - Data structure:
+ *   - leaderboard: Top 10 fastest laps per user/car/build combination
+ *   - userStats: Current user's aggregated stats for this race
+ *   - statistics: Overall race statistics (fastest, average)
+ *
+ * **Access Control:**
+ * - Authenticated: User must be logged in
+ * - View: Any authenticated user can view race
+ * - Edit: Any authenticated user can edit race
+ * - Remove members: Only admin can remove members
+ *
+ * **Page Layout:**
+ * - PageWrapper: Standard container with padding
+ * - Back button: Navigates to /races
+ * - Header: Race name, track info, badges, edit button
+ * - Builds: Grid of build cards
+ * - Race members: Full-width component with member list
+ * - Statistics: 2-column grid (fastest, average)
+ * - Leaderboard: Card with top 10 entries
+ * - User stats: Card with position, best, average, recent laps
+ *
+ * **Styling:**
+ * - Cards: Bordered with shadow, rounded corners
+ * - Buttons: min-h-[44px] for touch targets
+ * - Badges: Various variants (default, secondary, outline)
+ * - Icons: MapPin (track), Trophy (leaderboard), Award (stats)
+ * - Position badges: Circular with primary background
+ * - Time display: Monospace font for alignment
+ * - Responsive: Mobile-first, stacked on mobile
+ *
+ * **Navigation:**
+ * - Back: /races (from back button)
+ * - Edit: /races/[id]/edit (from edit button)
+ * - Track: /tracks/[slug] (from track link)
+ * - Build: /builds/[id] (from build card)
+ * - Add Lap Time: /lap-times/new (from button in user stats)
+ *
+ * **Error Handling:**
+ * - Fetch error: Console log, show "Race not found"
+ * - Build removed: Show "Build removed" badge, 60% opacity
+ * - No leaderboard: Show "No lap times yet" message
+ * - No user stats: Don't show user stats section
+ *
+ * **Formatting Functions:**
+ * - formatLapTime: Convert milliseconds to MM:SS.mmm format
+ * - Date formatting: Month day (e.g., "Jan 15")
+ *
+ * **Timezone Handling:**
+ * - Race members display "Last Updated" with timezone conversion
+ * - Displayed in user's local timezone
+ * - Shows relative time (e.g., "2 hours ago")
+ *
+ * **Related Files:**
+ * - @/app/races/page.tsx: Races listing page
+ * - @/app/races/new/page.tsx: Create new race page
+ * - @/app/races/[id]/edit/page.tsx: Edit race page
+ * - @/components/race-members/race-member-list: Race members component
+ * - @/app/api/races/[id]/route.ts: Race details API endpoint
+ * - @/lib/time: formatLapTime helper function
+ * - @/components/ui: Card, Button, Badge components
+ */
+
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -26,6 +185,9 @@ import { PageWrapper } from '@/components/layout'
 import { formatLapTime } from '@/lib/time'
 import { RaceMemberList } from '@/components/race-members/race-member-list'
 
+// ============================================================
+// TYPES
+// ============================================================
 interface RaceCar {
   id: string
   carId: string
@@ -129,6 +291,9 @@ interface Statistics {
 }
 
 export default function RaceDetailPage() {
+  // ============================================================
+  // STATE
+  // ============================================================
   const params = useParams()
   const [race, setRace] = useState<Race | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
@@ -137,6 +302,10 @@ export default function RaceDetailPage() {
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null)
 
+  // ============================================================
+  // DATA FETCHING
+  // ============================================================
+  // Fetch race data and current user on mount
   useEffect(() => {
     fetchRaceData()
     fetchCurrentUser()
@@ -174,6 +343,9 @@ export default function RaceDetailPage() {
     }
   }
 
+  // ============================================================
+  // LOADING STATE
+  // ============================================================
   if (loading) {
     return (
       <PageWrapper>
@@ -182,6 +354,7 @@ export default function RaceDetailPage() {
     )
   }
 
+  // Show not found message if race doesn't exist
   if (!race) {
     return (
       <PageWrapper>
@@ -195,9 +368,16 @@ export default function RaceDetailPage() {
     )
   }
 
+  // ============================================================
+  // PAGE RENDER
+  // ============================================================
   return (
     <PageWrapper>
       {/* Header */}
+      {/* - Back button: Navigates to /races */}
+      {/* - Race name: race.name or generated from track + builds */}
+      {/* - Track info: MapPin icon, link to track, badges */}
+      {/* - Edit button: Top-right corner */}
       <div>
         <Link href="/races" className="inline-block mb-4">
           <Button
