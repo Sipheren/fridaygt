@@ -232,7 +232,7 @@ Tonight Page → Shows all races where isActive = true
 - **Admin Controls**:
   - Drag-and-drop reordering with @dnd-kit (copied from sortable-race-card pattern)
   - Tyre selection dropdown (grouped by category: Comfort, Sports, Racing, Other)
-  - Delete button to remove members from race
+  - Delete button to remove members from race (with shadcn Dialog confirmation)
   - Public view for non-admins (read-only)
 - **Auto-Population**:
   - All active users automatically added to new races
@@ -251,21 +251,30 @@ Tonight Page → Shows all races where isActive = true
   - CASCADE deletes: on raceid and userid
   - RLS policies: SELECT (public), INSERT/UPDATE/DELETE (admin only)
   - Application-layer ID generation: `crypto.randomUUID()` (matches Race, RaceCar patterns)
+  - Column naming: lowercase (raceid, userid, partid, createdat, updatedat)
 - **Design System Compliance**:
-  - 100% compliance (47/47 checks passed)
-  - Zero new patterns: reused DragHandle, Select, Button, Card components
-  - Zero new utilities: used isAdmin(), cn(), getCurrentUser()
-  - Zero new CSS: used gt-hover-card, gt-hover-icon-btn global classes
-  - Copied exact pattern from `tonight/sortable-race-card.tsx`
+  - ✅ Fixed CRITICAL: Replaced native `confirm()` with shadcn Dialog component
+  - ✅ Fixed HIGH: Empty state with Users icon, border, proper padding/sizing
+  - ✅ Fixed HIGH: LoadingSection component with racing wheel animation
+  - ✅ Fixed MEDIUM: Helper text using `text-sm` instead of `text-xs`
+  - ✅ Verified (2026-01-26): All 4 fixes confirmed correctly implemented in code
+  - 100% compliance after fixes (47/47 checks passed)
+- **Post-Implementation Fixes** (2026-01-26):
+  - Fixed SQL function: `reorder_race_members_atomic()` - changed `"updatedAt"` to `"updatedat"`
+  - Fixed API column references: removed `createdat`/`updatedat` from SELECT/INSERT queries
+  - Fixed DELETE API: changed `raceId` to `raceid` for database consistency
+  - Fixed drag handler: wrapped DragHandle in div with dnd-kit listeners
+  - Updated DATABASE-SCHEMA.md with RaceMember documentation
 - **Components**:
   - `src/components/race-members/race-member-list.tsx` - Main list with DnD context, optimistic updates, 500ms debounce
-  - `src/components/race-members/race-member-card.tsx` - Individual card with position badge, gamertag, tyre dropdown, delete button, drag handle
+  - `src/components/race-members/race-member-card.tsx` - Individual card with Dialog confirmation, proper drag handlers
 - **Mobile-First UX**:
   - 44px touch targets for accessibility
   - Haptic feedback on mobile drag
   - 8px drag activation threshold prevents accidental drags
   - Saving indicator during reorder
   - Empty state handling
+  - Optimistic updates with rollback on error
 
 ---
 
@@ -377,7 +386,8 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
-| 2026-01-26 | #29 | Race members feature - Member management, drag-and-drop reordering, tyre selection, auto-population, 100% design system compliance |
+| 2026-01-26 | #29 | Race members feature + fixes + verification - Member management, drag-and-drop reordering, tyre selection, auto-population, design system compliance fixes, SQL function column name bug fix, delete functionality fix, verified all fixes correctly implemented |
+| 2026-01-26 | #28 | Comprehensive code review - Security fixes (P0), bug fixes (P1), code quality improvements (P2), type consolidation, unused code removal |
 | 2026-01-26 | #28 | Comprehensive code review - Security fixes (P0), bug fixes (P1), code quality improvements (P2), type consolidation, unused code removal |
 | 2026-01-26 | #27 | Admin user management enhancement - User profile editing (name/gamertag), build creator selection, global hover improvements |
 | 2026-01-26 | #26 | Race detail page build navigation fix - Conditional linking to builds, deleted build handling with visual feedback |

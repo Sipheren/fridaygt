@@ -16,6 +16,7 @@
 
 'use client'
 
+import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Trash2 } from 'lucide-react'
@@ -27,6 +28,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { DragHandle } from '@/components/ui/drag-handle'
 import { cn } from '@/lib/utils'
 
@@ -73,6 +82,8 @@ export function RaceMemberCard({
   onTyreChange,
   onDelete,
 }: RaceMemberCardProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+
   const {
     attributes,
     listeners,
@@ -92,9 +103,16 @@ export function RaceMemberCard({
   }
 
   const handleDelete = () => {
-    if (confirm(`Remove ${member.user.gamertag} from this race?`)) {
-      onDelete(member.id)
-    }
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    onDelete(member.id)
+    setDeleteDialogOpen(false)
+  }
+
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false)
   }
 
   // Group tyres by category
@@ -108,6 +126,7 @@ export function RaceMemberCard({
   }, {} as Record<string, Part[]>)
 
   return (
+    <>
     <div
       ref={setNodeRef}
       style={style}
@@ -163,8 +182,37 @@ export function RaceMemberCard({
 
       {/* Drag handle (admin only, 2+ members) */}
       {isAdmin && canReorder && (
-        <DragHandle {...attributes} {...listeners} isDragging={isDragging} />
+        <div
+          {...attributes}
+          {...listeners}
+          className="flex-shrink-0"
+          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DragHandle isDragging={isDragging} />
+        </div>
       )}
     </div>
+
+    {/* Delete confirmation dialog */}
+    <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Remove Race Member</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to remove {member.user.gamertag} from this race?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={cancelDelete}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={confirmDelete}>
+            Remove
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

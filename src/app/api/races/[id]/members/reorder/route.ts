@@ -115,8 +115,6 @@ export async function PATCH(
         userid,
         "order",
         partid,
-        createdat,
-        updatedat,
         user:User(id, gamertag),
         part:Part(id, name, category:PartCategory(id, name))
       `)

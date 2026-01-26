@@ -36,8 +36,6 @@ export async function GET(
         userid,
         "order",
         partid,
-        createdat,
-        updatedat,
         user:User(id, gamertag),
         part:Part(id, name, category:PartCategory(id, name))
       `)
@@ -183,7 +181,6 @@ export async function POST(
     const nextOrder = lastMember ? lastMember.order + 1 : 1
 
     // Create race member
-    const now = new Date().toISOString()
     const { data: member, error: memberError } = await supabase
       .from('RaceMember')
       .insert({
@@ -192,8 +189,6 @@ export async function POST(
         userid: userId,
         partid: selectedPartId,
         "order": nextOrder,
-        createdat: now,
-        updatedat: now,
       })
       .select(`
         id,
@@ -201,8 +196,6 @@ export async function POST(
         userid,
         "order",
         partid,
-        createdat,
-        updatedat,
         user:User(id, gamertag),
         part:Part(id, name, category:PartCategory(id, name))
       `)

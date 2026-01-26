@@ -51,7 +51,7 @@ export async function DELETE(
     // Verify member exists
     const { data: existingMember, error: fetchError } = await supabase
       .from('RaceMember')
-      .select('id, raceId')
+      .select('id, raceid')
       .eq('id', memberId)
       .single()
 

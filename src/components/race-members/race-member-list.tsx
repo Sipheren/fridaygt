@@ -35,6 +35,8 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
+import { Users } from 'lucide-react'
+import { LoadingSection } from '@/components/ui/loading'
 import { RaceMemberCard, type Part, type RaceMember } from './race-member-card'
 
 interface RaceMemberListProps {
@@ -245,17 +247,14 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
   const canReorder = members.length > 1
 
   if (isLoading) {
-    return (
-      <div className="text-center text-sm text-muted-foreground py-8">
-        Loading members...
-      </div>
-    )
+    return <LoadingSection text="Loading members..." />
   }
 
   if (members.length === 0) {
     return (
-      <div className="text-center text-sm text-muted-foreground py-8">
-        No members in this race yet
+      <div className="text-center py-12 border border-border rounded-lg">
+        <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground text-lg">No members in this race yet</p>
       </div>
     )
   }
@@ -297,7 +296,7 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
 
       {/* Helper text for drag functionality */}
       {isAdmin && canReorder && (
-        <div className="text-center text-xs text-muted-foreground">
+        <div className="text-center text-sm text-muted-foreground">
           Drag members to reorder • Changes save automatically
         </div>
       )}

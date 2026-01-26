@@ -479,6 +479,31 @@
 **Constraints:** UNIQUE (raceId, carId)
 **Purpose:** Links cars (and optional builds) to a race.
 
+### RaceMember (NEW - 2026-01-26)
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| id | text | NO | - | Primary key (UUID) |
+| raceid | text | NO | - | FK → Race |
+| userid | text | NO | - | FK → User |
+| partid | uuid | NO | - | FK → Part (tyre selection) |
+| order | integer | NO | - | Display order (1, 2, 3, ...) |
+| createdat | timestamp | NO | CURRENT_TIMESTAMP | Creation time |
+| updatedat | timestamp | NO | - | Last update time |
+
+**Constraints:** UNIQUE (raceid, userid) - one entry per user per race
+**Purpose:** Links users to races with tyre selection and ordering. Auto-populated for all active users when a race is created.
+
+**Indexes:** raceid, userid, order
+
+**RLS Policies:**
+- SELECT (public): Anyone can view race members
+- INSERT (admin): Only admins can add members
+- UPDATE (admin): Only admins can modify member data
+- DELETE (admin): Only admins can remove members
+
+**Functions:**
+- `reorder_race_members_atomic(member_ids text[], new_order integer[])`: Atomically reorders members with row-level locking
+
 ---
 
 ## Enums
@@ -588,6 +613,10 @@ Car (1) ←→ (N) RaceCar
 RunListEntry (1) ←→ (N) RunListEntryCar
 RunListEntry (1) ←→ (1) Race (NEW)
 Race (1) ←→ (N) RaceCar (NEW)
+
+Race (1) ←→ (N) RaceMember (NEW - 2026-01-26)
+User (1) ←→ (N) RaceMember
+Part (1) ←→ (N) RaceMember
 
 CarBuild (1) ←→ (N) CarBuildUpgrade
 CarBuild (1) ←→ (N) CarBuildSetting

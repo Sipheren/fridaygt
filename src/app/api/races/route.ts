@@ -240,15 +240,12 @@ export async function POST(req: NextRequest) {
           .single()
 
         if (defaultTyre) {
-          const now = new Date().toISOString()
           const raceMembers = activeUsers.map((user, index) => ({
             id: crypto.randomUUID(),
             raceid: raceId,
             userid: user.id,
             partid: defaultTyre.id,
             "order": index + 1,
-            createdat: now,
-            updatedat: now,
           }))
 
           const { error: membersError } = await supabase
