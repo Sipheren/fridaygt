@@ -8,6 +8,30 @@ A build-centric Gran Turismo 7 lap time tracker and race management application 
 ## Live Application
 
 **Production URL**: https://fridaygt.vercel.app
+**Current Version**: 2.8.0
+
+## Versioning
+
+FridayGT follows semantic versioning with a comprehensive session-based development log:
+
+| Version | Sessions | Key Changes |
+|---------|----------|-------------|
+| **2.8.0** | #29-31 | Race Members - member management, tyre selection, change tracking |
+| **2.7.0** | #26-28 | Admin Features - user profile editing, build creator selection |
+| **2.6.0** | #24-25 | Drag & Drop - Tonight page race reordering |
+| **2.5.0** | #22-23 | Dropdown & Gears - virtualization, gear system migration |
+| **2.4.0** | #21 | Tuning Display - build detail layout improvements |
+| **2.3.0** | #18-20 | Production Hardening - dual inputs, UI consistency |
+| **2.2.0** | #16-17 | Parts & Tuning - settings page, parts catalog |
+| **2.1.0** | #13-15 | Active Races - global hover system |
+| **2.0.0** | #10-12 | **BUILD-CENTRIC PIVOT** - architecture redesign |
+| **1.0.0** | #1 | **INITIAL RELEASE** - core entities, auth |
+
+### Version Classification
+- **Major (x.0.0)**: Breaking changes, architectural pivots, database resets
+- **Minor (x.y.0)**: New features, significant UI changes, new entities
+
+See [SESSION-LOG.md](docs/SESSION-LOG.md) for complete version history with commit ranges and detailed session notes.
 
 ## Development Status
 
@@ -82,6 +106,8 @@ FridayGT helps a GT7 racing group track performance with a **build-centric archi
   - Admin notifications for new user registrations
 - **Admin Tools** — User management, profile editing, build creator assignment
 - **Mobile Optimized** — All pages responsive with WCAG-compliant touch targets (≥44px)
+- **Branded Footer** — 3-column layout with sipheren.com (orange), year (gray), and dynamic version from package.json (red)
+- **Version Display** — Automatic version number displayed in footer synced with package.json
 
 ## Tech Stack
 
