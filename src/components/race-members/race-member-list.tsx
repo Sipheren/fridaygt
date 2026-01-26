@@ -263,8 +263,8 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
         throw new Error('Failed to delete member')
       }
 
-      // Remove from local state
-      setMembers((prev) => prev.filter((m) => m.id !== memberId))
+      // Refresh members from server to get updated timestamps
+      await refreshMembers()
     } catch (error) {
       console.error('Failed to delete member:', error)
     } finally {
@@ -293,6 +293,42 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
   // ============================================================
 
   const currentMemberIds = members.map((m) => m.userid)
+
+  // ============================================================
+  // DERIVE LAST UPDATED INFO
+  // ============================================================
+
+  // Find the most recent update across all members
+  const lastUpdatedMember = members.length > 0
+    ? members.reduce((latest, member) => {
+      const latestDate = new Date(latest.updatedat)
+      const memberDate = new Date(member.updatedat)
+      return memberDate > latestDate ? member : latest
+    })
+    : null
+
+  const lastUpdatedBy = lastUpdatedMember?.updatedByUser?.gamertag || null
+  const lastUpdatedAt = lastUpdatedMember?.updatedat || null
+
+  // Format date as "Jan 26, 2026, 3:45 PM" in user's local timezone
+  const formatLastUpdated = (dateString: string | null) => {
+    if (!dateString) return null
+
+    // Convert database timestamp to proper ISO 8601 UTC format
+    // Database returns: "2026-01-26 01:12:45.918703" (space separator)
+    // JavaScript needs: "2026-01-26T01:12:45.918703Z" (T separator + Z for UTC)
+    const isoString = dateString.replace(' ', 'T') + 'Z'
+    const date = new Date(isoString)
+
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }).format(date)
+  }
 
   // ============================================================
   // RENDER
@@ -325,6 +361,13 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
         </div>
       </CardHeader>
       <CardContent>
+        {/* Last Updated info */}
+        {lastUpdatedBy && lastUpdatedAt && (
+          <div className="text-sm text-muted-foreground mb-4">
+            Last Updated by {lastUpdatedBy} at {formatLastUpdated(lastUpdatedAt)}
+          </div>
+        )}
+
         {members.length === 0 ? (
           <div className="text-center py-12">
             <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

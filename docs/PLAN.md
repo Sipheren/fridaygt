@@ -303,6 +303,25 @@ Tonight Page → Shows all races where isActive = true
   - Tyre selector: Full-width on mobile (`w-full sm:w-fit`), full-width dropdown content on both mobile and desktop
   - Drag handle: Remains on right side (consistency)
   - Add Member dialog: Full-width user selector on both mobile and desktop
+- **Change Tracking** (2026-01-26):
+  - Added "Last Updated by <gamertag> at <time>" display below headers, above list
+  - Tracks all changes: add member, delete member, reorder members, change tyre selection
+  - Database schema: Added `updatedbyid` column to RaceMember table (FK to User)
+  - Backfilled existing records with nulluser placeholder (ID: 00000000-0000-0000-0000-000000000000)
+  - API changes: All write operations now set updatedbyid to current user
+    - POST /api/races/[id]/members - Sets updatedbyid on creation
+    - DELETE /api/races/[id]/members/[memberId] - Updates all remaining members to reflect deletion
+    - PATCH /api/races/[id]/members/[memberId]/tyre - Sets updatedbyid on tyre change
+    - PATCH /api/races/[id]/members/reorder - Sets updatedbyid for all reordered members via RPC function
+  - Frontend: Finds most recent update across all members, displays user and formatted time
+  - Time formatting: Converts UTC database timestamps to user's local timezone
+    - Format: "Jan 26, 2026, 2:30 PM" (12-hour format with AM/PM)
+    - Handles ISO 8601 conversion (space → T separator, add Z suffix for UTC)
+  - User filtering: nulluser excluded from /api/users endpoint (always filtered)
+  - Components updated:
+    - `src/components/race-members/race-member-list.tsx` - Added last updated display logic
+    - `src/components/race-members/race-member-card.tsx` - Updated interface
+  - Type definitions: Added `DbRaceMember` to `src/types/database.ts`
 
 ---
 
@@ -414,6 +433,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-26 | #31 | Race member change tracking - Added "Last Updated by <gamertag> at <time>" display, tracks user who made changes (add/delete/reorder/tyre), database schema update with updatedbyid column, proper timezone conversion (UTC to local), nulluser placeholder filtered from user lists |
 | 2026-01-26 | #30 | Race members mobile responsiveness - Two-row layout on mobile, larger position badge (40px), full-width tyre selector and Add Member dialog dropdown, follows design system responsive patterns |
 | 2026-01-26 | #29 | Race members feature + fixes + verification - Member management, drag-and-drop reordering, tyre selection, auto-population, design system compliance fixes, SQL function column name bug fix, delete functionality fix, verified all fixes correctly implemented |
 | 2026-01-26 | #28 | Comprehensive code review - Security fixes (P0), bug fixes (P1), code quality improvements (P2), type consolidation, unused code removal |

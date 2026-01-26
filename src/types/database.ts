@@ -181,6 +181,17 @@ export interface DbRaceCar {
   buildId: string
 }
 
+export interface DbRaceMember {
+  id: string
+  raceid: string
+  userid: string
+  partid: string
+  order: number
+  createdat: string
+  updatedat: string
+  updatedbyid: string | null
+}
+
 // ============================================================================
 // Lap Times
 // ============================================================================

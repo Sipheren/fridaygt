@@ -36,7 +36,11 @@ export async function GET(
         userid,
         "order",
         partid,
-        user:User(id, gamertag),
+        createdat,
+        updatedat,
+        updatedbyid,
+        user:User!RaceMember_userid_fkey(id, gamertag),
+        updatedByUser:User!RaceMember_updatedbyid_fkey(id, gamertag),
         part:Part(id, name, category:PartCategory(id, name))
       `)
       .eq('raceid', id)
@@ -80,6 +84,12 @@ export async function POST(
     const session = await auth()
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get current user ID
+    const currentUser = await getCurrentUser(session)
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
     // Check admin authorization
@@ -189,6 +199,7 @@ export async function POST(
         userid: userId,
         partid: selectedPartId,
         "order": nextOrder,
+        updatedbyid: currentUser.id,
       })
       .select(`
         id,
@@ -196,7 +207,11 @@ export async function POST(
         userid,
         "order",
         partid,
-        user:User(id, gamertag),
+        createdat,
+        updatedat,
+        updatedbyid,
+        user:User!RaceMember_userid_fkey(id, gamertag),
+        updatedByUser:User!RaceMember_updatedbyid_fkey(id, gamertag),
         part:Part(id, name, category:PartCategory(id, name))
       `)
       .single()

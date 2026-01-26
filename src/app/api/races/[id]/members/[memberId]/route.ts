@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { auth } from '@/lib/auth'
-import { isAdmin } from '@/lib/auth-utils'
+import { isAdmin, getCurrentUser } from '@/lib/auth-utils'
 import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 
 // DELETE /api/races/[id]/members/[memberId] - Remove member from race
@@ -46,9 +46,15 @@ export async function DELETE(
       )
     }
 
+    // Get current user ID
+    const currentUser = await getCurrentUser(session)
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
     const supabase = createServiceRoleClient()
 
-    // Verify member exists
+    // Verify member exists and get race ID
     const { data: existingMember, error: fetchError } = await supabase
       .from('RaceMember')
       .select('id, raceid')
@@ -58,6 +64,8 @@ export async function DELETE(
     if (fetchError || !existingMember) {
       return NextResponse.json({ error: 'Race member not found' }, { status: 404 })
     }
+
+    const raceId = existingMember.raceid
 
     // Delete the member
     const { error: deleteError } = await supabase
@@ -72,6 +80,15 @@ export async function DELETE(
         { status: 500 }
       )
     }
+
+    // Update all remaining members in this race to reflect the deletion
+    await supabase
+      .from('RaceMember')
+      .update({
+        updatedat: new Date().toISOString(),
+        updatedbyid: currentUser.id,
+      })
+      .eq('raceid', raceId)
 
     return NextResponse.json({ success: true })
   } catch (error) {

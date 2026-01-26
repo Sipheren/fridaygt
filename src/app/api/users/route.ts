@@ -31,6 +31,9 @@ export async function GET(request: NextRequest) {
       query = query.in('role', ['USER', 'ADMIN'])
     }
 
+    // Always exclude nulluser placeholder (used for race member backfill)
+    query = query.not('email', 'eq', 'nulluser')
+
     const { data: users, error } = await query
 
     if (error) {

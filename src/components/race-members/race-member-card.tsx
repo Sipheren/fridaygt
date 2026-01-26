@@ -59,7 +59,11 @@ export interface RaceMember {
   userid: string
   order: number
   partid: string
+  createdat: string
+  updatedat: string
+  updatedbyid: string | null
   user: User
+  updatedByUser: User | null
   part: Part
 }
 
