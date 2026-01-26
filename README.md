@@ -22,6 +22,9 @@ A build-centric Gran Turismo 7 lap time tracker and race management application 
 | Gear Ratios (20 gears, text storage) | Complete |
 | Lap Time Tracking | Complete |
 | Race Management | Complete |
+| Race Members (Add/Edit/Delete/Reorder) | Complete |
+| Member Change Tracking | Complete |
+| Tyre Selection | Complete |
 | Active Races (Tonight Page) | Complete |
 | Race Reordering (Drag & Drop) | Complete |
 | Admin User Management | Complete |
@@ -61,6 +64,15 @@ FridayGT helps a GT7 racing group track performance with a **build-centric archi
   - Drag-and-drop reordering on Tonight page
   - Automatic order assignment for newly activated races
   - Multiple builds per car in a single race
+- **Race Members** — Manage race participants with mobile-responsive interface
+  - Add/remove members via dialog with user selection
+  - Drag-and-drop reordering with haptic feedback
+  - Tyre selection per member (9 tyre compounds)
+  - Mobile-optimized with two-row layout on small screens
+- **Member Change Tracking** — "Last Updated by" display shows who made changes and when
+  - Tracks all operations: add, delete, reorder, tyre changes
+  - Timezone conversion (UTC to local browser time)
+  - Displays user gamertag and formatted timestamp
 - **Lap Time Tracking** — Build-centric recording with track, conditions, and notes
   - Build name snapshot preserved at recording time
   - Personal best tracking per car/track/build combination
@@ -200,7 +212,13 @@ Car (GT7 catalog, 552 cars)
        └── LapTime → Track (118 tracks)
 
 Race (track + builds, isActive toggle, order field)
-  └── RaceCar (multiple car/build combinations, buildId NOT NULL)
+  ├── RaceCar (multiple car/build combinations, buildId NOT NULL)
+  └── RaceMember (race participants with tyre selection)
+       - User: Member's gamertag
+       - Part: Selected tyre compound
+       - Order: Display position
+       - UpdatedBy: User who last modified the record
+       - Mobile-responsive with two-row layout
 
 Tonight Page → All races where isActive = true, sorted by order
 ```
@@ -271,6 +289,7 @@ Tonight Page → All races where isActive = true, sorted by order
 - **LapTime** — Lap times with buildId, buildName (snapshot)
 - **Race** — Races with track, laps, weather, isActive, order
 - **RaceCar** — Junction table (race → car/build combinations)
+- **RaceMember** — Race participants with tyre selection, order, and change tracking (updatedById)
 
 ### Parts & Tuning
 - **PartCategory** — 5 categories (Sports, Club Sports, Semi-Racing, Racing, Extreme)
@@ -280,6 +299,7 @@ Tonight Page → All races where isActive = true, sorted by order
 
 ### Database Functions
 - **reorder_races_atomic** — Atomic race reordering with row-level locking
+- **reorder_race_members_atomic** — Atomic race member reordering with row-level locking and change tracking
 
 See [DATABASE-SCHEMA.md](docs/DATABASE-SCHEMA.md) for complete schema.
 

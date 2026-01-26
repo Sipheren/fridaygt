@@ -316,6 +316,9 @@ export default function RaceDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Race Members */}
+      <RaceMemberList raceId={race.id} isAdmin={currentUser?.role === 'ADMIN'} />
+
       {/* Statistics */}
       {statistics && (
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
@@ -347,9 +350,6 @@ export default function RaceDetailPage() {
           </Card>
         </div>
       )}
-
-      {/* Race Members */}
-      <RaceMemberList raceId={race.id} isAdmin={currentUser?.role === 'ADMIN'} />
 
       {/* Leaderboard */}
       <Card>
