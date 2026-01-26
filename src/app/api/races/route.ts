@@ -216,6 +216,59 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // ============================================================
+    // AUTO-POPULATE RACE MEMBERS
+    // ============================================================
+    // Automatically add all active users (USER, ADMIN) to new races
+    // Graceful failure: if auto-population fails, allow race creation to succeed
+    // Admins can manually add members via UI if needed
+    // ============================================================
+
+    try {
+      // Fetch all active users
+      const { data: activeUsers } = await supabase
+        .from('User')
+        .select('id')
+        .in('role', ['USER', 'ADMIN'])
+
+      if (activeUsers && activeUsers.length > 0) {
+        // Get default Racing: Soft tyre
+        const { data: defaultTyre } = await supabase
+          .from('Part')
+          .select('id')
+          .eq('name', 'Racing: Soft')
+          .single()
+
+        if (defaultTyre) {
+          const now = new Date().toISOString()
+          const raceMembers = activeUsers.map((user, index) => ({
+            id: crypto.randomUUID(),
+            raceid: raceId,
+            userid: user.id,
+            partid: defaultTyre.id,
+            "order": index + 1,
+            createdat: now,
+            updatedat: now,
+          }))
+
+          const { error: membersError } = await supabase
+            .from('RaceMember')
+            .insert(raceMembers)
+
+          if (membersError) {
+            console.error('Error creating race members:', membersError)
+            // Graceful failure: allow race creation to succeed
+            // Admins can manually add members via UI
+          }
+        } else {
+          console.warn('Default tyre (Racing: Soft) not found, skipping auto-population')
+        }
+      }
+    } catch (error) {
+      console.error('Error during race member auto-population:', error)
+      // Graceful failure: allow race creation to succeed
+    }
+
     // Fetch complete race data for response
     const { data: completeRace } = await supabase
       .from('Race')

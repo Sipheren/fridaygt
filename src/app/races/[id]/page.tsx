@@ -24,6 +24,7 @@ import Link from 'next/link'
 import { LoadingSection } from '@/components/ui/loading'
 import { PageWrapper } from '@/components/layout'
 import { formatLapTime } from '@/lib/time'
+import { RaceMemberList } from '@/components/race-members/race-member-list'
 
 interface RaceCar {
   id: string
@@ -134,10 +135,24 @@ export default function RaceDetailPage() {
   const [userStats, setUserStats] = useState<UserStats | null>(null)
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [loading, setLoading] = useState(true)
+  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null)
 
   useEffect(() => {
     fetchRaceData()
+    fetchCurrentUser()
   }, [params.id])
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch('/api/auth/session')
+      if (response.ok) {
+        const data = await response.json()
+        setCurrentUser({ id: data.user.id, role: data.user.role })
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error)
+    }
+  }
 
   const fetchRaceData = async () => {
     try {
@@ -332,6 +347,20 @@ export default function RaceDetailPage() {
           </Card>
         </div>
       )}
+
+      {/* Race Members */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Race Members
+          </CardTitle>
+          <CardDescription>Member list with tyre selection</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RaceMemberList raceId={race.id} isAdmin={currentUser?.role === 'ADMIN'} />
+        </CardContent>
+      </Card>
 
       {/* Leaderboard */}
       <Card>

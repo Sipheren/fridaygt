@@ -223,6 +223,50 @@ Tonight Page → Shows all races where isActive = true
   - Removed unused code: UpdateLapTimeSchema, withErrorHandler, asyncHandler, suspense-wrapper.tsx
 - **Database Migration**: Added atomic race reordering function with row-level locking
 
+### Phase 15: Race Members Feature ✅
+- **Race Member Management**:
+  - New table: `RaceMember` (links races to users with tyre selection and ordering)
+  - Race member list displayed on race detail pages (between Statistics and Leaderboard)
+  - Shows all active users (USER + ADMIN roles, excludes PENDING)
+  - Each member displays: position number, gamertag only (no names/emails), tyre selection
+- **Admin Controls**:
+  - Drag-and-drop reordering with @dnd-kit (copied from sortable-race-card pattern)
+  - Tyre selection dropdown (grouped by category: Comfort, Sports, Racing, Other)
+  - Delete button to remove members from race
+  - Public view for non-admins (read-only)
+- **Auto-Population**:
+  - All active users automatically added to new races
+  - Default tyre: Racing: Soft
+  - Graceful failure: race creation succeeds even if member population fails
+  - Existing races populated via one-time SQL script (42 members across 6 races)
+- **API Endpoints**:
+  - `GET /api/races/[id]/members` - List all race members (public)
+  - `POST /api/races/[id]/members` - Add member to race (admin only)
+  - `PATCH /api/races/[id]/members/reorder` - Reorder members atomically (admin only)
+  - `PATCH /api/races/[id]/members/[memberId]/tyre` - Update tyre selection (admin only)
+  - `DELETE /api/races/[id]/members/[memberId]` - Remove member (admin only)
+- **Database**:
+  - Atomic reorder function: `reorder_race_members_atomic()` with row-level locking
+  - UNIQUE constraint: (raceid, userid) - one entry per user per race
+  - CASCADE deletes: on raceid and userid
+  - RLS policies: SELECT (public), INSERT/UPDATE/DELETE (admin only)
+  - Application-layer ID generation: `crypto.randomUUID()` (matches Race, RaceCar patterns)
+- **Design System Compliance**:
+  - 100% compliance (47/47 checks passed)
+  - Zero new patterns: reused DragHandle, Select, Button, Card components
+  - Zero new utilities: used isAdmin(), cn(), getCurrentUser()
+  - Zero new CSS: used gt-hover-card, gt-hover-icon-btn global classes
+  - Copied exact pattern from `tonight/sortable-race-card.tsx`
+- **Components**:
+  - `src/components/race-members/race-member-list.tsx` - Main list with DnD context, optimistic updates, 500ms debounce
+  - `src/components/race-members/race-member-card.tsx` - Individual card with position badge, gamertag, tyre dropdown, delete button, drag handle
+- **Mobile-First UX**:
+  - 44px touch targets for accessibility
+  - Haptic feedback on mobile drag
+  - 8px drag activation threshold prevents accidental drags
+  - Saving indicator during reorder
+  - Empty state handling
+
 ---
 
 ## Database Schema
@@ -247,6 +291,7 @@ Tonight Page → Shows all races where isActive = true
 ### Races
 - **Race** (trackId, name, description, laps, weather, isActive, createdById)
 - **RaceCar** (raceId, carId, buildId NOT NULL — junction table)
+- **RaceMember** (raceId, userId, order, partId — participant list with tyre selection)
 
 ### Lap Times
 - **LapTime** (userId, trackId, carId, buildId, timeMs, conditions, notes)
@@ -332,6 +377,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-26 | #29 | Race members feature - Member management, drag-and-drop reordering, tyre selection, auto-population, 100% design system compliance |
 | 2026-01-26 | #28 | Comprehensive code review - Security fixes (P0), bug fixes (P1), code quality improvements (P2), type consolidation, unused code removal |
 | 2026-01-26 | #27 | Admin user management enhancement - User profile editing (name/gamertag), build creator selection, global hover improvements |
 | 2026-01-26 | #26 | Race detail page build navigation fix - Conditional linking to builds, deleted build handling with visual feedback |
