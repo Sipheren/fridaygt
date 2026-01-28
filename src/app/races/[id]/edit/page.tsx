@@ -109,7 +109,7 @@ export default function EditRacePage() {
 
         const [raceRes, buildsRes] = await Promise.all([
           fetch(`/api/races/${raceId}`),
-          fetch('/api/builds?myBuilds=true')
+          fetch('/api/builds')
         ])
 
         if (!raceRes.ok) throw new Error('Failed to fetch race')
