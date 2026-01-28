@@ -82,7 +82,7 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
           'Comfort: Hard', 'Comfort: Medium', 'Comfort: Soft',
           'Sports: Hard', 'Sports: Medium', 'Sports: Soft',
           'Racing: Hard', 'Racing: Medium', 'Racing: Soft',
-          'Dirt', 'Snow Tyres', 'Intermediate', 'Racing: Heavy Wet',
+          'Dirt Tyre', 'Snow Tyres', 'Intermediate', 'Racing: Heavy Wet',
         ]
 
         const tyres = (partsData.parts || []).filter((part: Part) =>
