@@ -435,6 +435,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-29 | #36 | Race Creation Build Filter Fix - Removed myBuilds=true parameter from race creation page to show all builds (including public builds from other users) instead of only user's own builds |
 | 2026-01-29 | #35 | Tuning Settings Display Order - Arranged settings to match GT7's in-game menu order, cleaned up database (removed 40 invalid/unused settings, 9 sections), updated sort logic to use displayOrder, verified in browser |
 | 2026-01-26 | #31 | Race member change tracking - Added "Last Updated by <gamertag> at <time>" display, tracks user who made changes (add/delete/reorder/tyre), database schema update with updatedbyid column, proper timezone conversion (UTC to local), nulluser placeholder filtered from user lists |
 | 2026-01-26 | #30 | Race members mobile responsiveness - Two-row layout on mobile, larger position badge (40px), full-width tyre selector and Add Member dialog dropdown, follows design system responsive patterns |

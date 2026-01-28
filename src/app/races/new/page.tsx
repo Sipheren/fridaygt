@@ -236,7 +236,7 @@ export default function NewRacePage() {
         // Fetch both tracks and builds in parallel
         const [tracksRes, buildsRes] = await Promise.all([
           fetch('/api/tracks'),
-          fetch('/api/builds?myBuilds=true')
+          fetch('/api/builds')
         ])
 
         if (!tracksRes.ok) throw new Error('Failed to fetch tracks')
