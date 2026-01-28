@@ -12,8 +12,8 @@ export async function GET() {
 
     if (error) throw error
 
-    // Filter out Tyres section as tyres are already selected in the parts area
-    const filteredSections = sections?.filter(s => s.name !== 'Tyres') || []
+    // All sections are now valid tuning sections (unused ones removed from DB)
+    const filteredSections = sections || []
 
     return NextResponse.json({ sections: filteredSections }, {
       headers: {

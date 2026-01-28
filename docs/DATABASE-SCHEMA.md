@@ -393,13 +393,24 @@
 | name | varchar(100) | NO | - | Setting name |
 | description | text | YES | - | Setting description |
 | defaultValue | varchar(100) | YES | - | Default value |
+| displayOrder | integer | YES | - | Display order within section (GT7 menu order) |
 | isActive | boolean | YES | true | Active/inactive |
 | createdAt | timestamp | NO | CURRENT_TIMESTAMP | - |
 | updatedAt | timestamp | NO | - | - |
 
 **Constraints:** UNIQUE (sectionId, name)
 **Indexes:** sectionId, name, isActive
-**Total Settings:** 53 (as of 2026-01-24, after removing Transmission gear settings)
+**Total Settings:** 17 (as of 2026-01-29, after cleanup and ordering)
+
+**Settings by Section:**
+- Suspension (7): Body Height Adjustment, Anti-Roll Bar, Damping Ratio (Compression), Damping Ratio (Expansion), Natural Frequency, Negative Camber Angle, Toe Angle
+- Differential Gear (5): Initial Torque, Acceleration Sensitivity, Braking Sensitivity, Torque-Vectoring Centre Differential, Front/Rear Torque Distribution
+- Aerodynamics (1): Downforce
+- ECU (1): Output Adjustment
+- Performance Adjustment (3): Ballast, Ballast Positioning, Power Restrictor
+- Transmission (0): Gear ratios stored as direct columns on CarBuild table
+
+> **Note:** displayOrder is now populated for all settings to match GT7's in-game menu order. Previously unused sections removed: Tyres, Nitrous/Overtake, Supercharger, Intake & Exhaust, Brakes, Steering, Drivetrain, Engine Tuning, Bodywork.
 
 ### API Endpoints (2026-01-21)
 

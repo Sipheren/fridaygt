@@ -86,16 +86,18 @@ Tonight Page → Shows all races where isActive = true
 - Car database (552 cars with specs) — API accessible
 - Track database (118 tracks with layouts) — API accessible
 - Parts database (72 parts, 5 categories) — database-driven with FK validation
-- Tuning settings database (53 settings, 6 sections) — database-driven with FK validation
+- Tuning settings database (17 settings, 6 sections) — database-driven with FK validation, ordered by displayOrder
   - Transmission section exists but has NO settings (gears are direct CarBuild columns)
+  - Settings ordered by GT7's in-game menu order (Session #35)
 
 ### Phase 4: Build Management ✅
 - Build CRUD (create, read, update, delete, clone)
 - Parts system (72 parts across 5 categories: Sports, Club Sports, Semi-Racing, Racing, Extreme)
-- Tuning system (53 settings across 6 sections: Suspension, Differential, ECU, Performance Adjustment, Aerodynamics)
+- Tuning system (17 settings across 6 sections: Suspension, Differential, ECU, Performance Adjustment, Aerodynamics, Transmission)
   - **Gear ratios**: Fixed columns on CarBuild (gear1-20, finalDrive as text, supports up to 20 gears)
   - Preserves formatting (leading/trailing zeros like "2.500")
   - Removed from flexible CarBuildSetting system (Session #22)
+  - Settings ordered by GT7's in-game menu order using displayOrder (Session #35)
 - Input types: sliders, dropdowns, number inputs, dual front/rear inputs, ratio inputs
 - Quick build creation modal (inline during race/lap time creation)
 - Build selector component with multi-select and search
@@ -369,8 +371,8 @@ Tonight Page → Shows all races where isActive = true
 | Tracks | 118 | ✅ |
 | PartCategory | 5 | ✅ |
 | Part | 72 | ✅ |
-| TuningSection | 15 | ✅ |
-| TuningSetting | 60 | ✅ |
+| TuningSection | 6 | ✅ |
+| TuningSetting | 17 | ✅ |
 | Users | Active | ✅ |
 | Races | Active | ✅ |
 | CarBuilds | Active | ✅ |
@@ -433,6 +435,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-29 | #35 | Tuning Settings Display Order - Arranged settings to match GT7's in-game menu order, cleaned up database (removed 40 invalid/unused settings, 9 sections), updated sort logic to use displayOrder, verified in browser |
 | 2026-01-26 | #31 | Race member change tracking - Added "Last Updated by <gamertag> at <time>" display, tracks user who made changes (add/delete/reorder/tyre), database schema update with updatedbyid column, proper timezone conversion (UTC to local), nulluser placeholder filtered from user lists |
 | 2026-01-26 | #30 | Race members mobile responsiveness - Two-row layout on mobile, larger position badge (40px), full-width tyre selector and Add Member dialog dropdown, follows design system responsive patterns |
 | 2026-01-26 | #29 | Race members feature + fixes + verification - Member management, drag-and-drop reordering, tyre selection, auto-population, design system compliance fixes, SQL function column name bug fix, delete functionality fix, verified all fixes correctly implemented |

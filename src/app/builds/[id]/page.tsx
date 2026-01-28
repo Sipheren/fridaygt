@@ -543,17 +543,17 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
         // Already sorted above (gears first, then other settings)
         // No additional sorting needed
       } else {
-        // For other sections, sort by setting name alphabetically
+        // For other sections, sort by displayOrder (GT7 menu order)
         grouped[section].sort((a, b) => {
-          const aName = typeof a.setting === 'string' ? a.setting : a.setting.name
-          const bName = typeof b.setting === 'string' ? b.setting : b.setting.name
-          return aName.localeCompare(bName)
+          const aOrder = a.settingId ? (tuningSettingsMetadata[a.settingId]?.displayOrder ?? 999) : 999
+          const bOrder = b.settingId ? (tuningSettingsMetadata[b.settingId]?.displayOrder ?? 999) : 999
+          return aOrder - bOrder
         })
       }
     })
 
     return grouped
-  }, [build?.settings, build])
+  }, [build?.settings, build, tuningSettingsMetadata])
 
   // ============================================================
   // FORMATTING HELPERS
