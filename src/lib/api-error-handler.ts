@@ -260,6 +260,17 @@ export class InternalServerError extends ApiError {
 // ============================================================
 
 /**
+ * Supabase error interface
+ * Represents error objects returned by Supabase client
+ */
+interface SupabaseError {
+  message: string
+  code?: string
+  details?: string
+  hint?: string
+}
+
+/**
  * Type guard for Supabase errors
  * Checks if error is a Supabase error object
  *

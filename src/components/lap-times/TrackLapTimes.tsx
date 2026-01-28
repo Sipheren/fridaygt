@@ -366,7 +366,7 @@ export function TrackLapTimes({ trackSlug, trackName }: TrackLapTimesProps) {
           - formatLapTime(statistics.fastestTime) → "mm:ss.sss"
           - N/A if no fastest time (statistics.fastestTime is null)
           - Primary color (blue) for fastest time emphasis
-      ============================================================}
+      ============================================================*/}
 
       {statistics && statistics.totalLaps > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
@@ -430,7 +430,7 @@ export function TrackLapTimes({ trackSlug, trackName }: TrackLapTimesProps) {
           Shown: Only if displayedCars.length > 0
 
           Hidden: If no cars exist (show empty state instead)
-      ============================================================}
+      ============================================================*/}
 
       <div className="space-y-3">
         <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
@@ -497,7 +497,7 @@ export function TrackLapTimes({ trackSlug, trackName }: TrackLapTimesProps) {
                       - Context: How many laps contributed to this personal best
                       - Verification: User can see if time is from single lap or many laps
                       - Badge: Secondary color to match personal best styling
-                  ============================================================}
+                  ============================================================*/}
 
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
@@ -546,7 +546,7 @@ export function TrackLapTimes({ trackSlug, trackName }: TrackLapTimesProps) {
                       - Shown if: lap.buildName exists
                       - Icon: Wrench (purple)
                       - Purpose: Identifies which build/setup was used
-                  ============================================================}
+                  ============================================================*/}
 
                   {recentLapTimes.length > 0 && (
                     <div className="text-sm text-muted-foreground space-y-1">
