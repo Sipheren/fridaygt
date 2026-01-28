@@ -8,7 +8,7 @@ A build-centric Gran Turismo 7 lap time tracker and race management application 
 ## Live Application
 
 **Production URL**: https://fridaygt.vercel.app
-**Current Version**: 2.9.3
+**Current Version**: 2.9.4
 
 ## Versioning
 
@@ -16,6 +16,7 @@ FridayGT follows semantic versioning with a comprehensive session-based developm
 
 | Version | Sessions | Key Changes |
 |---------|----------|-------------|
+| **2.9.4** | #38 | Header Version Display - Version moved to header, footer cleanup |
 | **2.9.3** | #37 | Build Detail Empty Settings Filter - Hide null/empty tuning values |
 | **2.9.2** | #36 | Race Build Filter Fix (Extended) - Show all builds in race creation AND edit |
 | **2.9.1** | #36 | Race Creation Build Filter Fix - Show all builds, not just own |

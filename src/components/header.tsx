@@ -21,9 +21,10 @@ interface HeaderProps {
     email?: string | null
     role?: string
   } | null
+  version?: string
 }
 
-export function Header({ user }: HeaderProps) {
+export function Header({ user, version }: HeaderProps) {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
 
@@ -45,7 +46,7 @@ export function Header({ user }: HeaderProps) {
       <div className="absolute inset-x-0 top-0 h-0.5 bg-primary"></div>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6">
-          <Link href="/tonight" className="flex items-center">
+          <Link href="/tonight" className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
             <Image
               src="/logo-fgt.png"
               alt="FridayGT"
@@ -54,6 +55,17 @@ export function Header({ user }: HeaderProps) {
               className="h-8 w-auto sm:h-10"
               priority
             />
+            {/* Version - Mobile: under logo, Desktop: inline with separator */}
+            {version && (
+              <>
+                <div className="flex md:hidden text-xs font-mono font-medium text-destructive">
+                  v{version}
+                </div>
+                <div className="hidden md:flex text-xs font-mono font-medium text-destructive border-r border-border pr-4">
+                  v{version}
+                </div>
+              </>
+            )}
           </Link>
 
           {/* Desktop Navigation */}

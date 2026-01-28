@@ -435,6 +435,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-29 | #38 | Header Version Display - Moved version to header (compact v2.9.4 format next to logo), footer simplified to 2-column layout |
 | 2026-01-29 | #37 | Build Detail Empty Settings Filter - Hide tuning settings with null/empty values from displaying on build detail page for cleaner UI |
 | 2026-01-29 | #36 | Race Build Filter Fix - Removed myBuilds=true parameter from both race creation and edit pages to show all builds (including public builds from other users) instead of only user's own builds |
 | 2026-01-29 | #35 | Tuning Settings Display Order - Arranged settings to match GT7's in-game menu order, cleaned up database (removed 40 invalid/unused settings, 9 sections), updated sort logic to use displayOrder, verified in browser |
