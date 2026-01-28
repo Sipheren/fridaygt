@@ -42,10 +42,10 @@ export default async function RootLayout({
             </main>
             <footer className="py-6 text-sm">
               <div className="grid grid-cols-2 items-center gap-8">
-                <div className="text-left">
+                <div className="text-center">
                   <span className="text-secondary">sipheren.com</span>
                 </div>
-                <div className="text-right">
+                <div className="text-center">
                   <span className="text-muted-foreground">{new Date().getFullYear()}</span>
                 </div>
               </div>
