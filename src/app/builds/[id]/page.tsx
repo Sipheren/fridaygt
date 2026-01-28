@@ -484,8 +484,12 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
     const grouped: Record<string, BuildSetting[]> = {}
 
-    // First, group by section
+    // First, group by section (filter out settings with null/empty values)
     build.settings.forEach((setting) => {
+      // Skip settings with null, undefined, or empty values
+      if (!setting.value || setting.value.trim() === '') {
+        return
+      }
       if (!grouped[setting.section]) {
         grouped[setting.section] = []
       }
