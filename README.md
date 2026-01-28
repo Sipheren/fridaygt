@@ -8,7 +8,7 @@ A build-centric Gran Turismo 7 lap time tracker and race management application 
 ## Live Application
 
 **Production URL**: https://fridaygt.vercel.app
-**Current Version**: 2.8.2
+**Current Version**: 2.8.3
 
 ## Versioning
 
@@ -16,6 +16,7 @@ FridayGT follows semantic versioning with a comprehensive session-based developm
 
 | Version | Sessions | Key Changes |
 |---------|----------|-------------|
+| **2.8.3** | #34 | Ballast Positioning UI Enhancement - sign display for front/rear indication |
 | **2.8.2** | #33 | Parts Updates & Bug Fixes - Dirt tyre naming, build error fixes |
 | **2.8.1** | #32 | Code Documentation - comprehensive inline comments |
 | **2.8.0** | #29-31 | Race Members - member management, tyre selection, change tracking |

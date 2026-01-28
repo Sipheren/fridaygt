@@ -256,6 +256,38 @@ function renderSettingInput(
   // Format: Single numeric value (string)
   // Unit: Optional label shown after input (e.g., "°", "kg")
   if (inputType === 'number' || inputType === 'decimal') {
+    // Special handling for Ballast Positioning - always show sign (+F/-R unit)
+    // Positive values show + prefix, negative values keep - prefix
+    // Stored value stays clean (no + sign), only visual in input
+    if (setting.name === 'Ballast Positioning') {
+      const displayValue = currentValue
+        ? (currentValue.startsWith('-') ? currentValue : `+${currentValue}`)
+        : ''
+
+      return (
+        <div className="flex items-center gap-2">
+          <Input
+            id={setting.id}
+            type="text"
+            inputMode="decimal"
+            value={displayValue}
+            onChange={(e) => {
+              // Strip + sign for storage (keep - for negative values)
+              const rawValue = e.target.value.replace(/^\+/, '')
+              onChange(rawValue)
+            }}
+            placeholder="+/- value..."
+            className="min-h-[44px] w-full"
+          />
+          {setting.unit && (
+            <span className="text-sm text-muted-foreground whitespace-nowrap min-w-fit">
+              {setting.unit}
+            </span>
+          )}
+        </div>
+      )
+    }
+
     return (
       <div className="flex items-center gap-2">
         <Input
