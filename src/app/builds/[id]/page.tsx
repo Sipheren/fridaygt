@@ -612,6 +612,26 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       )
     }
 
+    // Handle Ballast Positioning - show sign for positive/negative values
+    const settingName = typeof setting.setting === 'string' ? setting.setting : setting.setting.name
+    if (settingName === 'Ballast Positioning') {
+      const displayValue = value && !value.startsWith('-') ? `+${value}` : value
+      return (
+        <Badge
+          variant="secondary"
+          className="text-base font-mono px-3 py-1"
+          style={{
+            backgroundColor: customOrange,
+            color: 'white',
+            border: 'none'
+          }}
+        >
+          {displayValue}
+          {unit && <span className="ml-1 text-sm opacity-90">{unit}</span>}
+        </Badge>
+      )
+    }
+
     // Regular value with orange badge
     return (
       <Badge
