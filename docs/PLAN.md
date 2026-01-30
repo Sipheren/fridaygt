@@ -435,6 +435,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-30 | #40 | GT Auto & Custom Parts - Wide body configuration, custom body components, conditional wing options (Wing Height/Endplate when Wing=Custom), mixed checkbox/dropdown inputs in parts system |
 | 2026-01-29 | #39 | Footer Centering Fix - Changed footer items from left/right aligned to centered in their respective columns for better visual balance |
 | 2026-01-29 | #38 | Header Version Display - Moved version to header (compact v2.9.4 format next to logo), footer simplified to 2-column layout |
 | 2026-01-29 | #37 | Build Detail Empty Settings Filter - Hide tuning settings with null/empty values from displaying on build detail page for cleaner UI |
