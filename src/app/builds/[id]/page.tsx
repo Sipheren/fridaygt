@@ -197,6 +197,7 @@ import {
   Trophy,
   Settings,
 } from 'lucide-react'
+import { ToeInIcon, ToeOutIcon, ToeStraightIcon } from '@/components/icons/ToeIcons'
 import { formatLapTime } from '@/lib/time'
 import { LoadingSection } from '@/components/ui/loading'
 import { PageWrapper } from '@/components/layout'
@@ -630,6 +631,43 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
         <div className="flex flex-col items-end gap-0.5">
           <span className="text-sm font-semibold" style={{ color: customOrange }}>Front: <span className="font-mono text-base">{front}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
           <span className="text-sm font-semibold" style={{ color: customOrange }}>Rear: <span className="font-mono text-base">{rear}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+        </div>
+      )
+    }
+
+    // Handle toeAngle inputs (signed front:rear format)
+    // Negative = Out, Positive = In, Zero = Straight
+    if (inputType === 'toeAngle' && value.includes(':')) {
+      const [frontStr, rearStr] = value.split(':')
+      const front = parseFloat(frontStr) || 0
+      const rear = parseFloat(rearStr) || 0
+
+      const getToeData = (val: number) => {
+        const abs = Math.abs(val).toFixed(3)
+        if (val > 0.0005) return { value: abs, direction: 'In', Icon: ToeInIcon }
+        if (val < -0.0005) return { value: abs, direction: 'Out', Icon: ToeOutIcon }
+        return { value: abs, direction: '', Icon: ToeStraightIcon }
+      }
+
+      const frontToe = getToeData(front)
+      const rearToe = getToeData(rear)
+
+      return (
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-sm font-semibold flex items-center gap-1" style={{ color: customOrange }}>
+            Front:
+            <frontToe.Icon size={16} className="text-current" aria-hidden="true" />
+            <span className="font-mono text-base">{frontToe.value}</span>
+            {frontToe.direction && <span className="text-xs">{frontToe.direction}</span>}
+            {unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}
+          </span>
+          <span className="text-sm font-semibold flex items-center gap-1" style={{ color: customOrange }}>
+            Rear:
+            <rearToe.Icon size={16} className="text-current" aria-hidden="true" />
+            <span className="font-mono text-base">{rearToe.value}</span>
+            {rearToe.direction && <span className="text-xs">{rearToe.direction}</span>}
+            {unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}
+          </span>
         </div>
       )
     }

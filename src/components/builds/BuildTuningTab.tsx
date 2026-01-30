@@ -89,6 +89,7 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { Loader2, Plus } from 'lucide-react'
+import { ToeAngleDualInput } from '@/components/builds/ToeAngleDualInput'
 
 // ============================================================
 // TYPE DEFINITIONS
@@ -339,6 +340,20 @@ function renderSettingInput(
           className="min-h-[44px] flex-1 text-center"
         />
       </div>
+    )
+  }
+
+  // TOE ANGLE input (bidirectional slider with icons)
+  // Used for: Toe Angle setting (Suspension section)
+  // Format: "front:rear" signed values (negative=out, positive=in)
+  // Display: Icon changes dynamically (ToeOutIcon → ToeStraightIcon → ToeInIcon)
+  // Range: -5.000 (Out) to +5.000 (In), center at 0.000 (Straight)
+  if (inputType === 'toeAngle') {
+    return (
+      <ToeAngleDualInput
+        value={currentValue || '0.000:0.000'}
+        onChange={onChange}
+      />
     )
   }
 

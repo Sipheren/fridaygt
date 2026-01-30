@@ -99,6 +99,7 @@ Tonight Page → Shows all races where isActive = true
   - Removed from flexible CarBuildSetting system (Session #22)
   - Settings ordered by GT7's in-game menu order using displayOrder (Session #35)
 - Input types: sliders, dropdowns, number inputs, dual front/rear inputs, ratio inputs
+- **Toe Angle input** (Session #41): Custom bidirectional slider with dynamic direction icons, GT7-matching UI
 - Quick build creation modal (inline during race/lap time creation)
 - Build selector component with multi-select and search
 - Foreign key validation for all parts and settings
@@ -435,6 +436,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-31 | #41 | Toe Angle Input - Bidirectional slider with dynamic icons (ToeInIcon/ToeOutIcon/ToeStraightIcon), front/rear dual inputs, GT7-matching UI, always-visible slider design |
 | 2026-01-30 | #40 | GT Auto & Custom Parts - Wide body configuration, custom body components, conditional wing options (Wing Height/Endplate when Wing=Custom), mixed checkbox/dropdown inputs in parts system |
 | 2026-01-29 | #39 | Footer Centering Fix - Changed footer items from left/right aligned to centered in their respective columns for better visual balance |
 | 2026-01-29 | #38 | Header Version Display - Moved version to header (compact v2.9.4 format next to logo), footer simplified to 2-column layout |
