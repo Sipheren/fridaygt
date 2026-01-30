@@ -8,7 +8,7 @@ A build-centric Gran Turismo 7 lap time tracker and race management application 
 ## Live Application
 
 **Production URL**: https://fridaygt.vercel.app
-**Current Version**: 2.9.4
+**Current Version**: 2.10.0
 
 ## Versioning
 
@@ -16,6 +16,7 @@ FridayGT follows semantic versioning with a comprehensive session-based developm
 
 | Version | Sessions | Key Changes |
 |---------|----------|-------------|
+| **2.10.0** | #40 | GT Auto & Custom Parts - Wide body, custom body components, conditional wing options |
 | **2.9.4** | #38 | Header Version Display - Version moved to header, footer cleanup |
 | **2.9.3** | #37 | Build Detail Empty Settings Filter - Hide null/empty tuning values |
 | **2.9.2** | #36 | Race Build Filter Fix (Extended) - Show all builds in race creation AND edit |
@@ -49,7 +50,7 @@ See [SESSION-LOG.md](docs/SESSION-LOG.md) for complete version history with comm
 | Car Database (552 cars) | Complete |
 | Track Database (118 tracks) | Complete |
 | Build Management | Complete |
-| Parts System (72 parts, 5 categories) | Complete |
+| Parts System (78 parts, 7 categories) | Complete |
 | Tuning System (53 settings, 6 sections) | Complete |
 | Gear Ratios (20 gears, text storage) | Complete |
 | Lap Time Tracking | Complete |
@@ -88,7 +89,7 @@ FridayGT helps a GT7 racing group track performance with a **build-centric archi
 
 ## Features
 
-- **Build Management** — Create car builds with 72 parts across 5 categories and 53 tuning settings across 6 sections
+- **Build Management** — Create car builds with 78 parts across 7 categories (including GT Auto wide body and Custom Parts with conditional wing options) and 53 tuning settings across 6 sections
   - Gear ratios stored as text (supports up to 20 gears with preserved formatting)
   - Admin users can assign builds to other active users
   - Clone builds with one click
@@ -273,7 +274,7 @@ Tonight Page → All races where isActive = true, sorted by order
 
 **Build Creation:**
 1. Select car from searchable dropdown (552 cars, grouped by manufacturer)
-2. Add optional description and parts (72 parts across 5 categories)
+2. Add optional description and parts (78 parts across 7 categories including GT Auto and Custom Parts with conditional wing options)
 3. Configure tuning settings (53 settings across 6 sections)
 4. Set gear ratios (up to 20 gears, stored as text to preserve formatting)
 5. Mark as public/private
@@ -326,8 +327,8 @@ Tonight Page → All races where isActive = true, sorted by order
 - **RaceMember** — Race participants with tyre selection, order, and change tracking (updatedById)
 
 ### Parts & Tuning
-- **PartCategory** — 5 categories (Sports, Club Sports, Semi-Racing, Racing, Extreme)
-- **Part** — 72 parts with FK validation
+- **PartCategory** — 7 categories (Sports, Club Sports, Semi-Racing, Racing, Extreme, GT Auto, Custom Parts)
+- **Part** — 78 parts with FK validation (including wide body and custom body components with conditional wing options)
 - **TuningSection** — 6 active sections (Suspension, Differential, ECU, Performance, Aerodynamics)
 - **TuningSetting** — 53 settings with inputType, min, max, step, unit, displayOrder
 

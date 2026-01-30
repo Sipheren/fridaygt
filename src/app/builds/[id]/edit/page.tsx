@@ -183,7 +183,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ArrowLeft, Save, Wrench, Settings, User } from 'lucide-react'
+import { ArrowLeft, Save, Wrench, Settings } from 'lucide-react'
 import { BuildUpgradesTab } from '@/components/builds/BuildUpgradesTab'
 import { BuildTuningTab } from '@/components/builds/BuildTuningTab'
 import { LoadingSection } from '@/components/ui/loading'
@@ -205,6 +205,7 @@ interface BuildUpgrade {
   category: string
   part: string | Part
   partId?: string
+  value?: string | null // Dropdown value for GT Auto and Custom Parts
 }
 
 interface BuildSetting {
@@ -310,7 +311,7 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
   const [isPublic, setIsPublic] = useState(false)
   const [carName, setCarName] = useState('')
   const [selectedUserId, setSelectedUserId] = useState('')
-  const [selectedUpgrades, setSelectedUpgrades] = useState<Record<string, boolean>>({})
+  const [selectedUpgrades, setSelectedUpgrades] = useState<Record<string, string | boolean>>({})
   const [tuningSettings, setTuningSettings] = useState<Record<string, string>>({})
   // Gear ratios as direct fields
   const [gears, setGears] = useState<Record<string, string>>({
@@ -384,12 +385,15 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
       setCarName(`${data.car.manufacturer} ${data.car.name}${data.car.year ? ` '${String(data.car.year).slice(-2)}` : ''}`)
       setSelectedUserId(data.userId)
 
-      // Convert upgrades to checkbox state
-      const upgradesMap: Record<string, boolean> = {}
+      // Convert upgrades to checkbox/dropdown state
+      // - Checkbox parts (existing): value = true
+      // - Dropdown parts (GT Auto, Custom Parts): value = string option
+      const upgradesMap: Record<string, string | boolean> = {}
       data.upgrades.forEach((upgrade) => {
         // Use partId if available, otherwise skip (for legacy data)
         if (upgrade.partId) {
-          upgradesMap[upgrade.partId] = true
+          // If value exists (dropdown part), use it; otherwise default to true (checkbox)
+          upgradesMap[upgrade.partId] = upgrade.value || true
         }
       })
       setSelectedUpgrades(upgradesMap)
@@ -449,11 +453,11 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
   // ============================================================
   // FORM HANDLERS - UPGRADES
   // ============================================================
-  // Toggle upgrade checkbox
-  const handleUpgradeToggle = (partId: string) => {
+  // Handle upgrade value change (checkbox or dropdown)
+  const handleUpgradeChange = (partId: string, value: string | boolean) => {
     setSelectedUpgrades((prev) => ({
       ...prev,
-      [partId]: !prev[partId],
+      [partId]: value,
     }))
   }
 
@@ -526,10 +530,24 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
     setSaving(true)
 
     try {
-      // Convert selected upgrades to array of partIds
+      // Convert selected upgrades to array
+      // - Checkbox parts: Include if value is true
+      // - Dropdown parts: Include all (have string values)
+      // - Format: { partId, value } where value is optional for checkboxes
       const upgrades = Object.entries(selectedUpgrades)
-        .filter(([_, selected]) => selected)
-        .map(([partId]) => ({ partId }))
+        .filter(([_, value]) => {
+          // Include checkbox parts that are checked (true)
+          // Include all dropdown parts (string values)
+          return value === true || typeof value === 'string'
+        })
+        .map(([partId, value]) => {
+          // For checkboxes (true), just send partId
+          // For dropdowns (string), send partId and value
+          if (typeof value === 'string') {
+            return { partId, value }
+          }
+          return { partId }
+        })
 
       // Convert tuning settings to array of settingIds (standard settings only)
       const settings = Object.entries(tuningSettings)
@@ -695,7 +713,7 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
         <TabsContent value="upgrades">
           <BuildUpgradesTab
             selectedUpgrades={selectedUpgrades}
-            onUpgradeToggle={handleUpgradeToggle}
+            onUpgradeChange={handleUpgradeChange}
           />
         </TabsContent>
 

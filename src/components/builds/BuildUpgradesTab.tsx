@@ -3,13 +3,17 @@
  *
  * Purpose: Parts selection interface with category-based navigation
  * - Displays available parts grouped by category (Engine, Brakes, Suspension, etc.)
- * - Checkbox selection for each part (toggle on/off)
+ * - Mixed input types: Checkbox selection for existing parts, Dropdown for new parts
+ * - GT Auto: Wide Body Installed dropdown
+ * - Custom Parts: Front, Side, Rear, Wing dropdowns with conditional Wing options
  * - Responsive design: Mobile dropdown, desktop sidebar for category navigation
  * - Visual feedback: Selected parts highlighted with primary background
  *
  * **Key Features:**
- * - Category-based navigation (Engine, Turbo, Brakes, Suspension, etc.)
- * - Checkbox selection for each part
+ * - Category-based navigation (Engine, Turbo, Brakes, Suspension, GT Auto, Custom Parts, etc.)
+ * - Checkbox selection for existing categories (Sports, Club Sports, Semi-Racing, Racing, Extreme)
+ * - Dropdown selection for new categories (GT Auto, Custom Parts)
+ * - Conditional display: Wing Height/Endplate only shown when Wing = "Custom"
  * - Visual feedback: Selected parts have bg-primary/10 and border-primary/30
  * - Parallel API calls: Fetch categories and parts simultaneously
  * - Part count display: "N parts available" in header
@@ -18,12 +22,12 @@
  * 1. Mount: Fetch categories and parts via parallel API calls
  * 2. Render: Show loading spinner until data loads
  * 3. Display: Render category navigation + active category's parts
- * 4. Interact: User clicks checkbox to toggle part selection
- * 5. Callback: Notify parent via onUpgradeToggle(partId)
+ * 4. Interact: User clicks checkbox or selects dropdown option
+ * 5. Callback: Notify parent via onUpgradeChange(partId, value)
  *
  * **Props:**
- * - selectedUpgrades: Record of partId -> boolean (true = selected)
- * - onUpgradeToggle: Callback when checkbox clicked (partId) => void
+ * - selectedUpgrades: Record of partId -> string | boolean (dropdown value or boolean)
+ * - onUpgradeChange: Callback when selection changes (partId, value) => void
  *
  * **State:**
  * - categories: Array of part categories (for navigation)
@@ -35,32 +39,37 @@
  * - Mobile: Category dropdown selector (full width)
  * - Desktop: Vertical sidebar tabs (w-64 fixed width)
  * - Min-height 44px for all interactive elements (touch targets)
- * - Min-height 24px for checkboxes (accessibility)
+ * - Dropdowns: Full-width on mobile (w-full sm:w-fit pattern)
  *
  * **Visual Feedback:**
- * - Selected part: bg-primary/10 + border-primary/30
- * - Unselected part: border-border + gt-hover-card
+ * - Selected checkbox: bg-primary/10 + border-primary/30
+ * - Unselected checkbox: border-border + gt-hover-card
  * - Active category: Primary background color in sidebar
  * - Inactive category: Ghost variant in sidebar
  *
  * **Part Selection Logic:**
- * - Checkbox state: Controlled by selectedUpgrades[part.id]
- * - Toggle: onUpgradeToggle(partId) called on change
- * - Parent manages: selectedUpgrades object state
+ * - Checkbox parts: Boolean true/false for selected/unselected
+ * - Dropdown parts: String value for selected option
+ * - Parent manages: selectedUpgrades object with mixed types
  * - No validation: All parts are optional (can select any combination)
+ *
+ * **Conditional Display:**
+ * - Wing Height and Wing Endplate only shown when Wing = "Custom"
+ * - These parts have special conditional logic in rendering
  *
  * **Debugging Tips:**
  * - Parts not showing: Check /api/parts and /api/parts/categories responses
  * - Category empty: Verify parts have correct categoryId foreign key
  * - Selection not persisting: Check parent component collects selectedUpgrades on submit
- * - Checkbox not responding: Verify onUpgradeToggle callback is passed correctly
- * - Visual feedback wrong: Check isChecked variable calculation (selectedUpgrades[part.id] || false)
+ * - Dropdown not working: Verify onUpgradeChange callback is passed correctly
+ * - Conditional parts not showing: Check Wing value equals "Custom"
  *
  * **Common Issues:**
  * - Category navigation broken: Check activeCategory state updates on click
  * - Parts not filtering: Verify activeCategoryObj?.id matches part.categoryId
  * - Selected state lost: Parent must manage selectedUpgrades state
  * - Mobile dropdown not working: Verify Select component from shadcn/ui
+ * - Conditional options always hidden: Check isConditionalPartShown logic
  *
  * **Related Files:**
  * - /api/parts/route.ts: Fetch all active parts
@@ -77,6 +86,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -109,8 +119,87 @@ interface Part {
 }
 
 interface BuildUpgradesTabProps {
-  selectedUpgrades: Record<string, boolean>
-  onUpgradeToggle: (partId: string) => void
+  selectedUpgrades: Record<string, string | boolean>
+  onUpgradeChange: (partId: string, value: string | boolean) => void
+}
+
+// ============================================================
+// DROPDOWN OPTIONS CONFIGURATION
+// ============================================================
+// Defines available options for each dropdown-based part
+// Used for GT Auto and Custom Parts categories
+
+// GT Auto part options
+const GT_AUTO_OPTIONS: Record<string, string[]> = {
+  'Wide Body Installed': ['Yes', 'No'],
+}
+
+// Custom Parts base options (shown by default)
+const CUSTOM_PARTS_OPTIONS: Record<string, string[]> = {
+  'Front': ['Standard', 'Type A', 'Type B'],
+  'Side': ['Standard', 'Type A', 'Type B'],
+  'Rear': ['Standard', 'Type A', 'Type B'],
+  'Wing': ['Standard', 'None', 'Type A', 'Type B', 'Custom'],
+}
+
+// Conditional Wing options (shown when Wing = "Custom")
+const WING_OPTIONS: Record<string, string[]> = {
+  'Wing Height': ['Low', 'Medium', 'High'],
+}
+
+// Wing Endplate is a number input (min: 1, max: 20)
+// Not in options arrays - handled separately with Input component
+
+// ============================================================
+// HELPER FUNCTIONS - Category Type Detection
+// ============================================================
+
+/**
+ * Determines if a category uses dropdown inputs vs checkbox inputs
+ * @param categoryName - The name of the part category
+ * @returns true if category uses dropdowns, false if uses checkboxes
+ */
+function isDropdownCategory(categoryName: string): boolean {
+  return categoryName === 'GT Auto' || categoryName === 'Custom Parts'
+}
+
+/**
+ * Gets available options for a dropdown part
+ * @param partName - The name of the part
+ * @returns Array of option strings, or empty array if not a dropdown part
+ */
+function getDropdownOptions(partName: string): string[] {
+  // Check GT Auto options
+  if (GT_AUTO_OPTIONS[partName]) {
+    return GT_AUTO_OPTIONS[partName]
+  }
+  // Check Custom Parts options
+  if (CUSTOM_PARTS_OPTIONS[partName]) {
+    return CUSTOM_PARTS_OPTIONS[partName]
+  }
+  // Check Wing options
+  if (WING_OPTIONS[partName]) {
+    return WING_OPTIONS[partName]
+  }
+  return []
+}
+
+/**
+ * Checks if a part is a conditional Wing option (only shown when Wing = "Custom")
+ * @param partName - The name of the part
+ * @returns true if part is conditional on Wing selection
+ */
+function isConditionalWingPart(partName: string): boolean {
+  return partName === 'Wing Height' || partName === 'Wing Endplate'
+}
+
+/**
+ * Checks if a part uses number input (vs dropdown select)
+ * @param partName - The name of the part
+ * @returns true if part uses number input
+ */
+function isNumberInputPart(partName: string): boolean {
+  return partName === 'Wing Endplate'
 }
 
 // ============================================================
@@ -123,8 +212,8 @@ interface BuildUpgradesTabProps {
 // 1. Mount: Fetch categories and parts via parallel API calls
 // 2. Render: Show loading spinner until data loads
 // 3. Display: Render category navigation (sidebar/dropdown) + active parts
-// 4. Interact: User clicks checkbox to toggle part selection
-// 5. Callback: Notify parent via onUpgradeToggle(partId)
+// 4. Interact: User clicks checkbox or selects dropdown option
+// 5. Callback: Notify parent via onUpgradeChange(partId, value)
 //
 // Data Fetching Strategy:
 // - Parallel calls: Promise.all for categories + parts (faster than sequential)
@@ -138,13 +227,17 @@ interface BuildUpgradesTabProps {
 // - loading/error: API call status
 //
 // Part Selection Pattern:
-// - Controlled component: Checkbox checked prop from selectedUpgrades[part.id]
-// - Toggle callback: onUpgradeToggle(partId) called on change
+// - Checkbox parts: Boolean true/false for selected/unselected
+// - Dropdown parts: String value for selected option
 // - Parent manages state: selectedUpgrades object in parent component
 // - Visual feedback: Selected parts have primary background/border
+//
+// Conditional Display:
+// - Wing Height and Wing Endplate only shown when Wing = "Custom"
+// - Logic: Find Wing part value, show/hide conditional parts accordingly
 // ============================================================
 
-export function BuildUpgradesTab({ selectedUpgrades, onUpgradeToggle }: BuildUpgradesTabProps) {
+export function BuildUpgradesTab({ selectedUpgrades, onUpgradeChange }: BuildUpgradesTabProps) {
   // ============================================================
   // STATE MANAGEMENT
   // ============================================================
@@ -243,6 +336,35 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeToggle }: BuildUpg
   // Get the active category data
   const activeCategoryObj = categories.find((c) => c.name === activeCategory)
   const activeCategoryParts = parts.filter((p) => p.categoryId === activeCategoryObj?.id)
+
+  // ============================================================
+  // DERIVED STATE - Conditional Wing Parts Display
+  // ============================================================
+  // Find Wing part value to determine if conditional parts should be shown
+  // Wing Height and Wing Endplate only shown when Wing = "Custom"
+  //
+  // wingPartValue: Current value of Wing dropdown (string or undefined)
+  // showConditionalWingParts: true when Wing = "Custom"
+  //
+  // Logic:
+  // 1. Find Wing part in all parts
+  // 2. Get its current value from selectedUpgrades
+  // 3. Check if value equals "Custom"
+  // 4. Use this to filter conditional parts
+
+  const wingPart = parts.find((p) => p.name === 'Wing')
+  const wingPartValue = wingPart ? selectedUpgrades[wingPart.id] : undefined
+  const showConditionalWingParts = typeof wingPartValue === 'string' && wingPartValue === 'Custom'
+
+  // Filter parts for active category, excluding conditional parts if Wing != "Custom"
+  const visibleParts = activeCategoryParts.filter((part) => {
+    // If not a conditional Wing part, always show
+    if (!isConditionalWingPart(part.name)) {
+      return true
+    }
+    // Conditional parts only shown when Wing = "Custom"
+    return showConditionalWingParts
+  })
 
   // ============================================================
   // LOADING STATE
@@ -353,61 +475,142 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeToggle }: BuildUpg
           PARTS LIST PANEL (Right Side)
           ============================================================
           Header: Category name + part count ("N parts available")
-          Content: Scrollable list of part checkboxes
+          Content: Scrollable list of parts (checkboxes or dropdowns)
           Visual feedback: Selected parts have bg-primary/10 + border-primary/30
 
-          Part Rendering:
-          - Checkbox: Controlled component (checked prop from selectedUpgrades)
-          - Label: Clickable (cursor-pointer) to toggle selection
-          - Container: Rounded border, min-height 44px (touch target)
-          - Selected state: Primary background/border
-          - Unselected state: Border with gt-hover-card hover effect
+          Part Rendering - Two Types:
+          1. Checkbox Parts (existing categories):
+             - Controlled checkbox component
+             - Boolean true/false for selected/unselected
+             - Click label to toggle selection
+             - Rounded border, min-height 44px (touch target)
+
+          2. Dropdown Parts (GT Auto, Custom Parts):
+             - Select component with predefined options
+             - String value for selected option
+             - Full-width on mobile (w-full sm:w-fit pattern)
+             - Conditional: Wing Height/Endplate only shown when Wing = "Custom"
+
+          3. Number Input (Wing Endplate):
+             - Input type="number" with min: 1, max: 20
+             - String value (number converted to string)
 
           Selection Logic:
-          - isChecked: selectedUpgrades[part.id] || false (default to unchecked)
-          - onCheckedChange: onUpgradeToggle(part.id) callback
-          - Parent manages: selectedUpgrades object state
+          - Parent manages: selectedUpgrades object with mixed types
+          - Callback: onUpgradeChange(partId, value) for all input types
           - No validation: All parts optional, can select any combination
+
+          Conditional Display:
+          - Wing Height and Wing Endplate filtered from visibleParts
+          - Only included when Wing value equals "Custom"
       ============================================================ */}
 
       <Card className="flex-1 p-4 overflow-hidden flex flex-col">
         <div className="mb-4">
           <h3 className="text-lg font-semibold">{activeCategory}</h3>
           <p className="text-sm text-muted-foreground">
-            {activeCategoryParts.length} parts available
+            {visibleParts.length} parts available
           </p>
         </div>
 
         <div className="overflow-y-auto flex-1 pr-4">
-          <div className="space-y-2">
-            {activeCategoryParts.map((part) => {
-              // Get checkbox state from parent (default to false if not set)
-              const isChecked = selectedUpgrades[part.id] || false
+          <div className="space-y-3">
+            {visibleParts.map((part) => {
+              // Determine input type based on category
+              const isDropdown = isDropdownCategory(activeCategory)
+              const options = getDropdownOptions(part.name)
+              const isNumberInput = isNumberInputPart(part.name)
+              const partValue = selectedUpgrades[part.id]
 
-              return (
-                <div
-                  key={part.id}
-                  className={cn(
-                    'flex items-center space-x-3 rounded-lg border p-3 transition-colors min-h-[44px]',
-                    isChecked
-                      ? 'bg-primary/10 border-primary/30'
-                      : 'border-border gt-hover-card'
-                  )}
-                >
-                  <Checkbox
-                    id={part.id}
-                    checked={isChecked}
-                    onCheckedChange={() => onUpgradeToggle(part.id)}
-                    className="min-h-[24px] min-w-[44px]"
-                  />
-                  <Label
-                    htmlFor={part.id}
-                    className="flex-1 cursor-pointer text-sm font-medium"
+              // Checkbox rendering (existing parts)
+              if (!isDropdown) {
+                const isChecked = partValue === true
+
+                return (
+                  <div
+                    key={part.id}
+                    className={cn(
+                      'flex items-center space-x-3 rounded-lg border p-3 transition-colors min-h-[44px]',
+                      isChecked
+                        ? 'bg-primary/10 border-primary/30'
+                        : 'border-border gt-hover-card'
+                    )}
                   >
-                    {part.name}
-                  </Label>
-                </div>
-              )
+                    <Checkbox
+                      id={part.id}
+                      checked={isChecked}
+                      onCheckedChange={() => onUpgradeChange(part.id, !isChecked)}
+                      className="min-h-[24px] min-w-[44px]"
+                    />
+                    <Label
+                      htmlFor={part.id}
+                      className="flex-1 cursor-pointer text-sm font-medium"
+                    >
+                      {part.name}
+                    </Label>
+                  </div>
+                )
+              }
+
+              // Dropdown rendering (GT Auto and Custom Parts)
+              if (options.length > 0) {
+                const currentValue = typeof partValue === 'string' ? partValue : ''
+
+                return (
+                  <div key={part.id} className="space-y-2">
+                    <Label htmlFor={part.id} className="text-sm font-medium">
+                      {part.name}
+                    </Label>
+                    <Select
+                      value={currentValue}
+                      onValueChange={(value) => onUpgradeChange(part.id, value)}
+                    >
+                      <SelectTrigger id={part.id} className="min-h-[44px] w-full">
+                        <SelectValue placeholder={`Select ${part.name.toLowerCase()}...`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {options.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )
+              }
+
+              // Number input rendering (Wing Endplate)
+              if (isNumberInput) {
+                const numValue = typeof partValue === 'string' ? partValue : '1'
+
+                return (
+                  <div key={part.id} className="space-y-2">
+                    <Label htmlFor={part.id} className="text-sm font-medium">
+                      {part.name} <span className="text-muted-foreground">(1-20)</span>
+                    </Label>
+                    <Input
+                      id={part.id}
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={numValue}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        const numValue = parseInt(value, 10)
+                        // Validate range
+                        if (!isNaN(numValue) && numValue >= 1 && numValue <= 20) {
+                          onUpgradeChange(part.id, value)
+                        }
+                      }}
+                      className="min-h-[44px] w-full"
+                    />
+                  </div>
+                )
+              }
+
+              // Fallback: part without options (shouldn't happen)
+              return null
             })}
           </div>
         </div>

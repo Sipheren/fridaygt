@@ -439,7 +439,7 @@ export async function PATCH(
         const partMap = new Map(partDetails.map(p => [p.id, p]))
 
         const upgradeRecords = upgrades
-          .filter((u): u is { partId?: string } => !!u.partId) // Only include upgrades with valid partId
+          .filter((u): u is { partId?: string; value?: string | null | undefined } => !!u.partId) // Only include upgrades with valid partId
           .map((upgrade) => {
             const part = partMap.get(upgrade.partId!)
             return {
@@ -448,6 +448,9 @@ export async function PATCH(
               partId: upgrade.partId,
               category: part?.categoryName || '',
               part: part?.name || '',
+              // Include value for dropdown parts (GT Auto, Custom Parts)
+              // Checkbox parts will have value = undefined (stored as NULL)
+              value: upgrade.value || null,
             }
           })
 

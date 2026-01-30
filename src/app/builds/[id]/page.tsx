@@ -194,9 +194,7 @@ import {
   Copy,
   Trash2,
   Edit,
-  Clock,
   Trophy,
-  MapPin,
   Settings,
 } from 'lucide-react'
 import { formatLapTime } from '@/lib/time'
@@ -467,15 +465,35 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
   // ============================================================
   // Group upgrades by category - memoized to avoid re-grouping on every render
   // - Creates: Record<category, BuildUpgrade[]>
+  // - Filters: Conditional Wing parts only shown when Wing = "Custom"
   // - Performance: Memoized to avoid re-group on every render
   const groupedUpgrades = useMemo(() => {
-    return build?.upgrades.reduce((acc, upgrade) => {
+    if (!build?.upgrades) return {}
+
+    // Find Wing value to determine conditional display
+    const wingUpgrade = build.upgrades.find(u => {
+      const partName = typeof u.part === 'string' ? u.part : u.part?.name
+      return partName === 'Wing'
+    })
+    const wingValue = wingUpgrade?.value
+    const showConditionalWingParts = wingValue === 'Custom'
+
+    return build.upgrades.reduce((acc, upgrade) => {
+      const partName = typeof upgrade.part === 'string' ? upgrade.part : upgrade.part?.name
+
+      // Filter out conditional Wing parts when Wing != "Custom"
+      if (partName === 'Wing Height' || partName === 'Wing Endplate') {
+        if (!showConditionalWingParts) {
+          return acc
+        }
+      }
+
       if (!acc[upgrade.category]) {
         acc[upgrade.category] = []
       }
       acc[upgrade.category].push(upgrade)
       return acc
-    }, {} as Record<string, BuildUpgrade[]>) || {}
+    }, {} as Record<string, BuildUpgrade[]>)
   }, [build?.upgrades])
 
   // Group settings by section - memoized to avoid re-grouping on every render

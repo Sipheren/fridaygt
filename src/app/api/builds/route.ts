@@ -293,6 +293,9 @@ export async function POST(request: NextRequest) {
             partId: upgrade.partId,
             category: part?.categoryName || '',
             part: part?.name || '',
+            // Include value for dropdown parts (GT Auto, Custom Parts)
+            // Checkbox parts will have value = undefined (stored as NULL)
+            value: (upgrade as any).value || null,
           }
         })
 

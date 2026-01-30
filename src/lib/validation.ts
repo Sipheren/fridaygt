@@ -28,7 +28,7 @@ export const CreateBuildSchema = z.object({
     partId: z.string().optional(),
     category: z.string().optional(),
     part: z.string().optional(),
-    value: z.string().optional(),
+    value: z.string().optional().nullable(), // nullable for dropdown parts (GT Auto, Custom Parts)
   })).optional(),
   settings: z.array(z.object({
     settingId: z.string().optional(),
@@ -97,7 +97,7 @@ export const UpdateBuildSchema = z.object({
     partId: z.string().optional(),
     category: z.string().optional(),
     part: z.string().optional(),
-    value: z.string().optional(),
+    value: z.string().optional().nullable(), // nullable for dropdown parts (GT Auto, Custom Parts)
   })).optional(),
   settings: z.array(z.object({
     settingId: z.string().optional(),

@@ -181,7 +181,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ArrowLeft, Save, Wrench, Settings, User } from 'lucide-react'
+import { ArrowLeft, Save, Wrench, Settings } from 'lucide-react'
 import { BuildUpgradesTab } from '@/components/builds/BuildUpgradesTab'
 import { BuildTuningTab } from '@/components/builds/BuildTuningTab'
 import { LoadingSection } from '@/components/ui/loading'
@@ -254,7 +254,7 @@ export default function NewBuildPage() {
   const [description, setDescription] = useState('')
   const [isPublic, setIsPublic] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState('')
-  const [selectedUpgrades, setSelectedUpgrades] = useState<Record<string, boolean>>({})
+  const [selectedUpgrades, setSelectedUpgrades] = useState<Record<string, string | boolean>>({})
   const [tuningSettings, setTuningSettings] = useState<Record<string, string>>({})
   // Gear ratios as direct fields
   const [gears, setGears] = useState<Record<string, string>>({
@@ -286,6 +286,7 @@ export default function NewBuildPage() {
   useEffect(() => {
     fetchUsers()
     fetchCars()
+    fetchParts()
 
     // Pre-select car if carId is in query params
     const preselectedCarId = searchParams.get('carId')
@@ -341,6 +342,52 @@ export default function NewBuildPage() {
     }
   }
 
+  // Fetch parts and set default values for GT Auto and Custom Parts
+  // - Endpoint: GET /api/parts
+  // - Response: { parts: Part[] }
+  // - Sets default values for new parts based on part names
+  const fetchParts = async () => {
+    try {
+      const response = await fetch('/api/parts')
+      const data = await response.json()
+      const partsData = data.parts || []
+
+      // Set default values for GT Auto and Custom Parts
+      // GT Auto defaults
+      // - Wide Body Installed: "No"
+      // Custom Parts defaults
+      // - Front: "Standard"
+      // - Side: "Standard"
+      // - Rear: "Standard"
+      // - Wing: "Standard"
+      // - Wing Height: "Medium" (conditional)
+      // - Wing Endplate: "1" (conditional)
+      const defaults: Record<string, string | boolean> = {}
+
+      for (const part of partsData) {
+        if (part.name === 'Wide Body Installed') {
+          defaults[part.id] = 'No'
+        } else if (part.name === 'Front') {
+          defaults[part.id] = 'Standard'
+        } else if (part.name === 'Side') {
+          defaults[part.id] = 'Standard'
+        } else if (part.name === 'Rear') {
+          defaults[part.id] = 'Standard'
+        } else if (part.name === 'Wing') {
+          defaults[part.id] = 'Standard'
+        } else if (part.name === 'Wing Height') {
+          defaults[part.id] = 'Medium'
+        } else if (part.name === 'Wing Endplate') {
+          defaults[part.id] = '1'
+        }
+      }
+
+      setSelectedUpgrades(defaults)
+    } catch (error) {
+      console.error('Error fetching parts:', error)
+    }
+  }
+
   // ============================================================
   // DROPDOWN OPTIONS
   // ============================================================
@@ -365,14 +412,15 @@ export default function NewBuildPage() {
   // ============================================================
   // FORM HANDLERS - UPGRADES
   // ============================================================
-  // Toggle upgrade checkbox
-  // - partId: Part ID to toggle
-  // - State: selectedUpgrades[partId] = !selectedUpgrades[partId]
-  // - Submit: Convert to [{ partId }] array (only selected)
-  const handleUpgradeToggle = (partId: string) => {
+  // Handle upgrade value change (checkbox or dropdown)
+  // - partId: Part ID to update
+  // - value: New value (boolean for checkboxes, string for dropdowns)
+  // - State: selectedUpgrades[partId] = value
+  // - Submit: Convert to [{ partId, value }] array
+  const handleUpgradeChange = (partId: string, value: string | boolean) => {
     setSelectedUpgrades((prev) => ({
       ...prev,
-      [partId]: !prev[partId],
+      [partId]: value,
     }))
   }
 
@@ -465,10 +513,24 @@ export default function NewBuildPage() {
     setSaving(true)
 
     try {
-      // Convert selected upgrades to array of partIds
+      // Convert selected upgrades to array
+      // - Checkbox parts: Include if value is true
+      // - Dropdown parts: Include all (have string values)
+      // - Format: { partId, value } where value is optional for checkboxes
       const upgrades = Object.entries(selectedUpgrades)
-        .filter(([_, selected]) => selected)
-        .map(([partId]) => ({ partId }))
+        .filter(([_, value]) => {
+          // Include checkbox parts that are checked (true)
+          // Include all dropdown parts (string values)
+          return value === true || typeof value === 'string'
+        })
+        .map(([partId, value]) => {
+          // For checkboxes (true), just send partId
+          // For dropdowns (string), send partId and value
+          if (typeof value === 'string') {
+            return { partId, value }
+          }
+          return { partId }
+        })
 
       // Convert tuning settings to array of settingIds (standard settings only)
       const settings = Object.entries(tuningSettings)
@@ -659,12 +721,12 @@ export default function NewBuildPage() {
 
         {/* Upgrades Tab */}
         {/* - Component: BuildUpgradesTab */}
-        {/* - Props: selectedUpgrades, onUpgradeToggle */}
-        {/* - Renders: Checkboxes for parts by category */}
+        {/* - Props: selectedUpgrades, onUpgradeChange */}
+        {/* - Renders: Checkboxes and dropdowns for parts by category */}
         <TabsContent value="upgrades">
           <BuildUpgradesTab
             selectedUpgrades={selectedUpgrades}
-            onUpgradeToggle={handleUpgradeToggle}
+            onUpgradeChange={handleUpgradeChange}
           />
         </TabsContent>
 
