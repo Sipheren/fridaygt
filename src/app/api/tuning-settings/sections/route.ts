@@ -1,9 +1,11 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = createServiceRoleClient()
+    const { searchParams } = new URL(request.url)
+    const nocache = searchParams.get('nocache') === 'true'
 
     const { data: sections, error } = await supabase
       .from('TuningSection')
@@ -15,11 +17,19 @@ export async function GET() {
     // All sections are now valid tuning sections (unused ones removed from DB)
     const filteredSections = sections || []
 
+    // Cache headers - skip if nocache parameter is set for development
+    const cacheHeaders = nocache
+      ? {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'CDN-Cache-Control': 'no-store',
+        }
+      : {
+          'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+          'CDN-Cache-Control': 'public, max-age=3600',
+        }
+
     return NextResponse.json({ sections: filteredSections }, {
-      headers: {
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
-        'CDN-Cache-Control': 'public, max-age=3600',
-      }
+      headers: cacheHeaders
     })
   } catch (error) {
     console.error('Error fetching tuning sections:', error)

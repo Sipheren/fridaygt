@@ -109,6 +109,7 @@ export async function GET(request: NextRequest) {
     const sectionId = searchParams.get('sectionId')
     const active = searchParams.get('active')
     const includeInactive = searchParams.get('includeInactive') === 'true'
+    const nocache = searchParams.get('nocache') === 'true'
 
     let query = supabase
       .from('TuningSetting')
@@ -225,11 +226,19 @@ export async function GET(request: NextRequest) {
     // - CDN propagation: Changes may take up to 1 hour to reach all edge nodes
     // ============================================================
 
+    // Cache headers - skip if nocache parameter is set for development
+    const cacheHeaders = nocache
+      ? {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'CDN-Cache-Control': 'no-store',
+        }
+      : {
+          'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+          'CDN-Cache-Control': 'public, max-age=3600',
+        }
+
     return NextResponse.json({ settings }, {
-      headers: {
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
-        'CDN-Cache-Control': 'public, max-age=3600',
-      }
+      headers: cacheHeaders
     })
   } catch (error) {
     console.error('Error fetching tuning settings:', error)

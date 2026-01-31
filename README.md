@@ -8,7 +8,7 @@ A build-centric Gran Turismo 7 lap time tracker and race management application 
 ## Live Application
 
 **Production URL**: https://fridaygt.vercel.app
-**Current Version**: 2.11.0
+**Current Version**: 2.12.0
 
 ## Versioning
 
@@ -16,6 +16,7 @@ FridayGT follows semantic versioning with a comprehensive session-based developm
 
 | Version | Sessions | Key Changes |
 |---------|----------|-------------|
+| **2.12.0** | #42 | Suspension Sliders - Front/rear dual input sliders with units, API cache bypass |
 | **2.11.0** | #41 | Toe Angle Input - Bidirectional slider with dynamic icons, GT7-matching UI |
 | **2.10.0** | #40 | GT Auto & Custom Parts - Wide body, custom body components, conditional wing options |
 | **2.9.4** | #38 | Header Version Display - Version moved to header, footer cleanup |
@@ -175,6 +176,15 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) — redirects to `/tonight`.
+
+**API Cache Bypass:**
+
+During development, you may need to bypass the 1-hour API cache after database changes. Append `?nocache=true` to tuning settings API endpoints:
+
+- `/api/tuning-settings?nocache=true` - Bypass cache for settings
+- `/api/tuning-settings/sections?nocache=true` - Bypass cache for sections
+
+This disables caching for development but keeps caching enabled in production for performance.
 
 ### Build
 

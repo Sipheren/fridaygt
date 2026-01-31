@@ -90,6 +90,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Loader2, Plus } from 'lucide-react'
 import { ToeAngleDualInput } from '@/components/builds/ToeAngleDualInput'
+import { SliderDualInput } from '@/components/builds/SliderDualInput'
 
 // ============================================================
 // TYPE DEFINITIONS
@@ -353,6 +354,21 @@ function renderSettingInput(
       <ToeAngleDualInput
         value={currentValue || '0.000:0.000'}
         onChange={onChange}
+      />
+    )
+  }
+
+  // SLIDER DUAL input (centered sliders for suspension settings)
+  // Used for: Negative Camber, Natural Frequency, Damping, Anti-Roll Bar
+  // Format: "front:rear" values (e.g., "1.500:2.000")
+  // Display: Text input + Unit (outside input) + slider underneath
+  // Range: minValue to maxValue from setting prop, center calculated as (min+max)/2
+  if (inputType === 'sliderDual') {
+    return (
+      <SliderDualInput
+        value={currentValue || ''}
+        onChange={onChange}
+        setting={setting}
       />
     )
   }

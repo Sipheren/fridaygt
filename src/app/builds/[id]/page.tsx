@@ -635,6 +635,18 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       )
     }
 
+    // Handle sliderDual inputs (centered sliders for suspension)
+    // Same format as dual: front:rear with unit
+    if (inputType === 'sliderDual' && value.includes(':')) {
+      const [front, rear] = value.split(':')
+      return (
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-sm font-semibold" style={{ color: customOrange }}>Front: <span className="font-mono text-base">{front}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+          <span className="text-sm font-semibold" style={{ color: customOrange }}>Rear: <span className="font-mono text-base">{rear}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+        </div>
+      )
+    }
+
     // Handle toeAngle inputs (signed front:rear format)
     // Negative = Out, Positive = In, Zero = Straight
     if (inputType === 'toeAngle' && value.includes(':')) {
