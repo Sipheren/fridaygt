@@ -8,7 +8,7 @@ A build-centric Gran Turismo 7 lap time tracker and race management application 
 ## Live Application
 
 **Production URL**: https://fridaygt.vercel.app
-**Current Version**: 2.14.0
+**Current Version**: 2.16.0
 
 ## Versioning
 
@@ -16,6 +16,8 @@ FridayGT follows semantic versioning with a comprehensive session-based developm
 
 | Version | Sessions | Key Changes |
 |---------|----------|-------------|
+| **2.16.0** | #46 | Reset & Clear Icons - Per-setting reset to original and clear buttons on build edit pages |
+| **2.15.0** | #45 | Wing Endplate Dropdown - Changed from number input to dropdown (0-25) |
 | **2.14.0** | #44 | Ballast Positioning Slider - Bidirectional slider with Front/Center/Rear labels |
 | **2.13.0** | #43 | Gradient Sliders - Interactive gradient fill bars for Power Restrictor & Ballast | |
 | **2.12.0** | #42 | Suspension Sliders - Front/rear dual input sliders with units, API cache bypass |

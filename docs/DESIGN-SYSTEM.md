@@ -437,6 +437,114 @@ WHERE "name" = 'Power Restrictor';
 
 ---
 
+### Reset & Clear Icon Buttons
+
+**Purpose:** Per-setting icon buttons for resetting to original database values and clearing field contents on build edit pages.
+
+**Location:** `src/components/builds/BuildUpgradesTab.tsx`, `src/components/builds/BuildTuningTab.tsx`
+
+**When to Use:**
+- Every input on build edit pages (new and edit)
+- Upgrades & Parts tab: Checkbox and dropdown parts
+- Tuning Settings tab: All tuning settings and gear ratios
+- Only shows when relevant (prevents UI clutter)
+
+**Icon Types:**
+
+1. **Reset Icon (↺)**: `RotateCcw` from lucide-react
+   - Shows: When current value ≠ original database value
+   - Purpose: Restore field to its original database value
+   - Color: `text-muted-foreground hover:text-primary`
+   - ARIA: `"Reset {setting name} to original value"`
+
+2. **Clear Icon (✕)**: `X` from lucide-react
+   - Shows: When field has a value
+   - Purpose: Set field to empty (empty string for dropdowns/text, false for checkboxes)
+   - Color: `text-muted-foreground hover:text-destructive`
+   - ARIA: `"Clear {setting name}"` or `"Uncheck {part name}"` for checkboxes
+
+**Button Styling:**
+```tsx
+<Button
+  type="button"
+  variant="ghost"
+  size="icon"
+  className="h-8 w-8 text-muted-foreground hover:text-primary transition-all duration-150"
+  aria-label={`Reset ${setting.name} to original value`}
+  onClick={handleReset}
+>
+  <RotateCcw className="h-4 w-4" />
+</Button>
+```
+
+**Dimensions:**
+- Button: 32px × 32px (`h-8 w-8`) - WCAG compliant touch targets
+- Icon: 16px × 16px (`h-4 w-4`)
+- Spacing: `gap-1` (4px) between icons
+
+**Layout Pattern (Label Row):**
+```tsx
+<div className="flex items-center justify-between">
+  <Label className="text-sm font-medium">{setting.name}</Label>
+  <div className="flex gap-1 shrink-0">
+    {/* Reset icon - conditional */}
+    {/* Clear icon - conditional */}
+  </div>
+</div>
+```
+
+**Conditional Display Logic:**
+```tsx
+// Reset: Only show when changed from original
+const hasChanged = originalValue !== currentValue
+{hasChanged && <ResetButton />}
+
+// Clear: Only show when has value
+const hasValue = currentValue !== ''
+{hasValue && <ClearButton />}
+```
+
+**Special Cases:**
+
+1. **Checkbox Parts**:
+   - Clear = uncheck (set to `false`)
+   - Reset = restore original checked state
+
+2. **Dropdown Parts**:
+   - Clear = empty string (shows placeholder)
+   - Reset = restore original dropdown value
+
+3. **Cascading Clear (Wing)**:
+   - When Wing dropdown is cleared, also clears Wing Height and Wing Endplate
+   - Prevents orphaned conditional field values
+
+4. **Dual Inputs (front:rear)**:
+   - Reset: Restores original "front:rear" string
+   - Clear: Sets to empty string (clears both)
+
+5. **Gear Ratios**:
+   - Each gear (1-20 + Final Drive) has its own reset/clear icons
+   - Individual gear operations don't affect visibleGearCount
+
+**Accessibility:**
+- All icons are `<button>` elements - keyboard navigable
+- Descriptive ARIA labels with setting name
+- Logical tab order: Label → Reset → Clear → Input
+- Focus visible with default ring styles
+- Touch targets: 32px minimum (WCAG AA compliant)
+
+**Performance:**
+- Conditional rendering prevents unnecessary DOM nodes
+- No layout shift (reserved space with flex)
+- 150ms smooth transitions for state changes
+
+**Mobile Responsiveness:**
+- Icons maintain 32px size on mobile
+- Full-width touch targets for easy tapping
+- No horizontal scrolling issues
+
+---
+
 #### Common Patterns
 
 **All specialized inputs share:**

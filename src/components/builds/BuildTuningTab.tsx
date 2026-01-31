@@ -88,7 +88,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { Loader2, Plus } from 'lucide-react'
+import { Loader2, Plus, RotateCcw, X } from 'lucide-react'
 import { ToeAngleDualInput } from '@/components/builds/ToeAngleDualInput'
 import { SliderDualInput } from '@/components/builds/SliderDualInput'
 import { GradientSliderInput } from '@/components/builds/GradientSliderInput'
@@ -140,6 +140,9 @@ interface BuildTuningTabProps {
   onAddGear: () => void
   onRemoveGear: (gearNumber: number) => void
   visibleGearCount: number
+  // Original values for reset functionality
+  originalTuningSettings: Record<string, string>
+  originalGears: Record<string, string>
 }
 
 // ============================================================
@@ -430,6 +433,8 @@ export function BuildTuningTab({
   onAddGear,
   onRemoveGear,
   visibleGearCount,
+  originalTuningSettings,
+  originalGears,
 }: BuildTuningTabProps) {
   // ============================================================
   // STATE MANAGEMENT
@@ -597,6 +602,44 @@ export function BuildTuningTab({
   }, [settings, activeSectionObj, activeSection])
 
   // ============================================================
+  // RESET/CLEAR HANDLERS
+  // ============================================================
+
+  /**
+   * Reset single setting to original value from database
+   * @param settingId - ID of setting to reset
+   */
+  const handleResetSetting = (settingId: string) => {
+    const originalValue = originalTuningSettings[settingId]
+    onSettingChange(settingId, originalValue)
+  }
+
+  /**
+   * Clear single setting (set to empty string)
+   * @param settingId - ID of setting to clear
+   */
+  const handleClearSetting = (settingId: string) => {
+    onSettingChange(settingId, '')
+  }
+
+  /**
+   * Reset single gear to original value from database
+   * @param gearKey - Key of gear to reset (gear1, gear2, ..., finalDrive)
+   */
+  const handleResetGear = (gearKey: string) => {
+    const originalValue = originalGears[gearKey]
+    onGearChange(gearKey, originalValue)
+  }
+
+  /**
+   * Clear single gear (set to empty string)
+   * @param gearKey - Key of gear to clear (gear1, gear2, ..., finalDrive)
+   */
+  const handleClearGear = (gearKey: string) => {
+    onGearChange(gearKey, '')
+  }
+
+  // ============================================================
   // LOADING STATE
   // ============================================================
   // Show centered spinner while fetching sections and settings
@@ -760,23 +803,55 @@ export function BuildTuningTab({
                   const gearNumber = i + 1
                   const gearKey = `gear${gearNumber}`
                   const currentValue = gears[gearKey] || ''
+                  const originalValue = originalGears[gearKey] || ''
+                  const hasChanged = originalValue !== currentValue
+                  const hasValue = currentValue !== ''
+
                   return (
                     <div key={gearKey} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label className="text-sm font-medium">
                           {gearNumber}{getOrdinalSuffix(gearNumber)} Gear
                         </Label>
-                        {gearNumber > 6 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onRemoveGear(gearNumber)}
-                            className="text-destructive hover:text-destructive h-8 px-2"
-                          >
-                            Remove
-                          </Button>
-                        )}
+                        <div className="flex gap-1 shrink-0">
+                          {/* Reset - only show if changed from original */}
+                          {hasChanged && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary transition-all duration-150"
+                              aria-label={`Reset ${gearNumber}${getOrdinalSuffix(gearNumber)} gear to original value`}
+                              onClick={() => handleResetGear(gearKey)}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {/* Clear - only show if has value */}
+                          {hasValue && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive transition-all duration-150"
+                              aria-label={`Clear ${gearNumber}${getOrdinalSuffix(gearNumber)} gear`}
+                              onClick={() => handleClearGear(gearKey)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {gearNumber > 6 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onRemoveGear(gearNumber)}
+                              className="text-destructive hover:text-destructive h-8 px-2"
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       <Input
                         type="text"
@@ -805,7 +880,37 @@ export function BuildTuningTab({
 
                 {/* Final Drive at bottom */}
                 <div className="space-y-2 pt-4 border-t border-border">
-                  <Label className="text-sm font-medium">Final Drive</Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Final Drive</Label>
+                    <div className="flex gap-1 shrink-0">
+                      {/* Reset - only show if changed from original */}
+                      {(originalGears.finalDrive || '') !== (gears.finalDrive || '') && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-primary transition-all duration-150"
+                          aria-label="Reset Final Drive to original value"
+                          onClick={() => handleResetGear('finalDrive')}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {/* Clear - only show if has value */}
+                      {(gears.finalDrive || '') !== '' && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive transition-all duration-150"
+                          aria-label="Clear Final Drive"
+                          onClick={() => handleClearGear('finalDrive')}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                   <Input
                     type="text"
                     inputMode="decimal"
@@ -829,17 +934,50 @@ export function BuildTuningTab({
 
               activeSectionSettings.map((setting) => {
                 const currentValue = tuningSettings[setting.id] || ''
+                const originalValue = originalTuningSettings[setting.id] || ''
+                const hasChanged = originalValue !== currentValue
+                const hasValue = currentValue !== ''
 
                 return (
                   <div key={setting.id} className="space-y-2">
-                    <Label htmlFor={setting.id} className="text-sm font-medium">
-                      {setting.name}
-                      {setting.unit && (
-                        <span className="text-muted-foreground font-normal ml-1">
-                          ({setting.unit})
-                        </span>
-                      )}
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={setting.id} className="text-sm font-medium">
+                        {setting.name}
+                        {setting.unit && (
+                          <span className="text-muted-foreground font-normal ml-1">
+                            ({setting.unit})
+                          </span>
+                        )}
+                      </Label>
+                      <div className="flex gap-1 shrink-0">
+                        {/* Reset - only show if changed from original */}
+                        {hasChanged && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary transition-all duration-150"
+                            aria-label={`Reset ${setting.name} to original value`}
+                            onClick={() => handleResetSetting(setting.id)}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {/* Clear - only show if has value */}
+                        {hasValue && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive transition-all duration-150"
+                            aria-label={`Clear ${setting.name}`}
+                            onClick={() => handleClearSetting(setting.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                     {renderSettingInput(setting, currentValue, (value) =>
                       onSettingChange(setting.id, value)
                     )}

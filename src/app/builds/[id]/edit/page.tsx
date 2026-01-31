@@ -327,6 +327,15 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
   const [visibleGearCount, setVisibleGearCount] = useState(6) // Start with 6 gears
 
   // ============================================================
+  // ORIGINAL STATE (for reset functionality)
+  // ============================================================
+  // Store original values for reset functionality
+  // For edit builds, these are loaded from the database
+  const [originalUpgrades, setOriginalUpgrades] = useState<Record<string, string | boolean>>({})
+  const [originalTuningSettings, setOriginalTuningSettings] = useState<Record<string, string>>({})
+  const [originalGears, setOriginalGears] = useState<Record<string, string>>({})
+
+  // ============================================================
   // DATA FETCHING
   // ============================================================
   // Fetch build, users, and current user on mount
@@ -397,6 +406,8 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
         }
       })
       setSelectedUpgrades(upgradesMap)
+      // Store original values for reset functionality (deep copy)
+      setOriginalUpgrades(structuredClone(upgradesMap))
 
       // Convert settings to input state (standard settings only, gears are direct fields)
       const settingsMap: Record<string, string> = {}
@@ -408,6 +419,8 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
         // Skip legacy settings without settingId (old data)
       })
       setTuningSettings(settingsMap)
+      // Store original values for reset functionality (deep copy)
+      setOriginalTuningSettings(structuredClone(settingsMap))
 
       // Load gears from direct fields (already strings now)
       const gearsData: Record<string, string> = {}
@@ -428,6 +441,8 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
         }
       }
       setGears(gearsData)
+      // Store original values for reset functionality (deep copy)
+      setOriginalGears(structuredClone(gearsData))
     } catch (error) {
       console.error('Error fetching build:', error)
       setErrorMessage('Failed to load build')
@@ -714,6 +729,7 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
           <BuildUpgradesTab
             selectedUpgrades={selectedUpgrades}
             onUpgradeChange={handleUpgradeChange}
+            originalUpgrades={originalUpgrades}
           />
         </TabsContent>
 
@@ -728,6 +744,8 @@ export default function EditBuildPage({ params }: { params: Promise<{ id: string
             onAddGear={handleAddGear}
             onRemoveGear={handleRemoveGear}
             visibleGearCount={visibleGearCount}
+            originalTuningSettings={originalTuningSettings}
+            originalGears={originalGears}
           />
         </TabsContent>
       </Tabs>

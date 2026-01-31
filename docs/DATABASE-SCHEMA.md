@@ -1,6 +1,6 @@
 # FridayGT Database Schema
 
-**Date:** 2026-01-21
+**Date:** 2026-01-31
 **Source:** Live Supabase database export
 
 ---
@@ -338,13 +338,16 @@
 
 ---
 
-## Parts & Tuning Data (2026-01-21)
+## Parts & Tuning Data (2026-01-31)
 
 **Status:** ✅ COMPLETE
 - Tables created
-- Data imported from CSV files (72 parts, 60 settings)
+- Data imported from CSV files and configured manually (78 parts, 53 settings)
 - Foreign key columns added and finalized (NOT NULL with constraints)
 - Existing build data migrated (6 CarBuildUpgrade records)
+- GT Auto & Custom Parts added (Session #40): Wide body, custom body components, conditional wing options
+- Tuning settings cleanup (Session #35): Reduced from 60 to 53 settings, 15 sections to 6 sections
+- Slider input types added (Sessions #41-44): toeAngle, sliderDual, gradientSlider, ballastSlider
 
 ### PartCategory
 | Column | Type | Nullable | Default | Description |
@@ -355,7 +358,7 @@
 | createdAt | timestamp | NO | CURRENT_TIMESTAMP | - |
 | updatedAt | timestamp | NO | - | - |
 
-**Categories (5):** Sports, Club Sports, Semi-Racing, Racing, Extreme
+**Categories (7):** Sports, Club Sports, Semi-Racing, Racing, Extreme, GT Auto, Custom Parts
 
 ### Part
 | Column | Type | Nullable | Default | Description |
@@ -394,13 +397,19 @@
 | description | text | YES | - | Setting description |
 | defaultValue | varchar(100) | YES | - | Default value |
 | displayOrder | integer | YES | - | Display order within section (GT7 menu order) |
+| inputType | varchar(50) | YES | - | Input type: select, dual, number, decimal, ratio, text, sliderDual, toeAngle, gradientSlider, ballastSlider |
+| minValue | double | YES | - | Minimum value (for sliders) |
+| maxValue | double | YES | - | Maximum value (for sliders) |
+| step | double | YES | - | Step increment (for sliders) |
+| unit | varchar(20) | YES | - | Unit symbol (°, kg, %, Hz, Lv) |
+| options | text[] | YES | - | Dropdown options (for select type) |
 | isActive | boolean | YES | true | Active/inactive |
 | createdAt | timestamp | NO | CURRENT_TIMESTAMP | - |
 | updatedAt | timestamp | NO | - | - |
 
 **Constraints:** UNIQUE (sectionId, name)
 **Indexes:** sectionId, name, isActive
-**Total Settings:** 17 (as of 2026-01-29, after cleanup and ordering)
+**Total Settings:** 53 (as of 2026-01-31, including specialized input types)
 
 **Settings by Section:**
 - Suspension (7): Body Height Adjustment, Anti-Roll Bar, Damping Ratio (Compression), Damping Ratio (Expansion), Natural Frequency, Negative Camber Angle, Toe Angle

@@ -270,6 +270,15 @@ export default function NewBuildPage() {
   const [visibleGearCount, setVisibleGearCount] = useState(6) // Start with 6 gears
 
   // ============================================================
+  // ORIGINAL STATE (for reset functionality)
+  // ============================================================
+  // Store original values for reset functionality
+  // For new builds, current values equal original values (empty/default)
+  const [originalUpgrades, setOriginalUpgrades] = useState<Record<string, string | boolean>>({})
+  const [originalTuningSettings, setOriginalTuningSettings] = useState<Record<string, string>>({})
+  const [originalGears, setOriginalGears] = useState<Record<string, string>>({})
+
+  // ============================================================
   // DATA FETCHING
   // ============================================================
   // Fetch users, cars, and pre-select car if carId in query params
@@ -361,7 +370,7 @@ export default function NewBuildPage() {
       // - Rear: "Standard"
       // - Wing: "Standard"
       // - Wing Height: "Medium" (conditional)
-      // - Wing Endplate: "1" (conditional)
+      // - Wing Endplate: "0" (conditional)
       const defaults: Record<string, string | boolean> = {}
 
       for (const part of partsData) {
@@ -378,7 +387,7 @@ export default function NewBuildPage() {
         } else if (part.name === 'Wing Height') {
           defaults[part.id] = 'Medium'
         } else if (part.name === 'Wing Endplate') {
-          defaults[part.id] = '1'
+          defaults[part.id] = '0'
         }
       }
 
@@ -727,6 +736,7 @@ export default function NewBuildPage() {
           <BuildUpgradesTab
             selectedUpgrades={selectedUpgrades}
             onUpgradeChange={handleUpgradeChange}
+            originalUpgrades={selectedUpgrades}  // For new builds, current = original
           />
         </TabsContent>
 
@@ -744,6 +754,8 @@ export default function NewBuildPage() {
             onAddGear={handleAddGear}
             onRemoveGear={handleRemoveGear}
             visibleGearCount={visibleGearCount}
+            originalTuningSettings={tuningSettings}  // For new builds, current = original
+            originalGears={gears}  // For new builds, current = original
           />
         </TabsContent>
       </Tabs>

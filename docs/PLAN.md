@@ -401,6 +401,48 @@ Tonight Page → Shows all races where isActive = true
   - Archived SUSPENSION-SLIDER-PLAN.md after completion
   - Archived GRADIENT-SLIDER-PLAN.md after completion
 
+### Phase 17: Reset & Clear Functionality ✅
+- **Per-Setting Icons**: Added reset (↺) and clear (✕) icon buttons to each individual input on build edit pages
+  - **Upgrades & Parts Tab**:
+    - Checkbox parts: Reset restores original checked state, Clear unchecks
+    - Dropdown parts: Reset restores original dropdown value, Clear sets to empty
+    - Icons only show when relevant (no clutter)
+  - **Tuning Settings Tab**:
+    - Standard settings: Reset restores original value, Clear sets to empty
+    - Dual inputs (front:rear): Reset restores "front:rear" format, Clear clears both
+    - Gear ratios (1-20 + Final Drive): Reset/clear for each individual gear
+    - Specialized inputs (sliderDual, toeAngle, gradientSlider, ballastSlider): All work with icons
+  - **Icon Button Styling**:
+    - 32px buttons (h-8 w-8) with 16px icons (h-4 w-4) - WCAG compliant
+    - Reset: `text-muted-foreground hover:text-primary` (blue hover)
+    - Clear: `text-muted-foreground hover:text-destructive` (red hover)
+    - 150ms smooth transitions
+  - **State Management**:
+    - Parent components store original values from database
+    - New builds: current values = original values (empty/default)
+    - Edit builds: original values loaded via `structuredClone()`
+  - **Accessibility**:
+    - ARIA labels: "Reset [setting] to original value", "Clear [setting]"
+    - Keyboard navigation: Icons are button elements, tab navigable
+    - Focus visible: Default ring styles
+  - **Mobile Responsiveness**:
+    - 32px touch targets - adequate for mobile
+    - No horizontal scrolling issues
+  - **Component Updates**:
+    - `src/app/builds/new/page.tsx`: Added original state, passed to tabs
+    - `src/app/builds/[id]/edit/page.tsx`: Load original from DB, passed to tabs
+    - `src/components/builds/BuildUpgradesTab.tsx`: Added handlers, icons, updated rendering
+    - `src/components/builds/BuildTuningTab.tsx`: Added handlers, icons, updated rendering
+  - **Edge Cases Handled**:
+    - Empty original values work correctly
+    - Checkbox: Clear = false (unchecked), Reset = restore original
+    - Conditional Wing parts work correctly
+    - Dual inputs: Reset restores original "front:rear" string
+  - **Documentation**:
+    - Updated SESSION-LOG.md with Session #46
+    - Updated README.md to version 2.16.0
+    - Archived RESET-CLEAR-FUNCTIONALITY-PLAN.md after completion
+
 ---
 
 ## Database Schema
@@ -511,6 +553,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-31 | #45 | Wing Endplate Dropdown - Changed from number input (1-20) to dropdown select (0-25), expanded range, updated default value to 0, mobile responsive |
 | 2026-01-31 | #44 | Ballast Positioning Slider - Bidirectional slider (-50 to +50) with Front/Center/Rear dynamic labels, BallastSliderInput component, integer-only display, mobile tested with touch-action: none |
 | 2026-01-31 | #43 | Gradient Sliders - Interactive gradient fill bars for Power Restrictor (0-100%) and Ballast (0-500kg), single draggable bar with centered value display, loading bar-style interaction, zero-padded values, cache bypass for development |
 | 2026-01-31 | #42 | Suspension Sliders - Front/rear dual input sliders (sliderDual), SliderDualInput component, 5 settings enhanced with units and display order fixes, development cache bypass with ?nocache=true |

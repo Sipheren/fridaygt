@@ -95,7 +95,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { Loader2 } from 'lucide-react'
+import { Loader2, RotateCcw, X } from 'lucide-react'
 
 // ============================================================
 // TYPE DEFINITIONS
@@ -121,6 +121,7 @@ interface Part {
 interface BuildUpgradesTabProps {
   selectedUpgrades: Record<string, string | boolean>
   onUpgradeChange: (partId: string, value: string | boolean) => void
+  originalUpgrades: Record<string, string | boolean>  // Original values for reset functionality
 }
 
 // ============================================================
@@ -145,10 +146,8 @@ const CUSTOM_PARTS_OPTIONS: Record<string, string[]> = {
 // Conditional Wing options (shown when Wing = "Custom")
 const WING_OPTIONS: Record<string, string[]> = {
   'Wing Height': ['Low', 'Medium', 'High'],
+  'Wing Endplate': Array.from({ length: 26 }, (_, i) => i.toString()), // 0-25
 }
-
-// Wing Endplate is a number input (min: 1, max: 20)
-// Not in options arrays - handled separately with Input component
 
 // ============================================================
 // HELPER FUNCTIONS - Category Type Detection
@@ -193,15 +192,6 @@ function isConditionalWingPart(partName: string): boolean {
   return partName === 'Wing Height' || partName === 'Wing Endplate'
 }
 
-/**
- * Checks if a part uses number input (vs dropdown select)
- * @param partName - The name of the part
- * @returns true if part uses number input
- */
-function isNumberInputPart(partName: string): boolean {
-  return partName === 'Wing Endplate'
-}
-
 // ============================================================
 // MAIN COMPONENT - BuildUpgradesTab
 // ============================================================
@@ -237,7 +227,7 @@ function isNumberInputPart(partName: string): boolean {
 // - Logic: Find Wing part value, show/hide conditional parts accordingly
 // ============================================================
 
-export function BuildUpgradesTab({ selectedUpgrades, onUpgradeChange }: BuildUpgradesTabProps) {
+export function BuildUpgradesTab({ selectedUpgrades, onUpgradeChange, originalUpgrades }: BuildUpgradesTabProps) {
   // ============================================================
   // STATE MANAGEMENT
   // ============================================================
@@ -367,6 +357,48 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeChange }: BuildUpg
   })
 
   // ============================================================
+  // RESET/CLEAR HANDLERS
+  // ============================================================
+
+  /**
+   * Reset single part to original value from database
+   * @param partId - ID of part to reset
+   */
+  const handleResetPart = (partId: string) => {
+    const originalValue = originalUpgrades[partId]
+    onUpgradeChange(partId, originalValue)
+  }
+
+  /**
+   * Clear single part (set to empty)
+   * @param partId - ID of part to clear
+   * For dropdown parts: clear to empty string
+   * For checkbox parts: clear to false (unchecked)
+   * Special case: Clearing Wing also clears Wing Height and Wing Endplate
+   */
+  const handleClearPart = (partId: string) => {
+    const part = parts.find((p) => p.id === partId)
+    if (!part) return
+
+    // Check if part belongs to dropdown category
+    const category = categories.find((c) => c.id === part.categoryId)
+    const isDropdown = category && isDropdownCategory(category.name)
+
+    // For dropdown parts, clear to empty string
+    // For checkbox parts, clear to false
+    onUpgradeChange(partId, isDropdown ? '' : false)
+
+    // Special case: If clearing Wing, also clear conditional Wing parts
+    if (part.name === 'Wing') {
+      // Find and clear Wing Height and Wing Endplate
+      const wingHeight = parts.find((p) => p.name === 'Wing Height')
+      const wingEndplate = parts.find((p) => p.name === 'Wing Endplate')
+      if (wingHeight) onUpgradeChange(wingHeight.id, '')
+      if (wingEndplate) onUpgradeChange(wingEndplate.id, '')
+    }
+  }
+
+  // ============================================================
   // LOADING STATE
   // ============================================================
   // Show centered spinner while fetching categories and parts
@@ -490,10 +522,7 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeChange }: BuildUpg
              - String value for selected option
              - Full-width on mobile (w-full sm:w-fit pattern)
              - Conditional: Wing Height/Endplate only shown when Wing = "Custom"
-
-          3. Number Input (Wing Endplate):
-             - Input type="number" with min: 1, max: 20
-             - String value (number converted to string)
+             - Wing Endplate: Dropdown with options 0-25
 
           Selection Logic:
           - Parent manages: selectedUpgrades object with mixed types
@@ -519,35 +548,67 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeChange }: BuildUpg
               // Determine input type based on category
               const isDropdown = isDropdownCategory(activeCategory)
               const options = getDropdownOptions(part.name)
-              const isNumberInput = isNumberInputPart(part.name)
               const partValue = selectedUpgrades[part.id]
 
               // Checkbox rendering (existing parts)
               if (!isDropdown) {
                 const isChecked = partValue === true
+                const originalValue = originalUpgrades[part.id]
+                const hasChanged = originalValue !== partValue
+                const hasValue = partValue === true
 
                 return (
                   <div
                     key={part.id}
                     className={cn(
-                      'flex items-center space-x-3 rounded-lg border p-3 transition-colors min-h-[44px]',
+                      'flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors min-h-[44px]',
                       isChecked
                         ? 'bg-primary/10 border-primary/30'
                         : 'border-border gt-hover-card'
                     )}
                   >
-                    <Checkbox
-                      id={part.id}
-                      checked={isChecked}
-                      onCheckedChange={() => onUpgradeChange(part.id, !isChecked)}
-                      className="min-h-[24px] min-w-[44px]"
-                    />
-                    <Label
-                      htmlFor={part.id}
-                      className="flex-1 cursor-pointer text-sm font-medium"
-                    >
-                      {part.name}
-                    </Label>
+                    <div className="flex items-center space-x-3 flex-1">
+                      <Checkbox
+                        id={part.id}
+                        checked={isChecked}
+                        onCheckedChange={() => onUpgradeChange(part.id, !isChecked)}
+                        className="min-h-[24px] min-w-[44px]"
+                      />
+                      <Label
+                        htmlFor={part.id}
+                        className="flex-1 cursor-pointer text-sm font-medium"
+                      >
+                        {part.name}
+                      </Label>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      {/* Reset - only show if changed from original */}
+                      {hasChanged && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-primary transition-all duration-150"
+                          aria-label={`Reset ${part.name} to original value`}
+                          onClick={() => handleResetPart(part.id)}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {/* Clear - only show if checked */}
+                      {hasValue && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive transition-all duration-150"
+                          aria-label={`Uncheck ${part.name}`}
+                          onClick={() => handleClearPart(part.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )
               }
@@ -555,12 +616,45 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeChange }: BuildUpg
               // Dropdown rendering (GT Auto and Custom Parts)
               if (options.length > 0) {
                 const currentValue = typeof partValue === 'string' ? partValue : ''
+                const originalValue = typeof originalUpgrades[part.id] === 'string' ? originalUpgrades[part.id] : ''
+                const hasChanged = originalValue !== currentValue
+                const hasValue = currentValue !== ''
 
                 return (
                   <div key={part.id} className="space-y-2">
-                    <Label htmlFor={part.id} className="text-sm font-medium">
-                      {part.name}
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={part.id} className="text-sm font-medium">
+                        {part.name}
+                      </Label>
+                      <div className="flex gap-1 shrink-0">
+                        {/* Reset - only show if changed from original */}
+                        {hasChanged && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary transition-all duration-150"
+                            aria-label={`Reset ${part.name} to original value`}
+                            onClick={() => handleResetPart(part.id)}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {/* Clear - only show if has value */}
+                        {hasValue && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive transition-all duration-150"
+                            aria-label={`Clear ${part.name}`}
+                            onClick={() => handleClearPart(part.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                     <Select
                       value={currentValue}
                       onValueChange={(value) => onUpgradeChange(part.id, value)}
@@ -576,35 +670,6 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeChange }: BuildUpg
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                )
-              }
-
-              // Number input rendering (Wing Endplate)
-              if (isNumberInput) {
-                const numValue = typeof partValue === 'string' ? partValue : '1'
-
-                return (
-                  <div key={part.id} className="space-y-2">
-                    <Label htmlFor={part.id} className="text-sm font-medium">
-                      {part.name} <span className="text-muted-foreground">(1-20)</span>
-                    </Label>
-                    <Input
-                      id={part.id}
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={numValue}
-                      onChange={(e) => {
-                        const value = e.target.value
-                        const numValue = parseInt(value, 10)
-                        // Validate range
-                        if (!isNaN(numValue) && numValue >= 1 && numValue <= 20) {
-                          onUpgradeChange(part.id, value)
-                        }
-                      }}
-                      className="min-h-[44px] w-full"
-                    />
                   </div>
                 )
               }
