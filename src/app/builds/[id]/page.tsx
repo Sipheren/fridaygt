@@ -369,7 +369,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
     try {
       const [buildRes, settingsRes] = await Promise.all([
         fetch(`/api/builds/${buildId}`),
-        fetch('/api/tuning-settings')
+        fetch('/api/tuning-settings?nocache=true')
       ])
 
       if (!buildRes.ok) {
@@ -503,12 +503,37 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
     const grouped: Record<string, BuildSetting[]> = {}
 
-    // First, group by section (filter out settings with null/empty values)
+    // First, group by section (filter out settings with null/empty/zero values)
     build.settings.forEach((setting) => {
+      const value = setting.value
+
       // Skip settings with null, undefined, or empty values
-      if (!setting.value || setting.value.trim() === '') {
+      if (!value || value.trim() === '') {
         return
       }
+
+      // Check if this is a dual/sliderDual/toeAngle input (front:rear format)
+      const metadata = setting.settingId ? tuningSettingsMetadata[setting.settingId] : undefined
+      const inputType = metadata?.inputType
+      const isDualFormat = value.includes(':') && (inputType === 'dual' || inputType === 'ratio' || inputType === 'sliderDual' || inputType === 'toeAngle')
+
+      if (isDualFormat) {
+        // For dual inputs, filter out if BOTH sides are "0" or "-0.00"
+        const [front, rear] = value.split(':')
+        const isFrontZero = front === '0' || front === '-0.00' || front === '0.00'
+        const isRearZero = rear === '0' || rear === '-0.00' || rear === '0.00'
+
+        if (isFrontZero && isRearZero) {
+          return // Skip if both front and rear are zero
+        }
+      } else {
+        // For single values, filter out "0", "0.00", "-0.00"
+        const isZero = value === '0' || value === '0.00' || value === '-0.00'
+        if (isZero) {
+          return
+        }
+      }
+
       if (!grouped[setting.section]) {
         grouped[setting.section] = []
       }
@@ -684,10 +709,22 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       )
     }
 
-    // Handle Ballast Positioning - show sign for positive/negative values
+    // Handle Ballast Positioning - show position label (Front/Center/Rear)
     const settingName = typeof setting.setting === 'string' ? setting.setting : setting.setting.name
     if (settingName === 'Ballast Positioning') {
-      const displayValue = value && !value.startsWith('-') ? `+${value}` : value
+      const numValue = parseFloat(value || '0')
+
+      let positionLabel = 'Center'
+      let displayValue = '0'
+
+      if (numValue < 0) {
+        positionLabel = 'Front'
+        displayValue = value || '0'  // Already has - sign
+      } else if (numValue > 0) {
+        positionLabel = 'Rear'
+        displayValue = `+${value}`  // Add + sign for display
+      }
+
       return (
         <Badge
           variant="secondary"
@@ -698,8 +735,7 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
             border: 'none'
           }}
         >
-          {displayValue}
-          {unit && <span className="ml-1 text-sm opacity-90">{unit}</span>}
+          {displayValue} {positionLabel}
         </Badge>
       )
     }

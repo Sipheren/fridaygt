@@ -1,6 +1,6 @@
 # FridayGT Design System & UI/UX Guidelines
 
-**Last Updated:** 2026-01-14
+**Last Updated:** 2026-01-31
 
 ## Table of Contents
 1. [Design Principles](#design-principles)
@@ -159,6 +159,328 @@ border-accent/30       // Active states
 ---
 
 ## Components
+
+### Specialized Tuning Inputs
+
+The application includes three specialized input components for GT7 tuning settings. These components provide enhanced UX beyond standard HTML inputs.
+
+#### 1. GradientSliderInput
+
+**Purpose:** Single-value interactive gradient bar for settings like Power Restrictor and Ballast.
+
+**Visual Metaphor:** Loading bar that fills from left to right.
+
+**Location:** `src/components/builds/GradientSliderInput.tsx`
+
+**Props:**
+```tsx
+interface GradientSliderInputProps {
+  value: string | null           // Numeric string (e.g., "75")
+  onChange: (value: string) => void
+  setting: TuningSetting         // Contains minValue, maxValue, step, unit
+  disabled?: boolean
+}
+```
+
+**Features:**
+- Click/drag anywhere on bar to adjust value
+- Gradient fills from left: `from-primary/60 to-primary/80`
+- Value displays centered in bar with zero-padding
+- Range labels show min/max below bar
+- Touch support with scroll prevention during drag
+- Smooth 150ms transition on value changes
+
+**Styling:**
+```tsx
+className={`
+  relative h-12 w-full rounded-md border overflow-hidden
+  min-h-[48px] touch-none select-none shadow-xs
+  transition-[color,box-shadow] outline-none
+  bg-transparent dark:bg-input/30 border-input
+`}
+```
+
+**Usage Example:**
+```tsx
+<GradientSliderInput
+  value="75"
+  onChange={(newValue) => setSetting('power-restrictor', newValue)}
+  setting={{
+    minValue: 0,
+    maxValue: 100,
+    step: 1,
+    unit: '%'
+  }}
+/>
+```
+
+**Data Model:**
+- Storage: String value (e.g., "75", "150")
+- Display: Zero-padded based on maxValue (100 → "00", 500 → "000")
+- Range: 0-100% for Power Restrictor, 0-500kg for Ballast
+
+**Accessibility:**
+- `role="slider"` with ARIA attributes
+- `aria-label` with unit context
+- `aria-valuemin`, `aria-valuemax`, `aria-valuenow`
+- `aria-disabled` when disabled
+- 48px minimum touch target (WCAG compliant)
+
+---
+
+#### 2. SliderDualInput
+
+**Purpose:** Front/rear dual input for suspension settings with always-visible centered sliders.
+
+**Visual Metaphor:** Two synchronized sliders sharing a value string.
+
+**Location:** `src/components/builds/SliderDualInput.tsx`
+
+**Props:**
+```tsx
+interface SliderDualInputProps {
+  value: string | null           // "front:rear" format (e.g., "1.500:2.000")
+  onChange: (value: string) => void
+  setting: TuningSetting         // Contains minValue, maxValue, step, unit
+  disabled?: boolean
+}
+```
+
+**Features:**
+- Two sliders (front/rear) with centered values
+- Value format: "front:rear" (e.g., "1.500:2.000")
+- Automatic decimal precision from step value
+- Center point calculated as `(minValue + maxValue) / 2`
+- Responsive: stacked on mobile, side-by-side on desktop
+- Optional unit display (°, Hz, %, Lv)
+
+**Styling:**
+```tsx
+// Front slider label
+<span className="text-xs text-muted-foreground font-medium">
+  Front
+</span>
+
+// Slider component
+<Slider
+  value={[frontValue]}
+  onValueChange={([v]) => handleFrontChange(v)}
+  min={minValue}
+  max={maxValue}
+  step={step}
+  className="flex-1"
+/>
+```
+
+**Usage Example:**
+```tsx
+<SliderDualInput
+  value="1.500:2.000"
+  onChange={(newValue) => setSetting('damping-compression', newValue)}
+  setting={{
+    minValue: 10,
+    maxValue: 80,
+    step: 1,
+    unit: '%'
+  }}
+/>
+```
+
+**Enhanced Settings (5 total):**
+- Anti-Roll Bar: 1-20 Lv
+- Damping Ratio (Compression): 10-80 %
+- Damping Ratio (Expansion): 10-80 %
+- Natural Frequency: 0-5 Hz
+- Negative Camber Angle: 0-6 °
+
+---
+
+#### 3. ToeAngleDualInput
+
+**Purpose:** Bidirectional toe angle slider with dynamic direction icons matching GT7's UI.
+
+**Visual Metaphor:** GT7's toe adjustment interface with front/rear indicators.
+
+**Location:** `src/components/builds/ToeAngleDualInput.tsx`
+
+**Props:**
+```tsx
+interface ToeAngleDualInputProps {
+  value: string | null           // "front:rear" format with +/- (e.g., "-0.50:+0.30")
+  onChange: (value: string) => void
+  setting: TuningSetting         // Contains minValue, maxValue, step
+  disabled?: boolean
+}
+```
+
+**Features:**
+- Bidirectional sliders (-5.00 to +5.00)
+- Dynamic icons based on value direction (ToeInIcon, ToeOutIcon, ToeStraightIcon)
+- Front/rear dual inputs with degree symbol (°)
+- Zero is toe straight (center position)
+- Negative = toe in, Positive = toe out
+- Responsive: stacked on mobile, side-by-side on desktop
+
+**Styling:**
+```tsx
+// Dynamic icon based on value
+{value < 0 && <ToeInIcon className="h-4 w-4" />}
+{value === 0 && <ToeStraightIcon className="h-4 w-4" />}
+{value > 0 && <ToeOutIcon className="h-4 w-4" />}
+
+// Degree display
+<span className="text-sm font-medium">
+  {displayValue}°
+</span>
+```
+
+**Usage Example:**
+```tsx
+<ToeAngleDualInput
+  value="-0.50:+0.30"
+  onChange={(newValue) => setSetting('toe-angle', newValue)}
+  setting={{
+    minValue: -5.00,
+    maxValue: 5.00,
+    step: 0.01
+  }}
+/>
+```
+
+**Custom Icons:**
+```tsx
+// Toe In (negative values)
+const ToeInIcon = ({ className }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={className}>
+    {/* Front of tires pointing inward */}
+  </svg>
+)
+
+// Toe Out (positive values)
+const ToeOutIcon = ({ className }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={className}>
+    {/* Front of tires pointing outward */}
+  </svg>
+)
+
+// Toe Straight (zero)
+const ToeStraightIcon = ({ className }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={className}>
+    {/* Tires pointing straight ahead */}
+  </svg>
+)
+```
+
+---
+
+#### Input Type Pattern
+
+All specialized inputs follow the same integration pattern in `BuildTuningTab.tsx`:
+
+```tsx
+// In renderSettingInput() function
+if (inputType === 'gradientSlider') {
+  return (
+    <GradientSliderInput
+      value={currentValue || ''}
+      onChange={onChange}
+      setting={setting}
+      disabled={disabled}
+    />
+  )
+}
+
+if (inputType === 'sliderDual') {
+  return (
+    <SliderDualInput
+      value={currentValue || ''}
+      onChange={onChange}
+      setting={setting}
+      disabled={disabled}
+    />
+  )
+}
+
+if (inputType === 'toeAngle') {
+  return (
+    <ToeAngleDualInput
+      value={currentValue || ''}
+      onChange={onChange}
+      setting={setting}
+      disabled={disabled}
+    />
+  )
+}
+```
+
+**Database Configuration:**
+```sql
+-- Set input type in TuningSetting table
+UPDATE "TuningSetting"
+SET "inputType" = 'gradientSlider',
+    "minValue" = 0,
+    "maxValue" = 100,
+    "step" = 1,
+    "unit" = '%'
+WHERE "name" = 'Power Restrictor';
+```
+
+---
+
+#### Component Comparison
+
+| Component | Inputs | Visual | Use Case |
+|-----------|--------|--------|----------|
+| GradientSliderInput | Single value | Gradient fill bar | Power Restrictor, Ballast |
+| SliderDualInput | Front/rear | Two sliders | Suspension settings (5 total) |
+| ToeAngleDualInput | Front/rear | Bidirectional with icons | Toe Angle only |
+
+---
+
+#### Common Patterns
+
+**All specialized inputs share:**
+- `value: string | null` prop for current value
+- `onChange: (value: string) => void` callback
+- `setting: TuningSetting` prop with min/max/step/unit
+- `disabled?: boolean` optional prop
+- Design system compliance (min-h-[44px], aria-labels, space-y-2)
+- Mobile-responsive layouts
+- Touch support with proper event handling
+
+**Value parsing:**
+```tsx
+// Parse numeric value with default
+const numericValue = parseFloat(value || '') || minValue
+
+// Calculate fill percentage
+const fillPercentage = ((numericValue - minValue) / (maxValue - minValue)) * 100
+```
+
+**Event handling:**
+```tsx
+// Mouse/touch start
+const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
+  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+  const newValue = calculateValueFromPosition(clientX)
+  onChange(newValue.toString())
+  setIsDragging(true)
+}
+
+// Window listeners for drag
+useEffect(() => {
+  if (isDragging) {
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handlePointerUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handlePointerUp)
+    }
+  }
+}, [isDragging])
+```
+
+---
 
 ### Buttons
 

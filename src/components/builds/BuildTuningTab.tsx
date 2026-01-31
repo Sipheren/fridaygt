@@ -91,6 +91,8 @@ import { cn } from '@/lib/utils'
 import { Loader2, Plus } from 'lucide-react'
 import { ToeAngleDualInput } from '@/components/builds/ToeAngleDualInput'
 import { SliderDualInput } from '@/components/builds/SliderDualInput'
+import { GradientSliderInput } from '@/components/builds/GradientSliderInput'
+import { BallastSliderInput } from '@/components/builds/BallastSliderInput'
 
 // ============================================================
 // TYPE DEFINITIONS
@@ -258,38 +260,6 @@ function renderSettingInput(
   // Format: Single numeric value (string)
   // Unit: Optional label shown after input (e.g., "°", "kg")
   if (inputType === 'number' || inputType === 'decimal') {
-    // Special handling for Ballast Positioning - always show sign (+F/-R unit)
-    // Positive values show + prefix, negative values keep - prefix
-    // Stored value stays clean (no + sign), only visual in input
-    if (setting.name === 'Ballast Positioning') {
-      const displayValue = currentValue
-        ? (currentValue.startsWith('-') ? currentValue : `+${currentValue}`)
-        : ''
-
-      return (
-        <div className="flex items-center gap-2">
-          <Input
-            id={setting.id}
-            type="text"
-            inputMode="decimal"
-            value={displayValue}
-            onChange={(e) => {
-              // Strip + sign for storage (keep - for negative values)
-              const rawValue = e.target.value.replace(/^\+/, '')
-              onChange(rawValue)
-            }}
-            placeholder="+/- value..."
-            className="min-h-[44px] w-full"
-          />
-          {setting.unit && (
-            <span className="text-sm text-muted-foreground whitespace-nowrap min-w-fit">
-              {setting.unit}
-            </span>
-          )}
-        </div>
-      )
-    }
-
     return (
       <div className="flex items-center gap-2">
         <Input
@@ -366,6 +336,37 @@ function renderSettingInput(
   if (inputType === 'sliderDual') {
     return (
       <SliderDualInput
+        value={currentValue || ''}
+        onChange={onChange}
+        setting={setting}
+      />
+    )
+  }
+
+  // BALLAST SLIDER input (bidirectional single slider for Ballast Positioning)
+  // Used for: Ballast Positioning (Performance Adjustment section)
+  // Format: Single signed value (e.g., "-25", "0", "+25")
+  // Display: Text input with dynamic label (Front/Center/Rear) + slider underneath
+  // Range: -50 (Full Front) to +50 (Full Rear), 0 at Center
+  if (inputType === 'ballastSlider') {
+    return (
+      <BallastSliderInput
+        value={currentValue || '0'}
+        onChange={onChange}
+        setting={setting}
+      />
+    )
+  }
+
+  // GRADIENT SLIDER input (single value with gradient fill slider)
+  // Used for: Power Restrictor, Ballast
+  // Format: Single numeric value (e.g., "75", "150")
+  // Display: Text input + Unit (outside input) + gradient fill slider underneath
+  // Range: minValue to maxValue from setting prop, center calculated as (min+max)/2
+  // Gradient: Light primary (60%) → Full primary (100%) - uniform across all instances
+  if (inputType === 'gradientSlider') {
+    return (
+      <GradientSliderInput
         value={currentValue || ''}
         onChange={onChange}
         setting={setting}
@@ -481,9 +482,10 @@ export function BuildTuningTab({
         setError(null)
 
         // Parallel API calls: Fetch sections and settings simultaneously
+        // DEV: nocache=true bypasses 1-hour cache during development
         const [sectionsRes, settingsRes] = await Promise.all([
-          fetch('/api/tuning-settings/sections'),
-          fetch('/api/tuning-settings')
+          fetch('/api/tuning-settings/sections?nocache=true'),
+          fetch('/api/tuning-settings?nocache=true')
         ])
 
         if (!sectionsRes.ok) throw new Error('Failed to fetch sections')

@@ -336,6 +336,40 @@ Tonight Page → Shows all races where isActive = true
   - Center point calculated as mathematical middle of range
   - Value clamping to min/max range
   - Design system compliant (min-h-[44px], aria-labels, space-y-2)
+- **GradientSliderInput Component** (327 lines):
+  - Single interactive gradient bar with centered value display
+  - Gradient fills from left: hsl(var(--primary) / 60%) → hsl(var(--primary))
+  - Click/drag anywhere to adjust value in real-time
+  - Zero-padded value display (e.g., "00%", "000kg")
+  - Storage: String value, Range: minValue to maxValue from database
+  - Touch support with prevent-scroll during drag
+  - Border highlights to ring color when dragging
+  - Matches Input component styling exactly (border-input, bg-transparent, rounded-md, shadow-xs)
+- **BallastSliderInput Component** (335 lines):
+  - Single-value bidirectional slider for Ballast Positioning
+  - Text input shows value with dynamic position label: "-25 Front", "0 Center", "+25 Rear"
+  - Slider ranges from -50 (Full Front) to +50 (Full Rear) with 0 at Center
+  - Three slider labels: "-50 Front", "0 Center", "+50 Rear"
+  - Clean value storage (no labels stored): "-25", "0", "25"
+  - Integer-only values (Math.round() for existing decimal values)
+  - Input validation and clamping to range
+  - WCAG-compliant touch targets (min-h-[44px])
+  - Mobile tested: touch-action: none prevents scroll during drag
+- **Enhanced Settings** (8 total):
+  1. Anti-Roll Bar: Range 1-20, step 1, unit Lv
+  2. Damping Ratio (Compression): Range 10-80, step 1, unit %
+  3. Damping Ratio (Expansion): Range 10-80, step 1, unit %
+  4. Natural Frequency: Range 0-5, step 0.01, unit Hz
+  5. Negative Camber Angle: Range 0-6, step 0.01, unit °
+  6. Power Restrictor: Range 0-100, step 1, unit % (gradientSlider)
+  7. Ballast: Range 0-500, step 1, unit kg (gradientSlider)
+  8. Ballast Positioning: Range -50 to +50, step 1 (ballastSlider)
+  - Displays optional unit symbols next to values (°, Hz, %, Lv)
+  - Responsive layout: stacked on mobile, side-by-side on desktop
+  - Automatic decimal precision from step value (0.01 → 2 decimals, 1 → integer)
+  - Center point calculated as mathematical middle of range
+  - Value clamping to min/max range
+  - Design system compliant (min-h-[44px], aria-labels, space-y-2)
 - **Enhanced Settings** (5 total):
   1. Anti-Roll Bar: Range 1-20, step 1, unit Lv
   2. Damping Ratio (Compression): Range 10-80, step 1, unit %
@@ -363,7 +397,9 @@ Tonight Page → Shows all races where isActive = true
 - **Documentation**:
   - Updated README with cache-busting instructions
   - Updated SESSION-LOG.md with session #42 details
+  - Updated DESIGN-SYSTEM.md with slider components documentation
   - Archived SUSPENSION-SLIDER-PLAN.md after completion
+  - Archived GRADIENT-SLIDER-PLAN.md after completion
 
 ---
 
@@ -475,6 +511,9 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-31 | #44 | Ballast Positioning Slider - Bidirectional slider (-50 to +50) with Front/Center/Rear dynamic labels, BallastSliderInput component, integer-only display, mobile tested with touch-action: none |
+| 2026-01-31 | #43 | Gradient Sliders - Interactive gradient fill bars for Power Restrictor (0-100%) and Ballast (0-500kg), single draggable bar with centered value display, loading bar-style interaction, zero-padded values, cache bypass for development |
+| 2026-01-31 | #42 | Suspension Sliders - Front/rear dual input sliders (sliderDual), SliderDualInput component, 5 settings enhanced with units and display order fixes, development cache bypass with ?nocache=true |
 | 2026-01-31 | #41 | Toe Angle Input - Bidirectional slider with dynamic icons (ToeInIcon/ToeOutIcon/ToeStraightIcon), front/rear dual inputs, GT7-matching UI, always-visible slider design |
 | 2026-01-30 | #40 | GT Auto & Custom Parts - Wide body configuration, custom body components, conditional wing options (Wing Height/Endplate when Wing=Custom), mixed checkbox/dropdown inputs in parts system |
 | 2026-01-29 | #39 | Footer Centering Fix - Changed footer items from left/right aligned to centered in their respective columns for better visual balance |
