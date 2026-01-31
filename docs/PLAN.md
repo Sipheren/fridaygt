@@ -60,7 +60,7 @@ Tonight Page → Shows all races where isActive = true
 **Date**: 2026-01-31
 **Branch**: `main`
 **Production URL**: https://fridaygt.vercel.app
-**Status**: Core features complete and deployed, admin tools enhanced, suspension sliders implemented, theme system fixes
+**Status**: Core features complete and deployed, admin tools enhanced, suspension sliders implemented, theme system fixes, Tonight page layout refined
 
 ---
 
@@ -506,6 +506,35 @@ Tonight Page → Shows all races where isActive = true
   - Updated package.json to version 2.18.0
   - Updated DESIGN-SYSTEM.md with color system explanation
 
+### Phase 20: Tonight Page Layout Refinement ✅
+- **Race Card Header Redesign**: Unified race card header with improved information hierarchy
+  - **Problem**: Race number, name, track info, and laps were scattered across separate sections
+  - **Solution**: Consolidated into single header row for cleaner visual presentation
+  - **Files Modified**:
+    - `src/components/tonight/sortable-race-card.tsx` (lines 307-400)
+  - **Changes**:
+    - **Race Number**: Moved from separate top row to left of race name
+      - Larger size: `w-16 h-16 rounded-lg text-2xl` (was `w-12 h-12 rounded-full text-sm`)
+      - Now spans full height of race name + track info
+      - Changed from circle to rounded rectangle for better alignment
+    - **Number of Laps**: Moved from badges section to header row
+      - Position: Right of track name with visual separator (`border-l border-border/50`)
+      - Styled with Flag icon inline
+      - Removed from badges section (no longer redundant)
+    - **Layout Structure**:
+      - Unified flex row: `[Race #] [Race Name + Track + Laps] [Drag Handle]`
+      - Track info and laps wrap on smaller screens (`flex-wrap`)
+    - **Weather/Length Badges**: Remain in badges section (weather now first after laps removal)
+  - **Result**:
+    - More compact and organized header
+    - Better visual hierarchy with race number prominently displayed
+    - Laps information now in primary viewing area
+    - Cleaner badges section with only weather and track length
+- **Documentation**:
+  - Updated SESSION-LOG.md with Session #49
+  - Updated README.md to version 2.19.0
+  - Updated package.json to version 2.19.0
+
 ---
 
 ## Database Schema
@@ -616,6 +645,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-31 | #49 | Tonight Page Layout Refinement - Unified race card header with race number, name, track, and laps in single row, updated to version 2.19.0 |
 | 2026-01-31 | #48 | Theme System Fixes - Badge color variables, BRAD MODE persistence, dark-first CSS, updated to version 2.18.0 |
 | 2026-01-31 | #47 | Light Mode Button Hover Fix - Fixed invisible hover text on ghost/outline buttons by removing hover:text-accent-foreground from light mode, updated to version 2.17.0 |
 | 2026-01-31 | #46 | Reset & Clear Icons - Per-setting reset to original and clear buttons on build edit pages |

@@ -307,23 +307,61 @@ export function SortableRaceCard({ race, index }: SortableRaceCardProps) {
           {/* ============================================================
               Race Header
               - Gradient background for visual interest
-              - Race number badge on left
+              - Unified layout: Race number, race name, track info, laps
               - Drag handle on right
-              - Race display name
-              - Track information (name, layout, location)
               ============================================================ */}
           <div className="relative bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6">
-            {/* Top row: Race number on left, Drag handle on right */}
-            <div className="flex items-start justify-between gap-4">
-              {/* Race Number Badge */}
-              {/* Shows position in list (1, 2, 3, etc.) */}
-              {/* Large, prominent for visibility */}
-              {/* Destructive color for contrast */}
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-destructive text-destructive-foreground font-bold text-sm shadow-lg">
-                {index + 1}
+            {/* Main Header Row: Race number + Race name + Laps + Drag handle */}
+            <div className="flex items-center justify-between gap-4">
+              {/* Left: Race number + Race content */}
+              <div className="flex items-center gap-4 flex-1">
+                {/* Race Number - Large, tall, spans full height of content */}
+                {/* Shows position in list (1, 2, 3, etc.) */}
+                {/* Destructive color for contrast */}
+                <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-destructive text-destructive-foreground font-bold text-2xl shadow-lg flex-shrink-0">
+                  {index + 1}
+                </div>
+
+                {/* Race Display Name + Track Info + Laps */}
+                <div className="flex-1 min-w-0">
+                  {/* Race Display Name */}
+                  {/* Large, bold for prominence */}
+                  <h2 className="text-2xl font-bold pr-2">{getDisplayName(race)}</h2>
+
+                  {/* Track Information + Laps */}
+                  <div className="flex items-center gap-3 mt-1 flex-wrap">
+                    {/* Track Info */}
+                    {/* MapPin icon for visual clarity */}
+                    {/* Track name always shown */}
+                    {/* Layout in parentheses if exists */}
+                    {/* Location with bullet separator if exists */}
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <span className="font-semibold">{race.track.name}</span>
+                      {race.track.layout && (
+                        <span className="text-sm text-muted-foreground">
+                          ({race.track.layout})
+                        </span>
+                      )}
+                      {race.track.location && (
+                        <span className="text-xs text-muted-foreground">• {race.track.location}</span>
+                      )}
+                    </div>
+
+                    {/* Laps - On right of track name with separator */}
+                    {/* Flag icon + lap count */}
+                    {/* Only shown if race.laps exists */}
+                    {race.laps && (
+                      <div className="flex items-center gap-1 ml-4 pl-4 border-l border-border/50">
+                        <Flag className="h-3.5 w-3.5 text-primary" />
+                        <span className="font-semibold text-sm">{race.laps} {race.laps === 1 ? 'Lap' : 'Laps'}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* Drag Handle */}
+              {/* Right: Drag Handle */}
               {/* Only interactable part for dragging */}
               {/* Attributes and listeners from useSortable */}
               {/* Cursor changes to 'grabbing' during drag */}
@@ -337,29 +375,6 @@ export function SortableRaceCard({ race, index }: SortableRaceCardProps) {
               >
                 <DragHandle isDragging={isDragging} />
               </div>
-            </div>
-
-            {/* Race Display Name */}
-            {/* Large, bold for prominence */}
-            {/* pr-14: Prevents text overlap with drag handle */}
-            <h2 className="text-2xl font-bold pr-14 mt-4">{getDisplayName(race)}</h2>
-
-            {/* Track Information */}
-            {/* MapPin icon for visual clarity */}
-            {/* Track name always shown */}
-            {/* Layout in parentheses if exists */}
-            {/* Location with bullet separator if exists */}
-            <div className="flex items-center gap-2 mt-3">
-              <MapPin className="h-4 w-4 text-primary" />
-              <span className="font-semibold">{race.track.name}</span>
-              {race.track.layout && (
-                <span className="text-sm text-muted-foreground">
-                  ({race.track.layout})
-                </span>
-              )}
-              {race.track.location && (
-                <span className="text-xs text-muted-foreground">• {race.track.location}</span>
-              )}
             </div>
           </div>
 
@@ -427,17 +442,10 @@ export function SortableRaceCard({ race, index }: SortableRaceCardProps) {
             </div>
 
             {/* Race Configuration Badges */}
-            {/* Laps: Flag icon + lap count */}
             {/* Weather: Weather emoji + condition */}
             {/* Track length: Trophy icon + length in km */}
             {/* Only shown if data exists */}
             <div className="flex flex-wrap gap-2">
-              {race.laps && (
-                <Badge variant="secondary" className="gap-1">
-                  <Flag className="h-3 w-3" />
-                  {race.laps} {race.laps === 1 ? 'Lap' : 'Laps'}
-                </Badge>
-              )}
               {race.weather && (
                 <Badge variant="outline" className="gap-1">
                   {race.weather === 'Dry' ? (
