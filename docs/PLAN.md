@@ -60,7 +60,7 @@ Tonight Page → Shows all races where isActive = true
 **Date**: 2026-01-31
 **Branch**: `main`
 **Production URL**: https://fridaygt.vercel.app
-**Status**: Core features complete and deployed, admin tools enhanced, suspension sliders implemented
+**Status**: Core features complete and deployed, admin tools enhanced, suspension sliders implemented, light mode button hover fixed
 
 ---
 
@@ -443,6 +443,23 @@ Tonight Page → Shows all races where isActive = true
     - Updated README.md to version 2.16.0
     - Archived RESET-CLEAR-FUNCTIONALITY-PLAN.md after completion
 
+### Phase 18: Light Mode Button Hover Fix ✅
+- **Button Variants Fix**: Fixed invisible hover text on ghost and outline buttons in light mode
+  - **Root Cause**: `hover:text-accent-foreground` was causing white text on light backgrounds
+  - In light mode, `--accent-foreground` is `oklch(0.98 0 0)` (near white)
+  - **Affected Elements**: "Back to Builds" button, delete buttons, all ghost/outline variants
+  - **Solution**:
+    - Outline variant: Moved `hover:text-accent-foreground` to dark mode only (`dark:hover:text-accent-foreground`)
+    - Ghost variant: Removed `hover:text-accent-foreground` entirely
+    - Text now keeps original color in light mode, only background changes
+  - **Files Modified**:
+    - `src/components/ui/button.tsx` (lines 16 and 20)
+  - **Global Hover Utilities Review**: All `gt-hover-*` utilities already using appropriate colors
+  - **Documentation**:
+    - Updated SESSION-LOG.md with Session #47
+    - Updated README.md to version 2.17.0
+    - Updated package.json to version 2.17.0
+
 ---
 
 ## Database Schema
@@ -553,6 +570,8 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-31 | #47 | Light Mode Button Hover Fix - Fixed invisible hover text on ghost/outline buttons by removing hover:text-accent-foreground from light mode, updated to version 2.17.0 |
+| 2026-01-31 | #46 | Reset & Clear Icons - Per-setting reset to original and clear buttons on build edit pages |
 | 2026-01-31 | #45 | Wing Endplate Dropdown - Changed from number input (1-20) to dropdown select (0-25), expanded range, updated default value to 0, mobile responsive |
 | 2026-01-31 | #44 | Ballast Positioning Slider - Bidirectional slider (-50 to +50) with Front/Center/Rear dynamic labels, BallastSliderInput component, integer-only display, mobile tested with touch-action: none |
 | 2026-01-31 | #43 | Gradient Sliders - Interactive gradient fill bars for Power Restrictor (0-100%) and Ballast (0-500kg), single draggable bar with centered value display, loading bar-style interaction, zero-padded values, cache bypass for development |
