@@ -60,7 +60,7 @@ Tonight Page → Shows all races where isActive = true
 **Date**: 2026-01-31
 **Branch**: `main`
 **Production URL**: https://fridaygt.vercel.app
-**Status**: Core features complete and deployed, admin tools enhanced, suspension sliders implemented, light mode button hover fixed
+**Status**: Core features complete and deployed, admin tools enhanced, suspension sliders implemented, theme system fixes
 
 ---
 
@@ -460,6 +460,52 @@ Tonight Page → Shows all races where isActive = true
     - Updated README.md to version 2.17.0
     - Updated package.json to version 2.17.0
 
+### Phase 19: Theme System Fixes ✅
+- **Badge Color System Fix**: Fixed hardcoded inline styles in build details page
+  - **Root Cause**: "Installed" badges and value badges used hardcoded `#FF7115` (GT Orange) inline styles
+  - **Problem**: Badges didn't respond to BRAD MODE color changes (stayed orange instead of blue)
+  - **Solution**: Replaced inline styles with `variant="destructive"` using CSS variable system
+  - **Files Modified**:
+    - `src/app/builds/[id]/page.tsx` (lines 639, 646-647, 657-658, 669-670, 694, 701, 729-740, 744-756, 974-979)
+  - **Changes**:
+    - Upgrades badges: Changed to `variant="destructive"`
+    - Tuning setting badges: Changed to `variant="destructive"`
+    - Dual/ratio/toeAngle text colors: Changed to `text-destructive` utility class
+    - Removed all inline `style={{ backgroundColor: '#FF7115', color: 'white' }}`
+- **BRAD MODE Persistence Fix**: Fixed BRAD MODE state resetting on navigation
+  - **Root Cause**: BRAD MODE state only stored in React component state, not localStorage
+  - **Problem**: Every page navigation caused BRAD MODE to reset to off
+  - **Solution**:
+    - Save BRAD MODE state to `localStorage.getItem('bradMode')`
+    - Restore state on mount from localStorage
+    - Apply `.accessible-racing` class immediately if stored
+  - **Files Modified**:
+    - `src/components/header.tsx` (lines 31-52)
+  - **Previous Theme Save/Restore**:
+    - Save current theme before entering BRAD MODE
+    - Store in `localStorage.getItem('previousTheme')`
+    - Restore theme when exiting BRAD MODE
+    - Removed problematic `setTheme('light')` call that was causing light mode bug
+- **Dark-First CSS Restructure**: Fixed dark mode as default base style
+  - **Root Cause**: Light theme was in `:root` (base), dark theme in `.dark` class
+  - **Problem**: Site flashed in light mode on load, dark mode wasn't truly the default
+  - **Solution**:
+    - Moved dark theme colors to `:root` (now the base/default)
+    - Moved light theme colors to `.light` class (opt-in)
+    - Kept `.dark` class as empty alias (inherits from `:root` for Tailwind `dark:` utilities)
+  - **Files Modified**:
+    - `src/app/globals.css` (lines 49-126)
+  - **Result**:
+    - Site always loads in dark mode by default
+    - No flash of light content on load
+    - Light mode is opt-in via `.light` class
+    - Tailwind `dark:` utilities still work correctly
+- **Documentation**:
+  - Updated SESSION-LOG.md with Session #48
+  - Updated README.md to version 2.18.0
+  - Updated package.json to version 2.18.0
+  - Updated DESIGN-SYSTEM.md with color system explanation
+
 ---
 
 ## Database Schema
@@ -570,6 +616,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-01-31 | #48 | Theme System Fixes - Badge color variables, BRAD MODE persistence, dark-first CSS, updated to version 2.18.0 |
 | 2026-01-31 | #47 | Light Mode Button Hover Fix - Fixed invisible hover text on ghost/outline buttons by removing hover:text-accent-foreground from light mode, updated to version 2.17.0 |
 | 2026-01-31 | #46 | Reset & Clear Icons - Per-setting reset to original and clear buttons on build edit pages |
 | 2026-01-31 | #45 | Wing Endplate Dropdown - Changed from number input (1-20) to dropdown select (0-25), expanded range, updated default value to 0, mobile responsive |

@@ -630,21 +630,19 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
   // Format setting value based on metadata
   // - Dual values: Front/Rear displayed as two lines (e.g., spring rates, brake balance)
-  // - Regular values: Orange badge with value and unit
-  // - Custom color: #FF7115 (GT orange)
+  // - Regular values: Badge with value and unit using destructive color
   const formatSettingValue = (setting: BuildSetting, metadata: TuningSettingMetadata | undefined) => {
     const value = setting.value
     const inputType = metadata?.inputType || 'text'
     const unit = metadata?.unit
-    const customOrange = '#FF7115' // R255 G113 B21
 
     // Handle dual inputs (front:rear format)
     if (inputType === 'dual' && value.includes(':')) {
       const [front, rear] = value.split(':')
       return (
         <div className="flex flex-col items-end gap-0.5">
-          <span className="text-sm font-semibold" style={{ color: customOrange }}>Front: <span className="font-mono text-base">{front}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
-          <span className="text-sm font-semibold" style={{ color: customOrange }}>Rear: <span className="font-mono text-base">{rear}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+          <span className="text-sm font-semibold text-destructive">Front: <span className="font-mono text-base">{front}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+          <span className="text-sm font-semibold text-destructive">Rear: <span className="font-mono text-base">{rear}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
         </div>
       )
     }
@@ -654,8 +652,8 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       const [front, rear] = value.split(':')
       return (
         <div className="flex flex-col items-end gap-0.5">
-          <span className="text-sm font-semibold" style={{ color: customOrange }}>Front: <span className="font-mono text-base">{front}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
-          <span className="text-sm font-semibold" style={{ color: customOrange }}>Rear: <span className="font-mono text-base">{rear}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+          <span className="text-sm font-semibold text-destructive">Front: <span className="font-mono text-base">{front}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+          <span className="text-sm font-semibold text-destructive">Rear: <span className="font-mono text-base">{rear}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
         </div>
       )
     }
@@ -666,8 +664,8 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
       const [front, rear] = value.split(':')
       return (
         <div className="flex flex-col items-end gap-0.5">
-          <span className="text-sm font-semibold" style={{ color: customOrange }}>Front: <span className="font-mono text-base">{front}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
-          <span className="text-sm font-semibold" style={{ color: customOrange }}>Rear: <span className="font-mono text-base">{rear}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+          <span className="text-sm font-semibold text-destructive">Front: <span className="font-mono text-base">{front}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
+          <span className="text-sm font-semibold text-destructive">Rear: <span className="font-mono text-base">{rear}</span>{unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}</span>
         </div>
       )
     }
@@ -691,14 +689,14 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
       return (
         <div className="flex flex-col items-end gap-0.5">
-          <span className="text-sm font-semibold flex items-center gap-1" style={{ color: customOrange }}>
+          <span className="text-sm font-semibold flex items-center gap-1 text-destructive">
             Front:
             <frontToe.Icon size={16} className="text-current" aria-hidden="true" />
             <span className="font-mono text-base">{frontToe.value}</span>
             {frontToe.direction && <span className="text-xs">{frontToe.direction}</span>}
             {unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}
           </span>
-          <span className="text-sm font-semibold flex items-center gap-1" style={{ color: customOrange }}>
+          <span className="text-sm font-semibold flex items-center gap-1 text-destructive">
             Rear:
             <rearToe.Icon size={16} className="text-current" aria-hidden="true" />
             <span className="font-mono text-base">{rearToe.value}</span>
@@ -727,29 +725,19 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
 
       return (
         <Badge
-          variant="secondary"
+          variant="destructive"
           className="text-base font-mono px-3 py-1"
-          style={{
-            backgroundColor: customOrange,
-            color: 'white',
-            border: 'none'
-          }}
         >
           {displayValue} {positionLabel}
         </Badge>
       )
     }
 
-    // Regular value with orange badge
+    // Regular value with destructive badge
     return (
       <Badge
-        variant="secondary"
+        variant="destructive"
         className="text-base font-mono px-3 py-1"
-        style={{
-          backgroundColor: customOrange,
-          color: 'white',
-          border: 'none'
-        }}
       >
         {value}
         {unit && <span className="ml-1 text-sm opacity-90">{unit}</span>}
@@ -972,9 +960,8 @@ export default function BuildDetailPage({ params }: { params: Promise<{ id: stri
                         {typeof upgrade.part === 'string' ? upgrade.part : upgrade.part.name}
                       </span>
                       <Badge
-                        variant="secondary"
+                        variant="destructive"
                         className="text-base font-mono shrink-0 ml-2 px-3 py-1"
-                        style={{ backgroundColor: '#FF7115', color: 'white', border: 'none' }}
                       >
                         {upgrade.value || 'Installed'}
                       </Badge>

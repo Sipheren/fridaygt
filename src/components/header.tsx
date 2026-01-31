@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Menu, User, LogOut, Moon, Sun, Radio, Settings } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface HeaderProps {
   user?: {
@@ -27,6 +28,51 @@ interface HeaderProps {
 export function Header({ user, version }: HeaderProps) {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
+  const [isBradMode, setIsBradMode] = useState(false)
+  const [previousTheme, setPreviousTheme] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Read BRAD MODE state from localStorage on mount
+    const storedBradMode = localStorage.getItem('bradMode') === 'true'
+    const storedPreviousTheme = localStorage.getItem('previousTheme')
+    setIsBradMode(storedBradMode)
+
+    if (storedPreviousTheme) {
+      setPreviousTheme(storedPreviousTheme)
+    }
+
+    if (storedBradMode) {
+      // Apply accessible-racing class if stored
+      document.documentElement.classList.add('accessible-racing')
+    }
+  }, [])
+
+  const toggleBradMode = () => {
+    const htmlElement = document.documentElement
+    const newState = !isBradMode
+
+    if (newState) {
+      // Save current theme before entering BRAD MODE
+      const currentTheme = theme || 'dark'
+      setPreviousTheme(currentTheme)
+      localStorage.setItem('previousTheme', currentTheme)
+      // Store BRAD MODE state in localStorage
+      localStorage.setItem('bradMode', 'true')
+      // Add accessible-racing class
+      htmlElement.classList.add('accessible-racing')
+    } else {
+      // Clear BRAD MODE state from localStorage
+      localStorage.setItem('bradMode', 'false')
+      localStorage.removeItem('previousTheme')
+      // Remove accessible-racing class
+      htmlElement.classList.remove('accessible-racing')
+      // Restore previous theme if we saved it
+      if (previousTheme) {
+        setTheme(previousTheme)
+      }
+    }
+    setIsBradMode(newState)
+  }
 
   const navItems = [
     { href: '/tonight', label: 'Tonight' },
@@ -92,17 +138,29 @@ export function Header({ user, version }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Theme Toggle */}
+          {/* BRAD MODE Button */}
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="h-11 w-11 sm:h-9 sm:w-9"
+            variant={isBradMode ? "default" : "outline"}
+            size="sm"
+            onClick={toggleBradMode}
+            className="h-8 px-3 text-xs font-bold"
           >
-            <Moon className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Sun className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
+            BRAD MODE
           </Button>
+
+          {/* Theme Toggle - Hidden when BRAD MODE is active */}
+          {!isBradMode && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="h-11 w-11 sm:h-9 sm:w-9"
+            >
+              <Moon className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Sun className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+          )}
 
           {user ? (
             <>

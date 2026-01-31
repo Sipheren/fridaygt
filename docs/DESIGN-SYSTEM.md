@@ -1,12 +1,14 @@
 # FridayGT Design System & UI/UX Guidelines
 
-**Last Updated:** 2026-01-31
+**Last Updated:** 2026-01-31 (Session #47)
 
 ## Table of Contents
 1. [Design Principles](#design-principles)
 2. [Layout Standards](#layout-standards)
 3. [Typography](#typography)
 4. [Colors](#colors)
+   - [Brand Colors](#brand-colors)
+   - [Creating New Color Modes](#creating-new-color-modes)
 5. [Components](#components)
 6. [Page Patterns](#page-patterns)
 7. [Common Inconsistencies](#common-inconsistencies)
@@ -155,6 +157,204 @@ border-primary/30
 border-destructive/20  // Errors, warnings
 border-accent/30       // Active states
 ```
+
+### Creating New Color Modes
+
+FridayGT uses a **CSS Custom Properties** system with **OKLCH color space**. All color modes are defined in `src/app/globals.css` and use semantic variable names. Components reference these variables through Tailwind utilities (`bg-primary`, `text-foreground`, etc.).
+
+#### Required CSS Variables (26 total)
+
+To create a new color mode, you must define all of the following variables:
+
+**Base Layer (Backgrounds & Surfaces):**
+```css
+--background          /* Main page background */
+--card               /* Card/panel backgrounds */
+--popover            /* Dropdown/dialog backgrounds */
+```
+
+**Typography (Foregrounds):**
+```css
+--foreground         /* Main text color */
+--card-foreground    /* Text on cards */
+--popover-foreground /* Text in dropdowns/dialogs */
+```
+
+**Brand Colors:**
+```css
+--primary             /* Main brand color (GT Red: ~25° hue) */
+--primary-foreground  /* Text on primary backgrounds */
+--secondary             /* Secondary brand color (GT Orange: ~45° hue) */
+--secondary-foreground  /* Text on secondary backgrounds */
+--accent             /* Tertiary accent (GT Teal: ~210° hue) */
+--accent-foreground  /* Text on accent backgrounds */
+```
+
+**Muted/Subtle Colors:**
+```css
+--muted             /* Subtle backgrounds */
+--muted-foreground  /* De-emphasized text */
+```
+
+**Functional Colors:**
+```css
+--destructive       /* Errors, warnings, delete actions */
+--border            /* Borders, dividers */
+--input             /* Input field backgrounds */
+--ring              /* Focus rings */
+```
+
+**Chart/Visualization Colors:**
+```css
+--chart-1           /* Primary data color */
+--chart-2           /* Secondary data color */
+--chart-3           /* Tertiary data color */
+--chart-4           /* Quaternary data color */
+--chart-5           /* Quinary data color */
+```
+
+**Sidebar Colors:**
+```css
+--sidebar                     /* Sidebar background */
+--sidebar-foreground          /* Sidebar text */
+--sidebar-primary             /* Sidebar primary action */
+--sidebar-primary-foreground  /* Text on sidebar primary */
+--sidebar-accent              /* Sidebar hover/active */
+--sidebar-accent-foreground   /* Text on sidebar accent */
+--sidebar-border              /* Sidebar borders */
+--sidebar-ring                /* Sidebar focus rings */
+```
+
+#### Implementation Example
+
+To add a new color mode (e.g., a "GT Racing" mode), add a new class block in `src/app/globals.css`:
+
+```css
+/* Example: GT Racing Mode - Aggressive dark theme */
+.gt-racing {
+  /* Base Layer - Darker than standard dark mode */
+  --background: oklch(0.03 0 0);
+  --card: oklch(0.10 0.01 240);
+  --card-foreground: oklch(0.93 0 0);
+  --popover: oklch(0.10 0.01 240);
+  --popover-foreground: oklch(0.93 0 0);
+
+  /* Typography */
+  --foreground: oklch(0.93 0 0);
+
+  /* Brand Colors - Higher chroma for vibrance */
+  --primary: oklch(0.62 0.26 25);              /* Vibrant GT Red */
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.76 0.22 45);            /* Bright GT Orange */
+  --secondary-foreground: oklch(0.03 0 0);
+  --accent: oklch(0.64 0.16 210);             /* Vibrant GT Teal */
+  --accent-foreground: oklch(0.98 0 0);
+
+  /* Muted Colors */
+  --muted: oklch(0.18 0.01 240);
+  --muted-foreground: oklch(0.55 0.01 240);
+
+  /* Functional Colors */
+  --destructive: oklch(0.64 0.27 25);
+  --border: oklch(0.22 0.02 240);
+  --input: oklch(0.18 0.01 240);
+  --ring: oklch(0.62 0.26 25);
+
+  /* Chart Colors - Match brand palette */
+  --chart-1: oklch(0.62 0.26 25);
+  --chart-2: oklch(0.64 0.16 210);
+  --chart-3: oklch(0.76 0.22 45);
+  --chart-4: oklch(0.58 0.22 260);
+  --chart-5: oklch(0.68 0.18 145);
+
+  /* Sidebar Colors */
+  --sidebar: oklch(0.06 0 0);
+  --sidebar-foreground: oklch(0.93 0 0);
+  --sidebar-primary: oklch(0.62 0.26 25);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.18 0.01 240);
+  --sidebar-accent-foreground: oklch(0.93 0 0);
+  --sidebar-border: oklch(0.22 0.02 240);
+  --sidebar-ring: oklch(0.62 0.26 25);
+}
+```
+
+Then apply the class to the `<html>` or `<body>` element:
+
+```tsx
+// In your layout or theme provider
+<html className="gt-racing">
+  {/* ... */}
+</html>
+```
+
+#### Color Format: OKLCH
+
+All colors use the **OKLCH** color space format: `oklch(lightness chroma hue)`
+
+- **Lightness (L):** 0 (black) to 1 (white)
+  - Light backgrounds: 0.90-0.98
+  - Dark backgrounds: 0.03-0.15
+- **Chroma (C):** 0 (grayscale) to ~0.37 (maximum colorfulness)
+  - Subtle colors: 0.005-0.02
+  - Vibrant colors: 0.18-0.27
+- **Hue (H):** 0-360° on the color wheel
+  - Red: ~25°
+  - Orange: ~45°
+  - Teal/Cyan: ~210°
+  - Purple: ~260°
+
+**Why OKLCH?**
+- Perceptually uniform (equal changes = equal visual differences)
+- Wide gamut coverage (more vibrant colors possible)
+- Consistent appearance across devices
+
+#### Design Guidelines for New Color Modes
+
+1. **Maintain Contrast:** Ensure WCAG AA compliance (4.5:1 for normal text, 3:1 for large text)
+   - Test all foreground/background pairs
+   - Use tools like WebAIM Contrast Checker
+
+2. **Preserve Semantic Meaning:**
+   - Primary = main brand color (red family for GT)
+   - Secondary = complementary accent (orange/yellow)
+   - Accent = tertiary highlight (teal/cyan)
+   - Destructive = errors/warnings (red-pink)
+
+3. **Consistent Hue Angles:**
+   - Keep primary around 20-30° (red range)
+   - Keep secondary around 40-50° (orange range)
+   - Keep accent around 200-220° (teal/cyan range)
+
+4. **Lightness Relationships:**
+   - Background should be darkest/base
+   - Card/popover slightly lighter than background
+   - Muted between background and card
+   - Foreground significantly lighter/darker than background (high contrast)
+
+5. **Chroma Adjustments:**
+   - Dark modes can use higher chroma (0.22-0.27) for vibrancy
+   - Light modes should use moderate chroma (0.12-0.22)
+   - Muted colors always use very low chroma (0.005-0.02)
+
+6. **Test All Components:**
+   - Buttons (all variants)
+   - Cards and borders
+   - Inputs and focus states
+   - Badges and alerts
+   - Charts and graphs
+
+#### Current Color Modes Reference
+
+**Light Mode (`:root`):**
+- Background: `oklch(0.98 0 0)` (near-white)
+- Foreground: `oklch(0.15 0 0)` (near-black)
+- Primary: `oklch(0.48 0.22 25)` (GT Red)
+
+**Dark Mode (`.dark`):**
+- Background: `oklch(0.08 0 0)` (near-black)
+- Foreground: `oklch(0.95 0 0)` (near-white)
+- Primary: `oklch(0.58 0.24 25)` (vibrant GT Red)
 
 ---
 
