@@ -1,7 +1,7 @@
 # FridayGT Security Model & Access Control
 
-**Last Updated:** 2026-01-29
-**Version:** 2.9.0
+**Last Updated:** 2026-02-02
+**Version:** 2.20.2
 
 ---
 
@@ -53,16 +53,20 @@ FridayGT uses a role-based access control (RBAC) system with three roles:
 
 ### Provider
 - **Library:** NextAuth.js v5
-- **Method:** Email magic links (passwordless authentication)
-- **Session Storage:** PostgreSQL database (`next_auth` schema)
+- **Provider:** Resend (email magic links)
+- **Method:** Passwordless authentication with time-limited magic links
+- **Session Storage:** PostgreSQL database via Supabase adapter
+- **Session Duration:** 30 days (configurable)
 
 ### Authentication Flow
 
 1. **Sign In Request:** User enters email
-2. **Magic Link:** Email sent with time-limited token
-3. **Session Creation:** Successful auth creates session in database
+2. **Magic Link:** Email sent with time-limited token (15 minutes)
+3. **Session Creation:** Successful auth creates session in database via Supabase adapter
 4. **Role Assignment:** Session callback fetches `role` from `User` table
-5. **Access Granted:** User gains access based on role
+5. **Auto-Promotion:** If email matches `DEFAULT_ADMIN_EMAIL`, automatically promoted to ADMIN
+6. **Admin Notification:** For PENDING users, admins receive email notification (once per user)
+7. **Access Granted:** User gains access based on role
 
 ### Session Configuration
 
@@ -70,37 +74,59 @@ FridayGT uses a role-based access control (RBAC) system with three roles:
 
 ```typescript
 export const { handlers, auth } = NextAuth({
-  providers: [EmailProvider({
-    server: process.env.EMAIL_SERVER,
-    from: process.env.EMAIL_FROM,
-  })],
+  adapter: SupabaseAdapter({
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  }),
+  session: {
+    strategy: "database",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  providers: [
+    Resend({
+      from: process.env.EMAIL_FROM!,
+      apiKey: process.env.RESEND_API_KEY!,
+      maxAge: 15 * 60, // 15 minutes
+    }),
+  ],
   callbacks: {
     async session({ session, user }) {
-      // Fetch role from User table and attach to session
-      const supabase = createServiceRoleClient()
+      // Attach user ID and fetch role from User table
+      session.user.id = user.id
+
+      const supabase = createClient(/* service role */)
       const { data: dbUser } = await supabase
         .from('User')
-        .select('role')
-        .eq('email', user.email)
+        .select('role, gamertag')
+        .eq('id', user.id)
         .single()
 
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          role: dbUser?.role || 'PENDING',
-        },
-      }
+      session.user.role = dbUser?.role || 'PENDING'
+      session.user.gamertag = dbUser?.gamertag || undefined
+
+      // Notify admins about pending users (atomic, prevents duplicates)
+      // Auto-promote DEFAULT_ADMIN_EMAIL to ADMIN
+
+      return session
     },
   },
 })
 ```
 
+**Environment Variables Required:**
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
+- `RESEND_API_KEY` - Resend API key for email
+- `EMAIL_FROM` - Sender email address
+- `DEFAULT_ADMIN_EMAIL` - Auto-promoted admin email (bootstrap)
+
 **Security Notes:**
 - Sessions stored in database (survives server restarts)
 - Role fetched from User table on every session (real-time updates)
-- Magic links expire after configured time window
+- Magic links expire after 15 minutes
 - No passwords stored (reduces attack surface)
+- Admin notifications sent atomically (prevents duplicate emails)
+- Auto-promotion of default admin for bootstrapping
 
 ---
 
@@ -182,6 +208,82 @@ export async function PATCH(request) {
 
 ---
 
+## Rate Limiting
+
+### Implementation
+
+**File:** `src/lib/rate-limit.ts`
+
+FridayGT uses in-memory rate limiting to protect API endpoints from abuse and DoS attacks.
+
+**Type:** In-memory Map (suitable for single-instance deployments)
+**Future:** Redis/Vercel KV planned for distributed rate limiting
+
+### Rate Limit Tiers
+
+| Tier | Limit | Window | Use Case |
+|------|-------|--------|----------|
+| **Auth** | 5 requests | 1 minute | Authentication endpoints |
+| **Mutation** | 20 requests | 1 minute | POST, PATCH, DELETE operations |
+| **Query** | 100 requests | 1 minute | GET operations |
+| **Expensive** | 3 requests | 1 minute | Resource-intensive operations |
+
+### Response Headers
+
+All rate-limited endpoints include standard headers:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 2026-02-02T12:00:00.000Z
+Retry-After: 30
+```
+
+**When limit exceeded:**
+- HTTP Status: `429 Too Many Requests`
+- Body: `{ error: "Too many requests, please try again later." }`
+
+### Usage Pattern
+
+```typescript
+import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
+
+export async function POST(request: NextRequest) {
+  // Check rate limit
+  const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
+
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: rateLimitHeaders(rateLimit) }
+    )
+  }
+
+  // Handle request...
+}
+```
+
+### IP Address Detection
+
+Rate limiting identifies clients by IP address using these headers (in order):
+1. `x-forwarded-for` - Proxies/load balancers
+2. `x-real-ip` - Nginx/Apache
+3. `cf-connecting-ip` - Cloudflare
+
+**Security:** Requests without identifiable IPs are rejected to prevent bypass.
+
+### Protected Endpoints
+
+Rate limiting is applied to:
+- `/api/auth/[...nextauth]` - Auth endpoints (5/min)
+- `/api/builds` - Build mutations (20/min)
+- `/api/lap-times` - Lap time mutations (20/min)
+- `/api/races` - Race mutations (20/min)
+- All admin endpoints (20/min)
+- Public query endpoints (100/min)
+
+---
+
 ## Access Control Matrix
 
 ### By Resource Type
@@ -241,6 +343,7 @@ export async function PATCH(request) {
 | `/api/parts/categories` | GET | Public | Part categories (5) |
 | `/api/tuning-settings` | GET | Public | Tuning settings (17 settings) |
 | `/api/tuning-settings/sections` | GET | Public | Tuning sections (6) |
+| `/api/stats/[...slug]` | GET | Public | Statistics (counts for tracks, cars, builds, races, lap-times, users) |
 
 **Characteristics:**
 - ✓ No authentication required
@@ -307,6 +410,14 @@ export async function PATCH(request) {
 | Endpoint | Method | Role Required | Notes |
 |----------|--------|--------------|-------|
 | `/api/user/profile` | PATCH | USER or ADMIN | Can edit own profile |
+
+#### Cron Jobs (Protected)
+
+| Endpoint | Method | Access | Notes |
+|----------|--------|--------|-------|
+| `/api/cron/cleanup-tokens` | GET | CRON_SECRET | Cleanup expired tokens (protected by secret) |
+
+**Cron Security:** Protected by `CRON_SECRET` environment variable. Must be included in request headers.
 
 ---
 
@@ -446,11 +557,13 @@ const supabase = createServiceRoleClient()
 5. **Authentication Required**
    - All mutations require authentication
    - Session validation on every request
-   - Magic link expiration
+   - Magic link expiration (15 minutes)
 
 6. **Rate Limiting**
-   - Applied to mutation endpoints
+   - Applied to all API endpoints
    - In-memory implementation (Redis planned)
+   - Standard rate limit headers
+   - IP-based identification with proxy support
 
 7. **Service Role Security**
    - Only used in API routes (not client-side)
@@ -460,6 +573,20 @@ const supabase = createServiceRoleClient()
 8. **SQL Injection Protection**
    - Parameterized queries via Supabase client
    - No direct SQL string concatenation
+
+9. **Admin Notification System**
+   - Automatic email notifications for new pending users
+   - Atomic updates prevent duplicate notifications
+   - Sent to all admins via Resend
+
+10. **Auto-Promotion Bootstrap**
+    - `DEFAULT_ADMIN_EMAIL` auto-promoted to ADMIN
+    - Enables initial admin setup without database access
+    - Safe (controlled by server environment variable)
+
+11. **Cron Job Protection**
+    - Protected by `CRON_SECRET` environment variable
+    - Prevents unauthorized scheduled task execution
 
 ### Future Enhancements 🔮
 
@@ -471,10 +598,11 @@ const supabase = createServiceRoleClient()
    - HMAC signing for critical operations
    - Verify request integrity
 
-3. **Audit Logging**
-   - Track all admin actions
+3. **Advanced Audit Logging**
+   - Track all admin actions in database
    - Log resource modifications
-   - Security event monitoring
+   - Security event monitoring dashboard
+   - Currently: Basic logging via admin notifications
 
 4. **API Versioning**
    - Versioned API endpoints for breaking changes
@@ -491,8 +619,10 @@ const supabase = createServiceRoleClient()
 - [ ] Always check ownership before allowing modifications
 - [ ] Use `getCurrentUser()` for ownership checks
 - [ ] Keep public endpoints read-only
-- [ ] Apply rate limiting to mutations
+- [ ] Apply rate limiting to all API endpoints
 - [ ] Validate input on all endpoints
+- [ ] Use appropriate rate limit tier (Auth/Mutation/Query/Expensive)
+- [ ] Return rate limit headers on all responses
 
 ### For Admins
 
@@ -502,6 +632,8 @@ const supabase = createServiceRoleClient()
 - [ ] Be cautious when promoting users to ADMIN
 - [ ] Keep service role key secure
 - [ ] Monitor for suspicious activity
+- [ ] Secure `RESEND_API_KEY` and `CRON_SECRET`
+- [ ] Set `DEFAULT_ADMIN_EMAIL` to trusted address
 
 ### For Users
 
@@ -573,5 +705,5 @@ const supabase = createServiceRoleClient()
 
 ---
 
-**Last Reviewed:** 2026-01-29
+**Last Reviewed:** 2026-02-02
 **Next Review:** After next security update
