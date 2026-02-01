@@ -38,7 +38,19 @@ Follow semantic versioning (MAJOR.MINOR.PATCH):
 - `0.X.0` - Large feature additions, significant alterations
 - `X.0.0` - Major milestones (user will indicate when these occur)
 
-Update version in relevant files when making releases.
+### Version Locations (update all when releasing)
+
+| File | Location | Notes |
+|------|----------|-------|
+| `package.json` | Line 3: `"version"` | **Primary source** - app reads from here |
+| `README.md` | Line 11: `**Current Version**` | Display version |
+| `README.md` | Version history table | Add new row at top |
+| `docs/PLAN.md` | Version history table | Add entry with session details |
+| SQL migrations | Header comment | New migrations only: `-- Version: X.X.X` |
+
+**Auto-updated** (no manual change needed):
+- `package-lock.json` - Updates when running `npm install`
+- Header version display - Reads from `package.json` via `src/app/layout.tsx`
 
 ## .gitignore
 
