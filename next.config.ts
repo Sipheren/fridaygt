@@ -36,7 +36,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
-              "connect-src 'self' https://*.supabase.co https://*.vercel-scripts.com",
+              "connect-src 'self' https://jbreuzfssbcqgwahugfn.supabase.co https://*.vercel-scripts.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
               "object-src 'none'",

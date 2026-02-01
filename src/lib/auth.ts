@@ -18,6 +18,7 @@ import NextAuth from "next-auth"
 import Resend from "next-auth/providers/resend"
 import { SupabaseAdapter } from "@auth/supabase-adapter"
 import { Resend as ResendClient } from "resend"
+import { getFullUrl } from "@/lib/utils"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: SupabaseAdapter({
@@ -26,11 +27,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   }),
   session: {
     strategy: "database", // Use database sessions instead of JWT
+    maxAge: 30 * 24 * 60 * 60, // 30 days - sessions expire after 30 days
   },
   providers: [
     Resend({
       from: process.env.EMAIL_FROM!,
       apiKey: process.env.RESEND_API_KEY!,
+      maxAge: 15 * 60, // 15 minutes - magic links expire after 15 minutes
     }),
   ],
   pages: {
@@ -80,7 +83,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           // Only send email if we actually updated the row (meaning it was false before)
           if (updatedUser?.adminNotified === true) {
-            console.log(`Sending admin notification for new pending user: ${session.user.email}`)
+            // Log notification (email masked in production)
+            console.log(`Sending admin notification for new pending user: ${session.user.id}`)
 
             try {
               // Fetch all admin emails
@@ -115,7 +119,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                           <body>
                             <div class="container">
                               <div class="header">
-                                <img src="https://fridaygt.com/logo-fgt.png" alt="FridayGT" style="height: 50px;">
+                                <img src="${getFullUrl('/logo-fgt.png')}" alt="FridayGT" style="height: 50px;">
                               </div>
                               <div class="content">
                                 <h1>New User Registration</h1>
@@ -126,7 +130,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                                   <strong>Date:</strong> ${new Date().toLocaleDateString()}
                                 </p>
                                 <p style="text-align: center; margin: 30px 0;">
-                                  <a href="https://fridaygt.com/admin/users" class="button">Review & Approve</a>
+                                  <a href="${getFullUrl('/admin/users')}" class="button">Review & Approve</a>
                                 </p>
                               </div>
                               <div class="footer">
@@ -140,7 +144,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                   )
                 )
 
-                console.log(`Admin notification sent for new user: ${session.user.email}`)
+                console.log(`Admin notification sent for new user: ${session.user.id}`)
               } else {
                 console.log('No admins found to notify')
               }
@@ -155,14 +159,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           console.log(`Skipping admin notification - role=${session.user.role}`)
         }
 
-        // Auto-promote default admin
+        // Auto-promote default admin email (bootstrapping first admin)
+        // SECURITY: Only auto-promotes if email matches DEFAULT_ADMIN_EMAIL exactly
+        // This is safe because the env var is controlled by the server admin
+        // Once an admin exists, they can promote other users via the admin API
         if (session.user.email === process.env.DEFAULT_ADMIN_EMAIL && session.user.role !== 'ADMIN') {
-          await supabase
+          console.log(`Auto-promoting DEFAULT_ADMIN_EMAIL to ADMIN: ${session.user.id}`)
+
+          const { error: updateError } = await supabase
             .from('User')
             .update({ role: 'ADMIN', updatedAt: new Date().toISOString() })
             .eq('email', session.user.email)
 
-          session.user.role = 'ADMIN'
+          if (!updateError) {
+            session.user.role = 'ADMIN'
+            console.log(`Successfully promoted ${session.user.id} to ADMIN`)
+          } else {
+            console.error('Failed to promote default admin:', updateError)
+          }
         }
       }
       return session

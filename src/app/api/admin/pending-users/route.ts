@@ -50,10 +50,27 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { isAdmin } from '@/lib/auth-utils'
+import { checkRateLimit, RateLimit, rateLimitHeaders } from '@/lib/rate-limit'
 
 // GET /api/admin/pending-users - List all pending users
 export async function GET(request: NextRequest) {
   try {
+    // ============================================================
+    // RATE LIMITING
+    // ============================================================
+    // Apply rate limiting: 100 requests per minute for admin queries
+    // Prevents abuse of pending user listing endpoint
+    // ============================================================
+
+    const rateLimit = await checkRateLimit(request, RateLimit.Query())
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
+      )
+    }
+
     // ============================================================
     // AUTHORIZATION CHECK
     // ============================================================

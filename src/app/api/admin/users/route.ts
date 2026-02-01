@@ -44,8 +44,25 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { isAdmin } from '@/lib/auth-utils'
+import { checkRateLimit, RateLimit, rateLimitHeaders } from '@/lib/rate-limit'
 
-export async function GET() {
+export async function GET(request: Request) {
+  // ============================================================
+  // RATE LIMITING
+  // ============================================================
+  // Apply rate limiting: 100 requests per minute for admin queries
+  // Prevents abuse of admin user listing endpoint
+  // ============================================================
+
+  const rateLimit = await checkRateLimit(request as any, RateLimit.Query())
+
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: rateLimitHeaders(rateLimit) }
+    )
+  }
+
   // ============================================================
   // AUTHORIZATION CHECK
   // ============================================================

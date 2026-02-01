@@ -16,12 +16,31 @@ import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { Resend } from 'resend'
 import { isAdmin } from '@/lib/auth-utils'
+import { logAdminAction } from '@/lib/audit-log'
+import { checkRateLimit, RateLimit, rateLimitHeaders } from '@/lib/rate-limit'
+import { getFullUrl } from '@/lib/utils'
 
 // POST /api/admin/pending-users/[id]/approve - Approve a pending user
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // ============================================================
+  // RATE LIMITING
+  // ============================================================
+  // Apply rate limiting: 20 requests per minute for mutations
+  // Prevents rapid approval/rejection spam
+  // ============================================================
+
+  const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
+
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: rateLimitHeaders(rateLimit) }
+    )
+  }
+
   try {
     const session = await auth()
     if (!isAdmin(session)) {
@@ -58,6 +77,15 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to approve user' }, { status: 500 })
     }
 
+    // Log approval to audit log
+    await logAdminAction({
+      adminId: session.user.id,
+      action: 'APPROVE_USER',
+      targetId: userId,
+      targetType: 'User',
+      details: { userEmail: user.email, userName: user.name }
+    })
+
     // Send approval email
     try {
       const resend = new Resend(process.env.RESEND_API_KEY)
@@ -82,7 +110,7 @@ export async function POST(
             <body>
               <div class="container">
                 <div class="header">
-                  <img src="https://fridaygt.com/logo-fgt.png" alt="FridayGT" style="height: 50px;">
+                  <img src="${getFullUrl('/logo-fgt.png')}" alt="FridayGT" style="height: 50px;">
                 </div>
                 <div class="content">
                   <h1>Account Approved!</h1>
@@ -90,7 +118,7 @@ export async function POST(
                   <p>Your FridayGT account has been approved and you can now complete your profile.</p>
                   <p>Click the button below to set your gamertag and get started:</p>
                   <p style="text-align: center; margin: 30px 0;">
-                    <a href="https://fridaygt.com/auth/signin" class="button">Complete Your Profile</a>
+                    <a href="${getFullUrl('/auth/signin')}" class="button">Complete Your Profile</a>
                   </p>
                   <p>See you on the track!</p>
                 </div>

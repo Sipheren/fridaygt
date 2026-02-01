@@ -16,6 +16,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { isAdmin } from '@/lib/auth-utils'
+import { logAdminAction } from '@/lib/audit-log'
+import { checkRateLimit, RateLimit, rateLimitHeaders } from '@/lib/rate-limit'
 
 interface RejectUserBody {
   reason?: string
@@ -26,6 +28,22 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // ============================================================
+  // RATE LIMITING
+  // ============================================================
+  // Apply rate limiting: 20 requests per minute for mutations
+  // Prevents rapid approval/rejection spam
+  // ============================================================
+
+  const rateLimit = await checkRateLimit(request, RateLimit.Mutation())
+
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: rateLimitHeaders(rateLimit) }
+    )
+  }
+
   try {
     const session = await auth()
     if (!isAdmin(session)) {
@@ -76,9 +94,18 @@ export async function POST(
       return NextResponse.json({ error: 'User is not pending' }, { status: 400 })
     }
 
-    // Log rejection with reason for audit trail
-    const adminEmail = session?.user?.email || 'unknown'
-    console.error(`[USER REJECTION] Admin: ${adminEmail} | User: ${user.email} (${user.id}) | Reason: ${reason || 'No reason provided'}`)
+    // Log rejection to audit log (replaces console.error logging)
+    await logAdminAction({
+      adminId: session.user.id,
+      action: 'REJECT_USER',
+      targetId: userId,
+      targetType: 'User',
+      details: {
+        userEmail: user.email,
+        userName: user.name,
+        reason: reason || 'No reason provided'
+      }
+    })
 
     // Delete the user (cascade will handle next_auth records)
     const { error: deleteError } = await supabase

@@ -89,3 +89,74 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+/**
+ * ============================================================================
+ * APPLICATION URL UTILITIES
+ * ============================================================================
+ *
+ * Provides environment-aware URL generation for email templates, links,
+ * and dynamic URLs throughout the application.
+ *
+ * **Environment Priority:**
+ * 1. NEXT_PUBLIC_APP_URL (manual override for any environment)
+ * 2. VERCEL_URL (auto-detected in Vercel production)
+ * 3. localhost:3000 (fallback for local development)
+ *
+ * **Why This Matters:**
+ * - Email templates need absolute URLs (e.g., https://fridaygt.com/auth/signin)
+ * - Development uses localhost, production uses real domain
+ * - Vercel preview deployments use auto-generated URLs
+ * - Hardcoded URLs break in different environments
+ */
+
+/**
+ * Get the base application URL for the current environment
+ *
+ * @returns Base URL (e.g., "http://localhost:3000" or "https://fridaygt.com")
+ *
+ * @example
+ * ```tsx
+ * const appUrl = getAppUrl()
+ * // Development: "http://localhost:3000"
+ * // Production: "https://fridaygt.com"
+ * // Preview: "https://fridaygt-abc123.vercel.app"
+ * ```
+ */
+export function getAppUrl(): string {
+  // Manual override (highest priority)
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL
+  }
+
+  // Vercel auto-detected URL
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+
+  // Local development fallback
+  return 'http://localhost:3000'
+}
+
+/**
+ * Generate a full absolute URL for a given path
+ *
+ * @param path - Relative path (e.g., "/auth/signin", "/logo-fgt.png")
+ * @returns Full absolute URL (e.g., "https://fridaygt.com/auth/signin")
+ *
+ * @example
+ * ```tsx
+ * // Email template
+ * <a href="${getFullUrl('/auth/signin')}">Sign In</a>
+ *
+ * // Image source
+ * <img src="${getFullUrl('/logo-fgt.png')}" alt="Logo" />
+ * ```
+ */
+export function getFullUrl(path: string): string {
+  const baseUrl = getAppUrl()
+  // Ensure path starts with / and baseUrl doesn't end with /
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+  return `${cleanBase}${cleanPath}`
+}

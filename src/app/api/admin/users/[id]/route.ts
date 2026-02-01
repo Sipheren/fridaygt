@@ -47,6 +47,7 @@ import { isAdmin } from '@/lib/auth-utils'
 import { UpdateUserRoleSchema, UpdateUserProfileSchema, validateBody } from '@/lib/validation'
 import type { DbUser } from '@/types/database'
 import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
+import { logAdminAction } from '@/lib/audit-log'
 
 export async function PATCH(
   request: NextRequest,
@@ -214,6 +215,21 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
   }
 
+  // Log role changes to audit log
+  if (updateData.role && user?.role) {
+    await logAdminAction({
+      adminId: session.user.id,
+      action: 'CHANGE_ROLE',
+      targetId: id,
+      targetType: 'User',
+      details: {
+        userEmail: user.email,
+        oldRole: user.role,
+        newRole: updateData.role
+      }
+    })
+  }
+
   // ============================================================
   // SEND APPROVAL EMAIL (PENDING → USER ONLY)
   // ============================================================
@@ -363,6 +379,15 @@ export async function DELETE(
     console.error('Error deleting user:', error)
     return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 })
   }
+
+  // Log deletion to audit log
+  await logAdminAction({
+    adminId: session.user.id,
+    action: 'DELETE_USER',
+    targetId: id,
+    targetType: 'User',
+    details: { userEmail: user?.email }
+  })
 
   // ============================================================
   // SEND ADMIN NOTIFICATION

@@ -30,8 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files (only commit examples, never actual keys)
+.env
+.env*.local
 !.env.local.example
 !.env.example
 
@@ -42,6 +43,8 @@ yarn-error.log*
 *.tsbuildinfo
 /tsconfig.tsbuildinfo
 next-env.d.ts
-.env*.local
 supabase/.temp/
 docs/SESSION-LOG.md
+
+# design files (Adobe Illustrator, etc.)
+*.ai

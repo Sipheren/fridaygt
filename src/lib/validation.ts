@@ -179,9 +179,10 @@ export const CreateLapTimeSchema = z.object({
 export const UpdateUserProfileSchema = z.object({
   gamertag: z.string()
     .min(3, 'Gamertag must be at least 3 characters')
-    .max(20, 'Gamertag must be less than 20 characters')
-    .regex(/^[a-zA-Z0-9_-]+$/, 'Gamertag can only contain letters, numbers, hyphens, and underscores')
-    .transform(val => val.trim())
+    .max(20, 'Gamertag must be 20 characters or less')
+    .regex(/^[a-zA-Z0-9_\-\s]+$/, 'Gamertag can only contain letters, numbers, spaces, hyphens, and underscores')
+    .transform(val => val.trim()) // Trim whitespace from start/end
+    .refine(val => val.length > 0, 'Gamertag cannot be empty or only whitespace')
     .optional()
     .nullable(),
   name: z.string()

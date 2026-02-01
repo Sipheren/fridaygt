@@ -1,26 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// In-memory store for rate limiting (use Redis for production)
+// ============================================================================
+// IN-MEMORY RATE LIMITING
+// ============================================================================
+// Simple rate limiting using an in-memory Map.
+// Suitable for single-instance deployments and development.
+//
+// Note: In serverless environments (Vercel), each instance has its own memory.
+// For production with multiple instances, consider using Redis/Vercel KV for
+// distributed rate limiting. Current implementation provides basic protection.
+// ============================================================================
+
+// In-memory store for rate limit counters
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
 /**
  * Clean up expired entries from the rate limit store
- * This is called lazily during rate limit checks instead of using a global interval
- * to avoid memory leaks in serverless environments
+ * Runs probabilistically (10% chance) to avoid performance impact
  */
 function cleanupExpiredEntries() {
   const now = Date.now()
   const entries = Array.from(rateLimitStore.entries())
-  let cleaned = 0
 
   for (const [key, value] of entries) {
     if (now > value.resetTime) {
       rateLimitStore.delete(key)
-      cleaned++
     }
   }
-
-  return cleaned
 }
 
 export interface RateLimitOptions {
@@ -47,26 +53,44 @@ const defaultOptions: Required<RateLimitOptions> = {
   limit: 100,
   windowMs: 60000, // 1 minute
   identifier: (request) => {
-    // Get IP address from various headers
+    // Get IP address from various headers (handles proxies/CDNs)
     const forwardedFor = request.headers.get('x-forwarded-for')
     const realIp = request.headers.get('x-real-ip')
     const cfConnectingIp = request.headers.get('cf-connecting-ip') // Cloudflare
 
     if (forwardedFor) {
-      return forwardedFor.split(',')[0].trim()
+      const ip = forwardedFor.split(',')[0].trim()
+      if (ip && ip !== 'unknown' && ip !== '') {
+        return ip
+      }
     }
     if (realIp) {
-      return realIp
+      const ip = realIp.trim()
+      if (ip && ip !== 'unknown' && ip !== '') {
+        return ip
+      }
     }
     if (cfConnectingIp) {
-      return cfConnectingIp
+      const ip = cfConnectingIp.trim()
+      if (ip && ip !== 'unknown' && ip !== '') {
+        return ip
+      }
     }
 
-    // Fallback to a generic identifier
-    return 'anonymous'
+    // If we can't identify the request, reject it
+    // This prevents anonymous requests from bypassing rate limits
+    throw new Error('Cannot identify request source - rate limiting required')
   },
   errorMessage: 'Too many requests, please try again later.',
   skipSuccessfulRequests: false,
+}
+
+/**
+ * Generate a rate limit key for the in-memory store
+ */
+function generateKey(identifier: string, pathname: string, windowSeconds: number): string {
+  const windowStart = Math.floor(Date.now() / 1000 / windowSeconds)
+  return `ratelimit:${identifier}:${pathname}:${windowStart}`
 }
 
 /**
@@ -95,9 +119,8 @@ export async function checkRateLimit(
   request: NextRequest,
   options: RateLimitOptions = {}
 ): Promise<RateLimitResult> {
-  // Clean up expired entries (lazy cleanup to avoid memory leaks from global intervals)
-  // Only run cleanup periodically to avoid performance impact on every request
-  if (Math.random() < 0.1) { // 10% chance to run cleanup on each request
+  // Clean up expired entries (10% chance to avoid performance impact)
+  if (Math.random() < 0.1) {
     cleanupExpiredEntries()
   }
 
@@ -105,24 +128,23 @@ export async function checkRateLimit(
 
   // Get identifier
   const identifier = await opts.identifier(request)
-  const key = `${identifier}:${request.nextUrl.pathname}`
+  const key = generateKey(identifier, request.nextUrl.pathname, Math.floor(opts.windowMs / 1000))
 
+  // In-memory rate limiting
   const now = Date.now()
-  const windowStart = now - opts.windowMs
+  const windowStart = now - (now % opts.windowMs)
 
-  // Get current rate limit data
   let data = rateLimitStore.get(key)
 
   // Reset if window has expired
   if (!data || now > data.resetTime) {
-    data = { count: 0, resetTime: now + opts.windowMs }
+    data = { count: 0, resetTime: windowStart }
     rateLimitStore.set(key, data)
   }
 
   // Increment counter
   data.count++
 
-  // Check if limit exceeded
   const success = data.count <= opts.limit
   const remaining = Math.max(0, opts.limit - data.count)
 

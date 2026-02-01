@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "name": "@/lib/supabase/service-role",
+        "message": "Service role client bypasses RLS. Ensure you have authenticated the user FIRST before using. See docs/API_SECURITY.md for required pattern."
+      }
+    ]
+  }
+}
