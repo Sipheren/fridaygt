@@ -44,7 +44,8 @@ yarn-error.log*
 /tsconfig.tsbuildinfo
 next-env.d.ts
 supabase/.temp/
-docs/SESSION-LOG.md
+docs/LOG.md
+session-log.md
 
 # design files (Adobe Illustrator, etc.)
 *.ai
