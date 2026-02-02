@@ -526,6 +526,65 @@
 
 ---
 
+## Notes Board (2026-02-02)
+
+**Status:** ✅ READY FOR IMPLEMENTATION (Phase 1 - v0.21.0)
+- Schema designed with all fixes applied
+- RLS policies defined
+- Real-time integration planned (Supabase Realtime)
+- API endpoints specified with security
+
+### Note
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| id | text | NO | - | Primary key (application-level UUID) |
+| title | text | NO | '' | Note title (max 200 chars) |
+| content | text | YES | '' | Note content (max 10,000 chars) |
+| color | varchar(7) | NO | '#fef08a' | Hex color code (6 colors) |
+| positionX | integer | NO | 0 | X position (desktop drag & drop) |
+| positionY | integer | NO | 0 | Y position (desktop drag & drop) |
+| width | varchar(20) | NO | 'medium' | Note width (small/medium/large) |
+| pinned | boolean | NO | false | Pin to top of board |
+| tags | text[] | NO | ARRAY[]::TEXT[] | Tag array (max 10 tags, 50 chars each) |
+| createdBy | text | NO | - | FK → User (creator) ON DELETE CASCADE |
+| createdAt | timestamp | NO | NOW() | Creation timestamp |
+| updatedAt | timestamp | NO | NOW() | Last update timestamp |
+
+**Indexes:**
+- `idx_notes_created_by` ON createdBy
+- `idx_notes_pinned` ON pinned WHERE pinned = true (partial index)
+- `idx_notes_created_at` ON createdAt DESC
+
+**RLS Policies:**
+1. **notes_select_all** - SELECT: Everyone can view notes (public read)
+2. **notes_insert_authenticated** - INSERT: Authenticated users can create notes
+3. **notes_update_own_or_admin** - UPDATE: Owner OR admin can update
+4. **notes_delete_own_or_admin** - DELETE: Owner OR admin can delete
+
+**Purpose:** Collaborative sticky notes board for team members to share quick notes, links, and ideas in real-time.
+
+**Real-time:** Supabase Realtime (INSERT/UPDATE/DELETE subscriptions)
+
+**Color Palette:**
+- Yellow (#fef08a) - Default
+- Pink (#fbcfe8) - Personal
+- Blue (#bfdbfe) - Ideas
+- Green (#bbf7d0) - Completed
+- Purple (#e9d5ff) - Important
+- Orange (#fed7aa) - Urgent
+
+**Mobile Behavior:**
+- < 768px: Vertical scrollable list, no drag
+- ≥ 768px: Grid layout with @dnd-kit drag & drop
+
+**Security:**
+- Rate limiting: Query (100/min), Mutation (20/min)
+- Zod validation: Title (200 chars), content (10k chars), hex color
+- XSS prevention: Text-only content (Phase 1), sanitized HTML (Phase 3)
+
+---
+
 ## Enums
 
 ### UserRole
@@ -620,6 +679,7 @@ User (1) ←→ (N) RunList ←→ (1) RunListEntry
 User (1) ←→ (N) LapTime
 User (1) ←→ (N) CarBuild
 User (1) ←→ (N) RunSession
+User (1) ←→ (N) Note
 
 Track (1) ←→ (N) LapTime
 Track (1) ←→ (N) RunListEntry

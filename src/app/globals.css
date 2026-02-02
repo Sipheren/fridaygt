@@ -316,4 +316,30 @@
     animation-delay: 0.8s;
     left: 65%;
   }
+
+  /* Note saving pulse animation - cycles through all 6 colors */
+  @keyframes saving-pulse {
+    0% {
+      background-color: rgba(254, 240, 138, 0.15); /* Yellow - semi-transparent */
+    }
+    20% {
+      background-color: rgba(251, 207, 232, 0.15); /* Pink - semi-transparent */
+    }
+    40% {
+      background-color: rgba(191, 219, 254, 0.15); /* Blue - semi-transparent */
+    }
+    60% {
+      background-color: rgba(187, 247, 208, 0.15); /* Green - semi-transparent */
+    }
+    80% {
+      background-color: rgba(233, 213, 255, 0.15); /* Purple - semi-transparent */
+    }
+    100% {
+      background-color: rgba(254, 215, 170, 0.15); /* Orange - semi-transparent */
+    }
+  }
+
+  .animate-saving-pulse {
+    animation: saving-pulse 4s ease-in-out;
+  }
 }

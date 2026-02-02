@@ -193,6 +193,31 @@ export interface DbRaceMember {
 }
 
 // ============================================================================
+// Notes
+// ============================================================================
+
+export type NoteWidth = 'small' | 'medium' | 'large'
+
+export interface DbNote {
+  id: string
+  title: string
+  content: string
+  color: string
+  positionX: number
+  positionY: number
+  width: NoteWidth
+  pinned: boolean
+  tags: string[]
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface DbNoteWithUser extends DbNote {
+  user: DbUser
+}
+
+// ============================================================================
 // Lap Times
 // ============================================================================
 

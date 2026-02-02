@@ -193,6 +193,28 @@ export const UpdateUserProfileSchema = z.object({
 }).strict()
 
 // ============================================
+// Notes Schemas
+// ============================================
+
+export const CreateNoteSchema = z.object({
+  title: z.string().max(200, 'Title must be less than 200 characters').transform(val => val.trim()).optional(),
+  content: z.string().max(10000, 'Content must be less than 10,000 characters').transform(val => val.trim()).optional(),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color code').default('#fef08a'),
+  positionX: z.number().int().optional().default(0),
+  positionY: z.number().int().optional().default(0),
+})
+
+export const UpdateNoteSchema = z.object({
+  title: z.string().max(200, 'Title must be less than 200 characters').transform(val => val.trim()).optional(),
+  content: z.string().max(10000, 'Content must be less than 10,000 characters').transform(val => val.trim()).optional(),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color code').optional(),
+  positionX: z.number().int().optional(),
+  positionY: z.number().int().optional(),
+  pinned: z.boolean().optional(),
+  tags: z.array(z.string().max(50, 'Tag must be less than 50 characters')).max(10, 'Maximum 10 tags allowed').optional(),
+}).strict()
+
+// ============================================
 // Admin User Schemas
 // ============================================
 

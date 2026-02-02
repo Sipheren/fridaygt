@@ -1,89 +1,119 @@
-# FridayGT Project Instructions
+# ⚠️ MANDATORY FIRST ACTIONS - DO THESE BEFORE ANYTHING ELSE
 
-## Session Logging
+## 1. Session Logging (NON-NEGOTIABLE)
 
-**REQUIRED**: Log all session activity to `session-log.md` in the project root.
+**YOU MUST** create/update `session-log.md` in the project root.
+```
+## [YYYY-MM-DD HH:MM] Session Entry
+**Prompt:** [what user asked]
+**Response:** [summary of what you did]
+**Files changed:** [list]
+**Tools used:** [list]
+```
 
-- Log every prompt received and response given
-- Include timestamps for each entry
-- Format: `## [YYYY-MM-DD HH:MM] Session Entry`
-- Include tool calls, file changes, and decisions made
-- This enables session recovery if interrupted
+- Create this file if it doesn't exist
+- Append to it after EVERY response
+- This is REQUIRED for session recovery
+- DO NOT SKIP THIS STEP
+
+## 2. Read Project Docs
+
+Before making changes, read from `docs/`:
+- `PLAN.md` - Current roadmap
+- `DESIGN-SYSTEM.md` - UI/UX guidelines
+- `DATABASE-SCHEMA.md` - Data structure
+- `SECURITY.md` - Security rules
+
+---
+
+# Project Rules
 
 ## Git Workflow
 
-### Branching Strategy
-- **Never commit directly to main**
-- Create feature branches for all work: `feature/description`, `fix/description`, `docs/description`
-- Merge to main only after work is complete
+### Branching (ALWAYS follow this)
+| Rule | Detail |
+|------|--------|
+| ❌ NEVER | Commit directly to main |
+| ✅ ALWAYS | Create feature branches first |
 
-### Commit Messages
-Use conventional commits format:
+Branch naming: `feature/description`, `fix/description`, `docs/description`
+
+### Commit Messages (REQUIRED format)
 - `feat:` - New features
 - `fix:` - Bug fixes
-- `docs:` - Documentation changes
+- `docs:` - Documentation
 - `refactor:` - Code refactoring
-- `style:` - Formatting, styling changes
-- `chore:` - Maintenance tasks
+- `style:` - Formatting
+- `chore:` - Maintenance
 
-### Pre-Commit Checks
-- Run linters before committing
-- Run tests if available
-- Verify no sensitive data is being committed
+### Before Every Commit
+1. Run linters
+2. Run tests (if available)
+3. Check for sensitive data
+4. Update `session-log.md`
+
+---
+
+## Databse SQL
+- All SQL quries must be run by user manually
+
+---
 
 ## Versioning
 
-Follow semantic versioning (MAJOR.MINOR.PATCH):
-- `0.0.X` - Small changes, quick additions, minor fixes
-- `0.X.0` - Large feature additions, significant alterations
-- `X.0.0` - Major milestones (user will indicate when these occur)
+Semantic versioning: `MAJOR.MINOR.PATCH`
+- `0.0.X` - Small fixes
+- `0.X.0` - New features
+- `X.0.0` - Major milestones (user will specify)
 
-### Version Locations (update all when releasing)
+### Files to Update When Releasing
 
-| File | Location | Notes |
-|------|----------|-------|
-| `package.json` | Line 3: `"version"` | **Primary source** - app reads from here |
-| `README.md` | Line 11: `**Current Version**` | Display version |
-| `README.md` | Version history table | Add new row at top |
-| `docs/PLAN.md` | Version history table | Add entry with session details |
-| SQL migrations | Header comment | New migrations only: `-- Version: X.X.X` |
+| File | What to Update |
+|------|----------------|
+| `package.json` | Line 3: `"version"` (PRIMARY) |
+| `README.md` | Line 11: version display |
+| `README.md` | Version history table (new row at top) |
+| `docs/PLAN.md` | Version history table |
+| SQL migrations | Header: `-- Version: X.X.X` |
 
-**Auto-updated** (no manual change needed):
-- `package-lock.json` - Updates when running `npm install`
-- Header version display - Reads from `package.json` via `src/app/layout.tsx`
+Auto-updated (don't touch): `package-lock.json`, header display
+
+---
 
 ## .gitignore
 
-**Respect the .gitignore file at all times.**
-- Never commit ignored files
-- Never remove items from .gitignore without explicit permission
-- Note: `docs/LOG.md` is gitignored (development log stays local)
-- Note: `session-log.md` is gitignored (session data stays local)
+**NEVER violate .gitignore rules:**
+- ❌ Never commit ignored files
+- ❌ Never remove items without permission
+- `docs/LOG.md` is gitignored (local only)
+- `session-log.md` is gitignored (local only)
 
-## Documentation
+---
 
-### Required Reading
-Before starting work, read relevant docs from the `docs/` folder:
-- `PLAN.md` - Current project plan and roadmap
-- `LOG.md` - Development log (local only)
-- `DESIGN-SYSTEM.md` - UI/UX design guidelines
-- `DATABASE-SCHEMA.md` - Database structure
-- `SECURITY.md` - Security guidelines
-- `API_SECURITY.md` - API security specifics
+## Documentation Updates
 
-### Documentation Updates
-Keep documentation current with all changes:
-- Update `PLAN.md` when roadmap changes
-- Update `LOG.md` with development progress
-- Update `DESIGN-SYSTEM.md` for UI/styling changes
-- Update `DATABASE-SCHEMA.md` for data model changes
-- Update `SECURITY.md` for security-related changes
+Keep docs current:
+| Change Type | Update This |
+|-------------|-------------|
+| Roadmap changes | `PLAN.md` |
+| Development progress | `LOG.md` |
+| UI/styling | `DESIGN-SYSTEM.md` |
+| Database | `DATABASE-SCHEMA.md` |
+| Security | `SECURITY.md`, `API_SECURITY.md` |
 
-### New Plans
-- Create new planning documents in `docs/` folder
-- Use descriptive names: `FEATURE-NAME-PLAN.md`
-- Archive completed plans to `docs/.archived/`
+New plans → `docs/FEATURE-NAME-PLAN.md`
+Completed plans → `docs/.archived/`
+
+---
 
 ## Project Context
 
-This is a Next.js project. Always check existing patterns and conventions in the codebase before making changes.
+- Framework: Next.js
+- ALWAYS check existing patterns before changes
+- Match current code conventions
+
+---
+
+# ⚠️ REMINDER: Did you update session-log.md?
+
+If not, do it NOW before responding.

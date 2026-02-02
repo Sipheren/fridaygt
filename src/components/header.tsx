@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Menu, User, LogOut, Moon, Sun, Radio, Settings } from 'lucide-react'
+import { Menu, User, LogOut, Moon, Sun, Radio, Settings, StickyNote } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface HeaderProps {
@@ -79,6 +79,7 @@ export function Header({ user, version }: HeaderProps) {
     { href: '/builds', label: 'Builds' },
     { href: '/races', label: 'Races' },
     { href: '/lap-times', label: 'Lap Times' },
+    { href: '/notes', label: 'Notes', icon: StickyNote },
   ]
 
   const adminItems = user?.role === 'ADMIN' ? [
@@ -131,6 +132,9 @@ export function Header({ user, version }: HeaderProps) {
                 {item.label === 'Tonight' && (
                   <Radio className="h-3.5 w-3.5" />
                 )}
+                {item.label === 'Notes' && 'icon' in item && (
+                  <item.icon className="h-3.5 w-3.5" />
+                )}
                 {item.label}
               </Link>
             ))}
@@ -181,6 +185,9 @@ export function Header({ user, version }: HeaderProps) {
                         }`}
                       >
                         {item.label === 'Tonight' && <Radio className="h-3.5 w-3.5" />}
+                        {item.label === 'Notes' && 'icon' in item && (
+                          <item.icon className="h-3.5 w-3.5" />
+                        )}
                         {item.label}
                       </Link>
                     </DropdownMenuItem>
