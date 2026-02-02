@@ -38,7 +38,7 @@ export function useNotesRealtime() {
       .order('createdAt', { ascending: false })
 
     if (!error && data) {
-      setNotes(data as DbNote[])
+      setNotes(data as DbNoteWithUser[])
     }
   }, [supabase])
 
@@ -57,7 +57,7 @@ export function useNotesRealtime() {
         .order('createdAt', { ascending: false })
 
       if (!error && data && isMounted.current) {
-        setNotes(data as DbNote[])
+        setNotes(data as DbNoteWithUser[])
       }
       setLoading(false)
     }
@@ -72,7 +72,7 @@ export function useNotesRealtime() {
         { event: 'INSERT', schema: 'public', table: 'Note' },
         (payload) => {
           if (isMounted.current) {
-            setNotes((prev) => [payload.new as DbNote, ...prev])
+            setNotes((prev) => [payload.new as DbNoteWithUser, ...prev])
           }
         }
       )
@@ -83,7 +83,7 @@ export function useNotesRealtime() {
           if (isMounted.current) {
             setNotes((prev) =>
               prev.map((note) =>
-                note.id === payload.new.id ? (payload.new as DbNote) : note
+                note.id === payload.new.id ? (payload.new as DbNoteWithUser) : note
               )
             )
           }

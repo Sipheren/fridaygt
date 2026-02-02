@@ -15,7 +15,14 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Menu, User, LogOut, Moon, Sun, Radio, Settings, StickyNote } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
+
+interface NavItem {
+  href: string
+  label: string
+  icon?: LucideIcon
+}
 
 interface HeaderProps {
   user?: {
@@ -74,7 +81,7 @@ export function Header({ user, version }: HeaderProps) {
     setIsBradMode(newState)
   }
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { href: '/tonight', label: 'Tonight' },
     { href: '/builds', label: 'Builds' },
     { href: '/races', label: 'Races' },
@@ -132,8 +139,8 @@ export function Header({ user, version }: HeaderProps) {
                 {item.label === 'Tonight' && (
                   <Radio className="h-3.5 w-3.5" />
                 )}
-                {item.label === 'Notes' && 'icon' in item && (
-                  <item.icon className="h-3.5 w-3.5" />
+                {item.label === 'Notes' && (
+                  <StickyNote className="h-3.5 w-3.5" />
                 )}
                 {item.label}
               </Link>
@@ -185,9 +192,7 @@ export function Header({ user, version }: HeaderProps) {
                         }`}
                       >
                         {item.label === 'Tonight' && <Radio className="h-3.5 w-3.5" />}
-                        {item.label === 'Notes' && 'icon' in item && (
-                          <item.icon className="h-3.5 w-3.5" />
-                        )}
+                        {item.label === 'Notes' && <StickyNote className="h-3.5 w-3.5" />}
                         {item.label}
                       </Link>
                     </DropdownMenuItem>

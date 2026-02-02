@@ -60,7 +60,7 @@ export function ColorWheel({ onColorSelect, onClose, className, isMobile = false
   }
 
   // Handle click/tap
-  const handleClick = (e: React.MouseEvent | ReactTouchEvent) => {
+  const handleClick = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     e.stopPropagation()
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY

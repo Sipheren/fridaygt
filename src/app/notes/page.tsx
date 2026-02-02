@@ -60,6 +60,9 @@ export default function NotesPage() {
       title: '',
       content: '',
       color: '#fef08a', // yellow default
+      positionX: 0,
+      positionY: 0,
+      width: 'medium',
       pinned: false,
       tags: [],
       createdAt: new Date().toISOString(),
@@ -67,8 +70,12 @@ export default function NotesPage() {
       createdBy: session?.user?.id || '',
       user: {
         id: session?.user?.id || '',
+        email: session?.user?.email || '',
         name: session?.user?.name || null,
+        role: (session?.user?.role || 'USER') as 'PENDING' | 'USER' | 'ADMIN',
         gamertag: session?.user?.gamertag || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       },
     }
     createNoteOptimistically(tempNote)
