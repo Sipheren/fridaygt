@@ -1,14 +1,14 @@
 # FridayGT
 
 > **GT7 Lap Time Tracker & Race Management**
-> **Status**: Core Features Complete | **Branch**: `main` | **Last Updated**: 2026-02-01
+> **Status**: Core Features Complete | **Branch**: `main` | **Last Updated**: 2026-02-03
 
 A build-centric Gran Turismo 7 lap time tracker and race management application built with Next.js, Supabase, and NextAuth.
 
 ## Live Application
 
 **Production URL**: https://fridaygt.vercel.app
-**Current Version**: 2.20.3
+**Current Version**: 2.21.0
 
 ## Versioning
 
@@ -16,6 +16,7 @@ FridayGT follows semantic versioning with a comprehensive session-based developm
 
 | Version | Sessions | Key Changes |
 |---------|----------|-------------|
+| **2.21.0** | #52 | Sticky Notes Board - Collaborative notes with real-time sync, color picker, mobile-first design |
 | **2.20.3** | #51 | Documentation - SECURITY.md alignment, rate limiting docs, auth provider correction, added new endpoints |
 | **2.20.0** | #50 | Security Hardening - Service role documentation, magic link expiry, audit logging, PII removal, rate limiting, URL fixes |
 | **2.19.0** | #49 | Tonight Page Layout - Unified race card header with race number, name, track, laps in single row |
@@ -72,6 +73,7 @@ See [SESSION-LOG.md](docs/SESSION-LOG.md) for complete version history with comm
 | Active Races (Tonight Page) | Complete |
 | Race Reordering (Drag & Drop) | Complete |
 | Admin User Management | Complete |
+| Sticky Notes Board | Complete |
 | Mobile Responsiveness | Complete |
 | Code Quality & Debugging Comments | Complete |
 | Production Deployment | Complete |
