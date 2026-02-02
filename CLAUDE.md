@@ -46,11 +46,20 @@ Branch naming: `feature/description`, `fix/description`, `docs/description`
 - `style:` - Formatting
 - `chore:` - Maintenance
 
-### Before Every Commit
-1. Run linters
-2. Run tests (if available)
-3. Check for sensitive data
-4. Update `session-log.md`
+### ⚠️ CRITICAL: Single Push Policy
+**DO NOT push multiple times** - this triggers multiple Vercel deployments and can hit usage limits
+- ✅ Commit all changes locally first
+- ✅ Build locally to verify it works (`npm run build`)
+- �️ **ONLY push once when all work is complete and user asks**
+- ❌ NEVER push after each commit
+- ❌ NEVER push intermediate work
+
+### Before Every Commit/Push
+1. Run `npm run build` to verify no TypeScript errors
+2. Run linters
+3. Run tests (if available)
+4. Check for sensitive data
+5. Update `session-log.md`
 
 ---
 
