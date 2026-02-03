@@ -107,7 +107,7 @@ export async function GET(
 
     // Get all lap times for this race (ONLY from builds in this race at this track)
     const trackId = track?.id || race.trackId
-    const buildIds = raceCars?.map((rc: any) => rc.buildId).filter(Boolean) || []
+    const buildIds = raceCars?.map((rc: DbRaceCar) => rc.buildId).filter(Boolean) || []
 
     const { data: lapTimes } = await supabase
       .from('LapTime')
@@ -144,12 +144,12 @@ export async function GET(
     }>()
 
     for (const lapTime of lapTimes || []) {
-      const user = (lapTime as any).user
-      const car = (lapTime as any).car
+      const user = (lapTime as DbLapTimeWithRelations).user
+      const car = (lapTime as DbLapTimeWithRelations).car
       const userId = user?.id
       const carId = car?.id
-      const buildId = (lapTime as any).buildId || null
-      const buildName = (lapTime as any).buildName || null
+      const buildId = (lapTime as DbLapTimeWithRelations).buildId || null
+      const buildName = (lapTime as DbLapTimeWithRelations).buildName || null
 
       if (!userId || !carId) continue
 
@@ -195,7 +195,7 @@ export async function GET(
       const userData = await getCurrentUser(session)
 
       if (userData) {
-        const userLapTimes = (lapTimes || []).filter((lt: any) => lt.user?.id === userData.id)
+        const userLapTimes = (lapTimes || []).filter((lt: DbLapTimeWithRelations) => lt.user?.id === userData.id)
 
         if (userLapTimes.length > 0) {
           const times = userLapTimes.map(lt => lt.timeMs)
@@ -220,7 +220,7 @@ export async function GET(
     const allTimes = lapTimes?.map(lt => lt.timeMs) || []
     const statistics = {
       totalLaps: lapTimes?.length || 0,
-      uniqueDrivers: new Set((lapTimes || []).map((lt: any) => lt.user?.id).filter(Boolean)).size,
+      uniqueDrivers: new Set((lapTimes || []).map((lt: DbLapTimeWithRelations) => lt.user?.id).filter(Boolean)).size,
       fastestTime: allTimes.length > 0 ? Math.min(...allTimes) : null,
       averageTime: allTimes.length > 0
         ? Math.round(allTimes.reduce((a, b) => a + b, 0) / allTimes.length)
@@ -385,7 +385,7 @@ export async function PATCH(
       await supabase.from('RaceCar').delete().eq('raceId', id)
 
       // Create new race car entries (one per build)
-      const raceCarsToInsert = builds.map((build: any) => ({
+      const raceCarsToInsert = builds.map((build: { id: string; carId: string }) => ({
         id: crypto.randomUUID(),
         raceId: id,
         carId: build.carId,

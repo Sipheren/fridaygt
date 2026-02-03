@@ -223,7 +223,7 @@ export default function SignInPage() {
             <h2 className="text-2xl font-bold tracking-tight">Check your email</h2>
             {/* Description */}
             <p className="text-muted-foreground">
-              We've sent you a magic link to sign in to your account.
+              We&apos;ve sent you a magic link to sign in to your account.
             </p>
           </div>
         </div>

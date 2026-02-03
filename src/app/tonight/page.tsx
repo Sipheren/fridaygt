@@ -121,7 +121,7 @@ export default function TonightPage() {
 
   // Show loading spinner while fetching data
   if (loading) {
-    return <LoadingSection text="Loading tonight's races..." />
+    return <LoadingSection text="Loading tonight&apos;s races..." />
   }
 
   // Show empty state when no active races
@@ -141,7 +141,7 @@ export default function TonightPage() {
           <div className="space-y-3">
             <h2 className="text-3xl font-bold tracking-tight">No Active Races</h2>
             <p className="text-muted-foreground text-lg">
-                Ready to race? Set races as active to see them here for tonight's session!
+                Ready to race? Set races as active to see them here for tonight&apos;s session!
             </p>
           </div>
 
@@ -215,7 +215,7 @@ export default function TonightPage() {
         <Card className="bg-gradient-to-r from-muted/50 to-muted border-dashed">
           <CardContent className="p-6 text-center space-y-4">
             <p className="text-muted-foreground">
-              Want to modify tonight's races?
+              Want to modify tonight&apos;s races?
             </p>
             <Button asChild variant="outline" size="lg">
               <Link href="/races">

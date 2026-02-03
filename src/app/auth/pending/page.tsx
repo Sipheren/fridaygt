@@ -176,7 +176,7 @@ export default function PendingApprovalPage() {
             {/* space-y-1: Spacing between items */}
             <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
               <li>An admin will review your account</li>
-              <li>You'll receive an approval email</li>
+              <li>You&apos;ll receive an approval email</li>
               <li>Click the link or return here to set your gamertag</li>
               <li>Start using FridayGT!</li>
             </ol>

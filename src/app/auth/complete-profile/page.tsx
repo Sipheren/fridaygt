@@ -162,7 +162,7 @@ export default function CompleteProfilePage() {
 
   useEffect(() => {
     // Redirect if user already has a gamertag
-    if (session?.user && (session.user as any).gamertag) {
+    if (session?.user && (session.user as { gamertag?: string }).gamertag) {
       router.push('/')
     }
   }, [session, router])
@@ -250,8 +250,8 @@ export default function CompleteProfilePage() {
 
       // Redirect immediately (session will refresh naturally on next page)
       router.push('/')
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'An error occurred')
       setIsLoading(false)
     }
   }

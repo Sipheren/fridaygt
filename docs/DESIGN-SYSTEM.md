@@ -1,6 +1,6 @@
 # FridayGT Design System & UI/UX Guidelines
 
-**Last Updated:** 2026-01-31 (Session #47)
+**Last Updated:** 2026-02-03 (Session #53)
 
 ## Table of Contents
 1. [Design Principles](#design-principles)
@@ -742,6 +742,178 @@ const hasValue = currentValue !== ''
 - Icons maintain 32px size on mobile
 - Full-width touch targets for easy tapping
 - No horizontal scrolling issues
+
+---
+
+### StickyNoteCard Component
+
+**Purpose:** Realistic sticky note display with Apple Notes-inspired visual effects for the Notes feature.
+
+**Location:** `src/components/notes/sticky-note-card.tsx`
+
+**Props:**
+```tsx
+interface StickyNoteCardProps {
+  note: DbNote & { user?: { id, name?, gamertag? } | null }
+  currentUserId?: string
+  isAdmin?: boolean
+  isSelected?: boolean
+  onSelect?: (noteId: string) => void
+  onDeselect?: () => void
+  onDelete?: (noteId: string) => void
+  onUpdate?: (noteId: string, data: { title?: string; content?: string; color?: string }) => void
+  onColorPick?: (noteId: string, button: HTMLButtonElement) => void
+  isPending?: boolean
+}
+```
+
+**Visual Design Features:**
+
+1. **Dramatic Rotation (-6° to +6°):**
+   - Deterministic rotation based on note ID hash
+   - Each note has unique but consistent rotation
+   - Formula: `(hash % 121) - 60` / 10 = -6° to +6°
+
+2. **Strong Directional Shadows:**
+   - Base: `shadow-[5px_5px_7px_rgba(33,33,33,0.7)]`
+   - Hover: `shadow-[10px_10px_7px_rgba(0,0,0,0.7)]`
+   - Selected: `shadow-[15px_15px_10px_rgba(0,0,0,0.8)]`
+   - Active: `shadow-[3px_3px_5px_rgba(33,33,33,0.5)]`
+
+3. **Scale on Hover (1.1x):**
+   - Hover/Selected: `scale(1.1)` with `z-index: 5`
+   - Creates "pop up" effect above other notes
+   - Snappy 150ms linear transition
+
+4. **Paper Curl Effect:**
+   - Bottom-left: `skew(-5deg) rotate(-5deg)` with shadow
+   - Bottom-right: `skew(5deg) rotate(5deg)` with shadow
+   - Creates realistic curled corner illusion
+
+5. **Pin at Top-Center:**
+   - Red round head: `w-2 h-2 rounded-full bg-red-500`
+   - Silver needle: `w-0.5 h-2 bg-gray-400`
+   - Positioned: `absolute -top-2 left-1/2 -translate-x-1/2 z-10`
+
+6. **Vibrant Post-it Colors:**
+```tsx
+const STICKY_NOTE_COLORS = {
+  '#fef08a': 'bg-yellow-200 dark:bg-yellow-600/30',      // Bright yellow
+  '#fbcfe8': 'bg-pink-200 dark:bg-pink-600/30',         // Bright pink
+  '#bfdbfe': 'bg-blue-200 dark:bg-blue-600/30',         // Bright blue
+  '#bbf7d0': 'bg-green-200 dark:bg-green-600/30',       // Bright green
+  '#e9d5ff': 'bg-purple-200 dark:bg-purple-600/30',     // Bright purple
+  '#fed7aa': 'bg-orange-200 dark:bg-orange-600/30',     // Bright orange
+}
+```
+
+7. **Paper Texture:**
+   - Applied via `.sticky-note-texture` class
+   - SVG noise pattern at 3% opacity
+   - `mix-blend-mode: overlay`
+   - Defined in `src/app/globals.css`
+
+**Styling Base:**
+```tsx
+className={cn(
+  // Base styles
+  'sticky-note-texture relative group min-h-[180px] p-5 rounded-md',
+  'origin-top-left', // Rotation origin at top-left
+  // Strong directional shadow
+  'shadow-[5px_5px_7px_rgba(33,33,33,0.7)]',
+  // Hover effects
+  'hover:shadow-[10px_10px_7px_rgba(0,0,0,0.7)]',
+  // Border
+  'border border-foreground/10',
+  // Smooth color transition
+  'transition-colors duration-[2000ms] ease-in-out',
+  colorClass
+)}
+```
+
+**Transform Calculation:**
+```tsx
+// Get current transform based on hover/selected state
+const getTransform = () => {
+  const baseTransform = rotation  // e.g., "rotate(3deg)"
+  if (isHovered || isSelected) {
+    return `${baseTransform} scale(1.1)`  // Add scale on hover
+  }
+  return baseTransform
+}
+
+// Applied via inline style for smooth transitions
+style={{
+  transform: getTransform(),
+  transition: 'transform 0.15s linear',
+  zIndex: (isHovered || isSelected) ? 5 : 'auto'
+}}
+```
+
+**Dev Toggle:**
+- Location: `src/components/notes/notes-board.tsx`
+- Flag: `const USE_STICKY_STYLE = true`
+- Change to `false` to use original NoteCard style
+
+**State Management:**
+- `isEditing`: Inline edit mode
+- `isHovered`: Track hover state for scale effect
+- `isPressed`: Touch press feedback
+- `currentColor`: Track note color
+- `isSaving`: Save animation state
+- `deleteDialogOpen`: Dialog visibility
+
+**Accessibility:**
+- Click to edit (desktop) / tap to edit (mobile)
+- Escape key cancels editing
+- Click away saves changes (blur)
+- 44px minimum touch targets on buttons
+- Descriptive ARIA labels on action buttons
+- Keyboard navigable with `tabIndex`
+
+**Mobile Responsiveness:**
+- Grid layout: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`
+- Gap: `gap-5` (20px)
+- Notes display in vertical list on mobile
+- Pin doesn't overlap content on small screens
+
+**Comparison with NoteCard:**
+
+| Feature | NoteCard (Classic) | StickyNoteCard (New) |
+|---------|------------------|----------------------|
+| Rotation | None | -6° to +6° |
+| Shadows | Soft, diffuse | Strong directional |
+| Hover | Translate Y | Scale 1.1x + z-index |
+| Corners | `rounded-xl` | `rounded-md` |
+| Colors | Muted (/95 opacity) | Vibrant (*-200) |
+| Pin | None | Red pushpin at top-center |
+| Paper curl | None | Bottom-left & right |
+| Scale on hover | None | 1.1x zoom effect |
+
+**Usage:**
+```tsx
+// In notes-board.tsx
+{USE_STICKY_STYLE ? (
+  <StickyNoteCard
+    note={note}
+    currentUserId={session?.user?.id}
+    isAdmin={isAdmin}
+    isSelected={selectedNoteId === note.id}
+    onSelect={handleSelectNote}
+    onDeselect={handleDeselectNote}
+    onDelete={handleDelete}
+    onUpdate={handleUpdateNote}
+    onColorPick={handleColorPick}
+    isPending={note.id === pendingNoteId}
+  />
+) : (
+  <NoteCard {...props} />
+)}
+```
+
+**References:**
+- Plan: `docs/STICKY-NOTES-VISUAL-PLAN.md`
+- Added: v2.22.0 (Session #53)
 
 ---
 

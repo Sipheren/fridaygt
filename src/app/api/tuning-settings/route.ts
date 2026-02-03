@@ -202,7 +202,7 @@ export async function GET(request: NextRequest) {
     // Client-side sort by section displayOrder if sections are included
     if (settings && settings.length > 0 && settings[0].section) {
       settings.sort((a, b) => {
-        const sectionOrder = ((a.section as any).displayOrder || 0) - ((b.section as any).displayOrder || 0)
+        const sectionOrder = ((a.section as { displayOrder?: number } | null)?.displayOrder || 0) - ((b.section as { displayOrder?: number } | null)?.displayOrder || 0)
         if (sectionOrder !== 0) return sectionOrder
         return (a.displayOrder || 999) - (b.displayOrder || 999)
       })

@@ -185,10 +185,10 @@ export function rateLimitHeaders(result: RateLimitResult): HeadersInit {
 export function withRateLimit<
   T extends NextRequest | { request: NextRequest } = NextRequest
 >(
-  handler: (request: T, ...args: any[]) => Promise<NextResponse>,
+  handler: (request: T, ...args: unknown[]) => Promise<NextResponse>,
   options: RateLimitOptions = {}
 ) {
-  return async (request: T, ...args: any[]): Promise<NextResponse> => {
+  return async (request: T, ...args: unknown[]): Promise<NextResponse> => {
     // Handle both NextRequest and objects with NextRequest property
     const req = 'request' in request ? (request as { request: NextRequest }).request : (request as NextRequest)
 

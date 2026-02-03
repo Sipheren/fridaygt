@@ -315,7 +315,7 @@ export function SortableRaceList({ initialRaces }: SortableRaceListProps) {
   // - Debounce not working: Check saveTimeoutRef is being cleared
   // ============================================================
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
+  const handleDragStart = useCallback((_event: DragStartEvent) => {
     // Haptic feedback for mobile
     // - 50ms vibration: Subtle tactile feedback
     // - Browser check: Only call if supported

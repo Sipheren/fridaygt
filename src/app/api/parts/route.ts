@@ -183,7 +183,7 @@ export async function GET(request: NextRequest) {
     // Client-side sort by category displayOrder if categories are included
     if (parts && parts.length > 0 && parts[0].category) {
       parts.sort((a, b) => {
-        const categoryOrder = ((a.category as any).displayOrder || 0) - ((b.category as any).displayOrder || 0)
+        const categoryOrder = ((a.category as { displayOrder?: number } | null)?.displayOrder || 0) - ((b.category as { displayOrder?: number } | null)?.displayOrder || 0)
         if (categoryOrder !== 0) return categoryOrder
         return a.name.localeCompare(b.name)
       })

@@ -51,7 +51,7 @@ export function VerificationEmail({ verifyUrl }: VerificationEmailProps) {
           marginBottom: 0,
         }}
       >
-        If you didn't create an account with FridayGT, you can safely ignore this email.
+        If you didn&apos;t create an account with FridayGT, you can safely ignore this email.
       </Text>
     </BaseEmail>
   )

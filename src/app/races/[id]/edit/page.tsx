@@ -123,7 +123,7 @@ export default function EditRacePage() {
         setFormData({
           name: raceData.race.name || '',
           description: raceData.race.description || '',
-          buildIds: raceData.race.RaceCar?.map((rc: any) => rc.buildId) || [],
+          buildIds: raceData.race.RaceCar?.map((rc: { buildId: string }) => rc.buildId) || [],
           laps: raceData.race.laps?.toString() || '',
           weather: raceData.race.weather || '',
           isActive: raceData.race.isActive || false,

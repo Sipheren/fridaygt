@@ -1,4 +1,4 @@
-import { Section, Text, Row, Column } from '@react-email/components'
+import { Section, Text } from '@react-email/components'
 import { colors, fonts, spacing, borderRadius } from '../constants'
 
 interface CardProps {

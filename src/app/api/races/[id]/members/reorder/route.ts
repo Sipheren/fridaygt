@@ -141,7 +141,7 @@ export async function PATCH(
     }
 
     // Verify all members belong to the specified race
-    const invalidMembers = existingMembers.filter((m: any) => m.raceid !== raceId)
+    const invalidMembers = existingMembers.filter((m: { raceid: string }) => m.raceid !== raceId)
     if (invalidMembers.length > 0) {
       return NextResponse.json(
         { error: 'One or more members do not belong to this race' },

@@ -35,7 +35,7 @@ export interface AuditLogParams {
   action: AuditAction
   targetId?: string
   targetType?: string
-  details?: Record<string, any>
+  details?: Record<string, unknown>
 }
 
 /**
@@ -114,7 +114,7 @@ export async function getAuditLogs(filters: {
   targetId?: string
   action?: AuditAction
   limit?: number
-}): Promise<any[]> {
+}): Promise<unknown[]> {
   const supabase = createServiceRoleClient()
 
   let query = supabase

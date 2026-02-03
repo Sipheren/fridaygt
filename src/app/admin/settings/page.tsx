@@ -122,7 +122,7 @@ export default function AdminSettingsPage() {
           ======================================================================== */}
       <div className="border border-border rounded-lg p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <Image className="h-5 w-5 text-secondary" />
+          <Image className="h-5 w-5 text-secondary" alt="Settings icon" />
           <h2 className="text-xl font-bold">
             IMAGES
             <Badge variant="outline" className="ml-2 text-chart-4 border-chart-4/30">

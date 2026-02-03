@@ -24,10 +24,6 @@ import { UpdateBuildSchema, validateBody } from '@/lib/validation'
 import type {
   DbCarBuildUpgrade,
   DbCarBuildSetting,
-  DbPart,
-  DbPartCategory,
-  DbTuningSetting,
-  DbTuningSection,
 } from '@/types/database'
 import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 
@@ -164,7 +160,7 @@ export async function GET(
     // Also handles cases where setting.setting.section is NULL (custom gears)
     // ============================================================
 
-    const transformedSettings = settings?.map((setting: any) => {
+    const transformedSettings = settings?.map((setting: DbCarBuildSetting & { setting?: { section?: { name?: string } } }) => {
       return {
         ...setting,
         section: setting.setting?.section?.name || setting.category,
@@ -361,7 +357,7 @@ export async function PATCH(
     for (const [key, value] of Object.entries(gearFields)) {
       if (key.startsWith('gear') || key === 'finalDrive') {
         // Store as string, empty string becomes null
-        (updateData as any)[key] = value === '' ? null : value
+        (updateData as Record<string, unknown>)[key] = value === '' ? null : value
       }
     }
 
@@ -422,7 +418,7 @@ export async function PATCH(
         // Fetch part details to populate legacy columns
         const partIds = upgrades.map(u => u.partId).filter(Boolean)
 
-        let partDetails: any[] = []
+        let partDetails: Array<{ id: string; name: string; categoryName: string }> = []
         if (partIds.length > 0) {
           // Fetch parts with category details using JOIN query
           const { data: parts } = await supabase
@@ -432,7 +428,7 @@ export async function PATCH(
 
           partDetails = (parts || []).map(p => ({
             ...p,
-            categoryName: (p.category as any)?.name || ''
+            categoryName: (p.category as { name?: string } | null)?.name || ''
           }))
         }
 
@@ -508,7 +504,7 @@ export async function PATCH(
           .map((s) => s.settingId)
           .filter((id): id is string => id !== undefined && id !== null)
 
-        let settingDetails: any[] = []
+        let settingDetails: Array<{ id: string; name: string; sectionName: string }> = []
         if (settingIds.length > 0) {
           // Fetch settings with section details using JOIN query
           const { data: tuningSettings } = await supabase
@@ -518,7 +514,7 @@ export async function PATCH(
 
           settingDetails = (tuningSettings || []).map(s => ({
             ...s,
-            sectionName: (s.section as any)?.name || ''
+            sectionName: (s.section as { name?: string } | null)?.name || ''
           }))
         }
 
@@ -526,7 +522,7 @@ export async function PATCH(
 
         // Handle standard settings
         const settingRecords = settings
-          .map((setting: any) => {
+          .map((setting: { settingId?: string | null; value?: string | number | null }) => {
             const tuningSetting = settingMap.get(setting.settingId!)
             return {
               id: crypto.randomUUID(),
@@ -575,7 +571,7 @@ export async function PATCH(
       .eq('buildId', id)
 
     // Transform settings to use 'section' instead of 'category' for frontend compatibility
-    const transformedSettings = updatedSettings?.map((setting: any) => {
+    const transformedSettings = updatedSettings?.map((setting: DbCarBuildSetting & { setting?: { section?: { name?: string } } }) => {
       return {
         ...setting,
         section: setting.setting?.section?.name || setting.category,

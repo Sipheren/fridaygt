@@ -46,6 +46,7 @@ import { sendApprovalNotification, sendUserRemovalNotification } from '@/lib/ema
 import { isAdmin } from '@/lib/auth-utils'
 import { UpdateUserRoleSchema, UpdateUserProfileSchema, validateBody } from '@/lib/validation'
 import type { DbUser } from '@/types/database'
+// Unused import removed
 import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 import { logAdminAction } from '@/lib/audit-log'
 
@@ -411,7 +412,7 @@ export async function DELETE(
   // Send notification to ALL admins
   if (user?.email && admins && admins.length > 0) {
     const adminEmails = admins
-      .map((a: any) => a.email)
+      .map((a: { email: string | null }) => a.email)
       .filter((e: string | null): e is string => e !== null && e !== '')
 
     try {

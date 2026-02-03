@@ -267,7 +267,7 @@ export async function POST(request: NextRequest) {
     if (upgrades && Array.isArray(upgrades) && upgrades.length > 0) {
       const partIds = upgrades.map(u => u.partId).filter(Boolean)
 
-      let partDetails: any[] = []
+      let partDetails: Array<{ id: string; name: string; categoryName: string }> = []
       if (partIds.length > 0) {
         // Fetch parts with category details using JOIN query
         const { data: parts } = await supabase
@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
 
         partDetails = (parts || []).map(p => ({
           ...p,
-          categoryName: (p.category as any)?.name || ''
+          categoryName: (p.category as { name?: string } | null)?.name || ''
         }))
       }
 
@@ -285,7 +285,7 @@ export async function POST(request: NextRequest) {
 
       const upgradeRecords = upgrades
         .filter(u => u.partId) // Only include upgrades with valid partId
-        .map(upgrade => {
+        .map((upgrade: { partId: string; value?: string | null }) => {
           const part = partMap.get(upgrade.partId)
           return {
             id: crypto.randomUUID(),
@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
             part: part?.name || '',
             // Include value for dropdown parts (GT Auto, Custom Parts)
             // Checkbox parts will have value = undefined (stored as NULL)
-            value: (upgrade as any).value || null,
+            value: upgrade.value || null,
           }
         })
 
@@ -328,7 +328,7 @@ export async function POST(request: NextRequest) {
       // Handle standard settings (fetch details from TuningSetting table)
       const settingIds = standardSettings.map(s => s.settingId).filter(Boolean)
 
-      let settingDetails: any[] = []
+      let settingDetails: Array<{ id: string; name: string; sectionName: string }> = []
       if (settingIds.length > 0) {
         // Fetch settings with section details using JOIN query
         const { data: tuningSettings } = await supabase
@@ -338,14 +338,14 @@ export async function POST(request: NextRequest) {
 
         settingDetails = (tuningSettings || []).map(s => ({
           ...s,
-          sectionName: (s.section as any)?.name || ''
+          sectionName: (s.section as { name?: string } | null)?.name || ''
         }))
       }
 
       const settingMap = new Map(settingDetails.map(s => [s.id, s]))
 
       const settingRecords = standardSettings
-        .map((setting: any) => {
+        .map((setting: { settingId: string; value?: string | number | null }) => {
           const tuningSetting = settingMap.get(setting.settingId)
           return {
             id: crypto.randomUUID(),
@@ -359,7 +359,7 @@ export async function POST(request: NextRequest) {
 
       // Handle custom gears (store with settingId=null and custom name in 'setting' field)
       // Save all custom gears, even with empty values, to preserve user's added gears
-      const customGearRecords = customGears.map((gear: any) => {
+      const customGearRecords = customGears.map((gear: { settingId: string; value?: string | null }) => {
         const gearName = gear.settingId.replace('custom:', '')
         return {
           id: crypto.randomUUID(),

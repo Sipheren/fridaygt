@@ -1,5 +1,5 @@
 import { Section, Text } from '@react-email/components'
-import { colors, fonts, spacing } from '../constants'
+import { spacing } from '../constants'
 
 interface EmailSectionProps {
   children: React.ReactNode

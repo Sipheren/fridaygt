@@ -26,7 +26,7 @@ interface LogEntry {
   userId?: string
   email?: string
   adminId?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 const isProduction = process.env.NODE_ENV === 'production'
@@ -109,20 +109,20 @@ export function maskId(id: string): string {
 /**
  * Convenience function for info logs
  */
-export function logInfo(message: string, meta: Record<string, any> = {}): void {
+export function logInfo(message: string, meta: Record<string, unknown> = {}): void {
   log({ level: 'info', message, ...meta })
 }
 
 /**
  * Convenience function for warning logs
  */
-export function logWarn(message: string, meta: Record<string, any> = {}): void {
+export function logWarn(message: string, meta: Record<string, unknown> = {}): void {
   log({ level: 'warn', message, ...meta })
 }
 
 /**
  * Convenience function for error logs
  */
-export function logError(message: string, meta: Record<string, any> = {}): void {
+export function logError(message: string, meta: Record<string, unknown> = {}): void {
   log({ level: 'error', message, ...meta })
 }

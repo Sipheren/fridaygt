@@ -84,7 +84,7 @@ function getDisplayName(race: DbRaceWithRelations): string {
   }
 
   const trackName = race.track?.name || 'Unknown Track'
-  const firstCar = (race.RaceCar?.[0] as any)?.car
+  const firstCar = race.RaceCar?.[0]?.car as { manufacturer?: string; name?: string } | undefined
   const carName = firstCar ? `${firstCar.manufacturer} ${firstCar.name}` : 'Unknown Car'
 
   return `${trackName} + ${carName}`
@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
     // ============================================================
 
     // Create RaceCar entries for each build
-    const raceCarEntries = builds.map((build: any) => ({
+    const raceCarEntries = builds.map((build: { id: string; carId: string }) => ({
       id: crypto.randomUUID(),
       raceId,
       carId: build.carId,

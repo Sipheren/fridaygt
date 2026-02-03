@@ -1,7 +1,6 @@
 import { Text } from '@react-email/components'
 import { BaseEmail } from './base-email'
 import { Button } from './components/button'
-import { Badge } from './components/badge'
 import { Card } from './components/card'
 import { colors, spacing, fonts } from './constants'
 
@@ -109,7 +108,7 @@ export function ApprovalEmail({ approved, signInUrl }: ApprovalEmailProps) {
               marginBottom: 0,
             }}
           >
-            You can submit a new registration request if you'd like to try again.
+            You can submit a new registration request if you&apos;d like to try again.
           </Text>
         </>
       )}

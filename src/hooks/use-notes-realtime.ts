@@ -16,7 +16,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { DbNote, DbNoteWithUser } from '@/types/database'
+import type { DbNoteWithUser } from '@/types/database'
 
 export function useNotesRealtime() {
   const [notes, setNotes] = useState<DbNoteWithUser[]>([])
@@ -40,7 +40,7 @@ export function useNotesRealtime() {
     if (!error && data) {
       setNotes(data as DbNoteWithUser[])
     }
-  }, [supabase])
+  }, [])
 
   useEffect(() => {
     isMounted.current = true
@@ -105,7 +105,7 @@ export function useNotesRealtime() {
       isMounted.current = false
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [supabase])
 
   // Optimistic update function
   const updateNoteOptimistically = useCallback((noteId: string, updates: Partial<DbNoteWithUser>) => {

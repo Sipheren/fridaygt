@@ -136,7 +136,7 @@ export async function POST(
 
     const newBuildId = crypto.randomUUID()
     const now = new Date().toISOString()
-    const { data: newBuild, error: buildError } = await supabase
+    const { error: buildError } = await supabase
       .from('CarBuild')
       .insert({
         id: newBuildId,
@@ -176,7 +176,7 @@ export async function POST(
     // ============================================================
 
     if (originalBuild.upgrades && originalBuild.upgrades.length > 0) {
-      const upgradeRecords = originalBuild.upgrades.map((upgrade: any) => ({
+      const upgradeRecords = originalBuild.upgrades.map((upgrade: DbCarBuildUpgrade) => ({
         id: crypto.randomUUID(),
         buildId: newBuildId,
         category: upgrade.category,
@@ -210,7 +210,7 @@ export async function POST(
     // ============================================================
 
     if (originalBuild.settings && originalBuild.settings.length > 0) {
-      const settingRecords = originalBuild.settings.map((setting: any) => ({
+      const settingRecords = originalBuild.settings.map((setting: DbCarBuildSetting) => ({
         id: crypto.randomUUID(),
         buildId: newBuildId,
         category: setting.category,

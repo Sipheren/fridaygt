@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
     const buildId = crypto.randomUUID()
     const now = new Date().toISOString()
 
-    const { data: build, error: buildError } = await supabase
+    const { error: buildError } = await supabase
       .from('CarBuild')
       .insert({
         id: buildId,

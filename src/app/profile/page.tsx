@@ -203,9 +203,9 @@ export default function ProfilePage() {
       // Note: Duplicate setTimeout exists (line above), but first one is correct
       // This second one is redundant but harmless
       setTimeout(() => setSuccess(false), 3000)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating profile:', err)
-      setError(err.message || 'Failed to update profile')
+      setError(err instanceof Error ? err.message : 'Failed to update profile')
     } finally {
       setSaving(false)
     }

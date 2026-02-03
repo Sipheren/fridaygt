@@ -1,5 +1,5 @@
-import { Container, Html, Text, Body, Head, Heading, Preview, Section, Link, Row, Column } from '@react-email/components'
-import { colors, fonts, spacing, layout, borderRadius } from './constants'
+import { Container, Html, Text, Body, Head, Heading, Preview, Section } from '@react-email/components'
+import { colors, fonts, spacing, layout } from './constants'
 
 interface BaseEmailProps {
   previewText: string
@@ -96,7 +96,7 @@ export function BaseEmail({ previewText, heading, children }: BaseEmailProps) {
                 margin: 0,
               }}
             >
-              You received this email because you signed up for FridayGT. If you didn't request this, please ignore this email.
+              You received this email because you signed up for FridayGT. If you didn&apos;t request this, please ignore this email.
             </Text>
           </Section>
         </Container>

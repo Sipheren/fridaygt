@@ -40,7 +40,7 @@
  * - Performance: Consider pagination if user base grows beyond 1000 users
  */
 
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { isAdmin } from '@/lib/auth-utils'
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
   // Prevents abuse of admin user listing endpoint
   // ============================================================
 
-  const rateLimit = await checkRateLimit(request as any, RateLimit.Query())
+  const rateLimit = await checkRateLimit(request as NextRequest, RateLimit.Query())
 
   if (!rateLimit.success) {
     return NextResponse.json(

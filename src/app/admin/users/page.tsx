@@ -94,7 +94,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ArrowLeft, UserCheck, UserX, Shield, User, Clock, AlertTriangle, Loader2, Users, Edit, Gamepad2 } from 'lucide-react'
+import { ArrowLeft, UserCheck, UserX, Shield, User, Clock, AlertTriangle, Loader2, Users, Gamepad2 } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 import { PageWrapper, PageHeader } from '@/components/layout'
 
@@ -137,6 +137,7 @@ export default function AdminUsersPage() {
   // Fetch users on component mount
   useEffect(() => {
     fetchUsers()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Auto-hide messages after 5 seconds

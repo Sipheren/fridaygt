@@ -204,9 +204,9 @@ export default function LapTimesPage() {
       setLapTimes(lapTimes.filter((lap) => lap.id !== lapToDelete!.id))
       setDeleteDialogOpen(false)
       setLapToDelete(null)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting lap time:', error)
-      setErrorMessage(error.message || 'Failed to delete lap time')
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to delete lap time')
       setShowErrorDialog(true)
     } finally {
       setDeletingId(null)

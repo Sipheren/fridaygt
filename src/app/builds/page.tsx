@@ -497,7 +497,7 @@ export default function BuildsPage() {
                       {build.car.year && (
                         <>
                           <span>•</span>
-                          <span>'{String(build.car.year).slice(-2)}</span>
+                          <span>&apos;{String(build.car.year).slice(-2)}</span>
                         </>
                       )}
                     </div>

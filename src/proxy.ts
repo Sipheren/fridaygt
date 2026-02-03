@@ -5,7 +5,7 @@ export default auth((req) => {
   const { pathname } = req.nextUrl
   const isAuthenticated = !!req.auth
   const user = req.auth?.user
-  const userRole = (user as any)?.role
+  const userRole = (user as { role?: string } | null)?.role
 
   // Public routes
   const publicRoutes = ['/auth/signin', '/auth/verify-request', '/auth/error', '/auth/pending']

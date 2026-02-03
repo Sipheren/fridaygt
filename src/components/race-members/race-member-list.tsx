@@ -130,7 +130,7 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
   // DRAG HANDLERS
   // ============================================================
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
+  const handleDragStart = useCallback((_event: DragStartEvent) => {
     // Haptic feedback for mobile
     if ('vibrate' in navigator && typeof navigator.vibrate === 'function') {
       navigator.vibrate(50)

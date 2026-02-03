@@ -1,6 +1,5 @@
 import { Text } from '@react-email/components'
 import { BaseEmail } from './base-email'
-import { Badge } from './components/badge'
 import { Card } from './components/card'
 import { colors, spacing, fonts } from './constants'
 
