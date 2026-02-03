@@ -27,7 +27,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   }),
   session: {
     strategy: "database", // Use database sessions instead of JWT
-    maxAge: 30 * 24 * 60 * 60, // 30 days - sessions expire after 30 days
+    maxAge: 7 * 24 * 60 * 60, // 7 days - sessions expire after 7 days
   },
   providers: [
     Resend({
