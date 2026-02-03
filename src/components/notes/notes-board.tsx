@@ -9,12 +9,16 @@
  */
 
 import { NoteCard } from './note-card'
+import { StickyNoteCard } from './sticky-note-card'
 import { EmptyNotesState } from './empty-notes-state'
 import { ColorPickerPopover } from './color-picker-popover'
 import { Loader2 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useState, useCallback, useEffect } from 'react'
 import type { DbNoteWithUser } from '@/types/database'
+
+// DEV ONLY: Toggle between classic and sticky note styles
+const USE_STICKY_STYLE = true  // ← Change this to false for classic style
 
 interface NotesBoardProps {
   notes: DbNoteWithUser[]
@@ -129,18 +133,33 @@ export function NotesBoard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" onClick={handleDeselectNote}>
         {filteredNotes.map((note) => (
           <div key={note.id} onClick={(e) => e.stopPropagation()}>
-            <NoteCard
-              note={note}
-              currentUserId={session?.user?.id}
-              isAdmin={isAdmin}
-              isSelected={selectedNoteId === note.id}
-              onSelect={handleSelectNote}
-              onDeselect={handleDeselectNote}
-              onUpdate={handleUpdateNote}
-              onDelete={handleDelete}
-              onColorPick={handleColorPick}
-              isPending={note.id === pendingNoteId}
-            />
+            {USE_STICKY_STYLE ? (
+              <StickyNoteCard
+                note={note}
+                currentUserId={session?.user?.id}
+                isAdmin={isAdmin}
+                isSelected={selectedNoteId === note.id}
+                onSelect={handleSelectNote}
+                onDeselect={handleDeselectNote}
+                onUpdate={handleUpdateNote}
+                onDelete={handleDelete}
+                onColorPick={handleColorPick}
+                isPending={note.id === pendingNoteId}
+              />
+            ) : (
+              <NoteCard
+                note={note}
+                currentUserId={session?.user?.id}
+                isAdmin={isAdmin}
+                isSelected={selectedNoteId === note.id}
+                onSelect={handleSelectNote}
+                onDeselect={handleDeselectNote}
+                onUpdate={handleUpdateNote}
+                onDelete={handleDelete}
+                onColorPick={handleColorPick}
+                isPending={note.id === pendingNoteId}
+              />
+            )}
           </div>
         ))}
       </div>
