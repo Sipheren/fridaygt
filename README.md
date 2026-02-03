@@ -8,7 +8,7 @@ A build-centric Gran Turismo 7 lap time tracker and race management application 
 ## Live Application
 
 **Production URL**: https://fridaygt.vercel.app
-**Current Version**: 2.21.0
+**Current Version**: 2.22.0
 
 ## Versioning
 
@@ -16,6 +16,7 @@ FridayGT follows semantic versioning with a comprehensive session-based developm
 
 | Version | Sessions | Key Changes |
 |---------|----------|-------------|
+| **2.22.0** | #53 | Sticky Notes Visual Redesign - Realistic sticky note effect with dramatic rotation (-6° to +6°), strong directional shadows, paper curl effect, scale on hover (1.1x), vibrant Post-it colors |
 | **2.21.0** | #52 | Sticky Notes Board - Collaborative notes with real-time sync, color picker, mobile-first design |
 | **2.20.3** | #51 | Documentation - SECURITY.md alignment, rate limiting docs, auth provider correction, added new endpoints |
 | **2.20.0** | #50 | Security Hardening - Service role documentation, magic link expiry, audit logging, PII removal, rate limiting, URL fixes |
