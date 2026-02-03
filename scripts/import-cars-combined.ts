@@ -80,7 +80,7 @@
 
 import fs from 'fs'
 import path from 'path'
-import { createClient } from '@supabase/supabase-js'
+// import { createClient } from '@supabase/supabase-js' // Unused - using direct import
 
 // ============================================================================
 // Configuration
@@ -99,7 +99,7 @@ import { createClient } from '@supabase/supabase-js'
  * @param content - Raw CSV content as string
  * @returns Array of objects with headers as keys
  */
-function parseCSV(content: string): any[] {
+function parseCSV(content: string): Record<string, string>[] {
   const lines = content.trim().split('\n')
   const headers = lines[0].split(',')
 
@@ -121,7 +121,7 @@ function parseCSV(content: string): any[] {
     }
     values.push(current.trim())
 
-    const obj: any = {}
+    const obj: Record<string, string> = {}
     headers.forEach((header, index) => {
       obj[header] = values[index] || ''
     })
@@ -254,7 +254,7 @@ async function importCars() {
   for (let i = 0; i < records.length; i += batchSize) {
     const batch = records.slice(i, i + batchSize)
 
-    const cars = batch.map((record: any) => {
+    const cars = batch.map((record: Record<string, string>) => {
       // Extract and normalize car data
       const make = record.Make || 'Unknown'
       const model = record.Model || 'Unknown Car'

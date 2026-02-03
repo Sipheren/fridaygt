@@ -172,7 +172,7 @@ export function TrackBuilds({ trackId, trackName }: TrackBuildsProps) {
       const buildStats = new Map<string, { lapCount: number; bestTime: number | null }>()
 
       if (lapTimesData.lapTimes) {
-        lapTimesData.lapTimes.forEach((lapTime: any) => {
+        lapTimesData.lapTimes.forEach((lapTime: { id: string; buildId?: string; timeMs: number }) => {
           if (lapTime.buildId) {
             buildIds.add(lapTime.buildId)
 
@@ -210,8 +210,8 @@ export function TrackBuilds({ trackId, trackName }: TrackBuildsProps) {
       // STEP 4: Enrich builds with track stats
       // ============================================================
       const enrichedBuilds = buildsData.builds
-        .filter((data: any) => data && !data.error)
-        .map((data: any) => ({
+        .filter((data: { id?: string; error?: string } | null) => data && !data.error)
+        .map((data: { id: string }) => ({
           ...data,
           stats: buildStats.get(data.id)
         }))

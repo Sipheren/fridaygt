@@ -294,7 +294,7 @@ export function CarLapTimes({ carSlug, carName }: CarLapTimesProps) {
           <div className="space-y-2">
             <p className="text-lg font-semibold">NO LAP TIMES YET</p>
             <p className="text-sm text-muted-foreground">
-              You haven't recorded any lap times with the {carName} yet.
+              You haven&apos;t recorded any lap times with the {carName} yet.
             </p>
           </div>
           <Button

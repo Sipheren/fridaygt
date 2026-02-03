@@ -284,8 +284,8 @@ export async function POST(request: NextRequest) {
       const partMap = new Map(partDetails.map(p => [p.id, p]))
 
       const upgradeRecords = upgrades
-        .filter(u => u.partId) // Only include upgrades with valid partId
-        .map((upgrade: { partId: string; value?: string | null }) => {
+        .filter((u): u is { partId: string; value?: string | null } => !!u.partId) // Only include upgrades with valid partId
+        .map((upgrade) => {
           const part = partMap.get(upgrade.partId)
           return {
             id: crypto.randomUUID(),
@@ -345,12 +345,12 @@ export async function POST(request: NextRequest) {
       const settingMap = new Map(settingDetails.map(s => [s.id, s]))
 
       const settingRecords = standardSettings
-        .map((setting: { settingId: string; value?: string | number | null }) => {
-          const tuningSetting = settingMap.get(setting.settingId)
+        .map((setting) => {
+          const tuningSetting = settingMap.get(setting.settingId as string)
           return {
             id: crypto.randomUUID(),
             buildId,
-            settingId: setting.settingId,
+            settingId: setting.settingId as string,
             category: tuningSetting?.sectionName || '',
             setting: tuningSetting?.name || '',
             value: setting.value,
@@ -359,8 +359,8 @@ export async function POST(request: NextRequest) {
 
       // Handle custom gears (store with settingId=null and custom name in 'setting' field)
       // Save all custom gears, even with empty values, to preserve user's added gears
-      const customGearRecords = customGears.map((gear: { settingId: string; value?: string | null }) => {
-        const gearName = gear.settingId.replace('custom:', '')
+      const customGearRecords = customGears.map((gear) => {
+        const gearName = (gear.settingId as string).replace('custom:', '')
         return {
           id: crypto.randomUUID(),
           buildId,

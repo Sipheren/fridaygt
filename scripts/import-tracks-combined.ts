@@ -111,7 +111,7 @@ const supabase = createClient(supabaseUrl, supabaseKey)
  * @param content - Raw CSV content as string
  * @returns Array of objects with headers as keys
  */
-function parseCSV(content: string): any[] {
+function parseCSV(content: string): Record<string, string>[] {
   const lines = content.trim().split('\n')
   const headers = lines[0].split(',')
 
@@ -133,7 +133,7 @@ function parseCSV(content: string): any[] {
     }
     values.push(current.trim())
 
-    const obj: any = {}
+    const obj: Record<string, string> = {}
     headers.forEach((header, index) => {
       obj[header] = values[index] || ''
     })
@@ -196,7 +196,7 @@ async function importTracks() {
   for (let i = 0; i < records.length; i += batchSize) {
     const batch = records.slice(i, i + batchSize)
 
-    const tracks = batch.map((record: any) => {
+    const tracks = batch.map((record: Record<string, string>) => {
       // Extract track data from CSV
       const fullCourseName = record['Course Name'] || 'Unknown Track'
       const country = record.Country || 'Unknown'

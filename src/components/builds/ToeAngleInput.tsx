@@ -87,24 +87,7 @@ function getDirection(value: number): 'in' | 'out' | 'straight' {
   return 'straight'
 }
 
-/**
- * Get icon component based on direction
- * - Maps direction string to corresponding icon component
- * - Used for dynamic icon rendering
- *
- * @param direction - 'in' | 'out' | 'straight'
- * @returns Icon component (ToeInIcon | ToeOutIcon | ToeStraightIcon)
- */
-function getToeIcon(direction: 'in' | 'out' | 'straight') {
-  switch (direction) {
-    case 'in':
-      return ToeInIcon
-    case 'out':
-      return ToeOutIcon
-    default:
-      return ToeStraightIcon
-  }
-}
+// Icons are now conditionally rendered in JSX instead of using a factory function
 
 /**
  * Format display value with direction label
@@ -135,7 +118,7 @@ function formatDisplayValue(value: number): string {
  */
 function parseDirectInput(input: string): string {
   // Strip direction suffixes if present
-  let cleaned = input.replace(/\s*(In|Out|IN|OUT)$/i, '')
+  const cleaned = input.replace(/\s*(In|Out|IN|OUT)$/i, '')
 
   // Check for "out" keyword (case insensitive) anywhere in input
   const isOut = /out/i.test(input)
@@ -182,7 +165,6 @@ export function ToeAngleInput({ value, onChange, label, disabled = false }: ToeA
 
   // Get display components based on current value
   const direction = getDirection(numericValue)
-  const IconComponent = getToeIcon(direction)
   const displayValue = formatDisplayValue(numericValue)
 
   // ============================================================
@@ -227,11 +209,27 @@ export function ToeAngleInput({ value, onChange, label, disabled = false }: ToeA
 
       <div className="flex items-center gap-2">
         {/* Direction Icon - React component with currentColor */}
-        <IconComponent
-          size={24}
-          className="shrink-0 text-foreground"
-          aria-hidden="true"
-        />
+        {direction === 'in' && (
+          <ToeInIcon
+            size={24}
+            className="shrink-0 text-foreground"
+            aria-hidden="true"
+          />
+        )}
+        {direction === 'out' && (
+          <ToeOutIcon
+            size={24}
+            className="shrink-0 text-foreground"
+            aria-hidden="true"
+          />
+        )}
+        {direction === 'straight' && (
+          <ToeStraightIcon
+            size={24}
+            className="shrink-0 text-foreground"
+            aria-hidden="true"
+          />
+        )}
 
         {/* Value Display/Input - min-h-[44px] for WCAG touch targets */}
         <Input

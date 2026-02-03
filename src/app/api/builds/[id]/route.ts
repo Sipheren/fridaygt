@@ -160,12 +160,10 @@ export async function GET(
     // Also handles cases where setting.setting.section is NULL (custom gears)
     // ============================================================
 
-    const transformedSettings = settings?.map((setting: DbCarBuildSetting & { setting?: { section?: { name?: string } } }) => {
-      return {
-        ...setting,
-        section: setting.setting?.section?.name || setting.category,
-      }
-    }) || []
+    const transformedSettings = settings?.map((setting) => ({
+      ...setting,
+      section: (setting as { setting?: { section?: { name?: string } } })?.setting?.section?.name || (setting as { category?: string }).category,
+    })) || []
 
     return NextResponse.json({
       ...build,
@@ -571,12 +569,10 @@ export async function PATCH(
       .eq('buildId', id)
 
     // Transform settings to use 'section' instead of 'category' for frontend compatibility
-    const transformedSettings = updatedSettings?.map((setting: DbCarBuildSetting & { setting?: { section?: { name?: string } } }) => {
-      return {
-        ...setting,
-        section: setting.setting?.section?.name || setting.category,
-      }
-    }) || []
+    const transformedSettings = updatedSettings?.map((setting) => ({
+      ...setting,
+      section: (setting as { setting?: { section?: { name?: string } } })?.setting?.section?.name || (setting as { category?: string }).category,
+    })) || []
 
     return NextResponse.json({
       ...updatedBuild,

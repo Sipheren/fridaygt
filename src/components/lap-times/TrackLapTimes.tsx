@@ -179,7 +179,7 @@ export function TrackLapTimes({ trackSlug, trackName }: TrackLapTimesProps) {
   // showAll: Boolean to show all cars (default: false = show 3)
 
   const [lapTimesByCar, setLapTimesByCar] = useState<LapTimesByCarGroup[]>([])
-  const [statistics, setStatistics] = useState<any>(null)
+  const [statistics, setStatistics] = useState<{ totalLaps: number; fastestTime: number | null } | null>(null)
   const [loading, setLoading] = useState(true)
   const [showAll, setShowAll] = useState(false)
 
@@ -280,7 +280,7 @@ export function TrackLapTimes({ trackSlug, trackName }: TrackLapTimesProps) {
         <div className="text-center py-8">
           <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
           <p className="text-muted-foreground mb-4">
-            You haven't recorded any lap times on {trackName} yet
+            You haven&apos;t recorded any lap times on {trackName} yet
           </p>
           <Button asChild>
             <Link href={`/lap-times/new`}>

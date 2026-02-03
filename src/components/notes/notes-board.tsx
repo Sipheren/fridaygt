@@ -58,6 +58,7 @@ export function NotesBoard({
     if (newNoteId) {
       setSelectedNoteId(newNoteId)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newNoteId])
 
   // Handle note selection

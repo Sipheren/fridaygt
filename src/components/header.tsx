@@ -42,7 +42,6 @@ export function Header({ user, version }: HeaderProps) {
     // Read BRAD MODE state from localStorage on mount
     const storedBradMode = localStorage.getItem('bradMode') === 'true'
     const storedPreviousTheme = localStorage.getItem('previousTheme')
-    setIsBradMode(storedBradMode)
 
     if (storedPreviousTheme) {
       setPreviousTheme(storedPreviousTheme)
@@ -52,6 +51,10 @@ export function Header({ user, version }: HeaderProps) {
       // Apply accessible-racing class if stored
       document.documentElement.classList.add('accessible-racing')
     }
+
+    // Set BRAD MODE state after other state updates to prevent cascading renders
+    setIsBradMode(storedBradMode)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const toggleBradMode = () => {

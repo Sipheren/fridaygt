@@ -84,7 +84,7 @@ function getDisplayName(race: DbRaceWithRelations): string {
   }
 
   const trackName = race.track?.name || 'Unknown Track'
-  const firstCar = race.RaceCar?.[0]?.car as { manufacturer?: string; name?: string } | undefined
+  const firstCar = (race.RaceCar?.[0] as { car?: { manufacturer?: string; name?: string }[] | null })?.car?.[0]
   const carName = firstCar ? `${firstCar.manufacturer} ${firstCar.name}` : 'Unknown Car'
 
   return `${trackName} + ${carName}`
