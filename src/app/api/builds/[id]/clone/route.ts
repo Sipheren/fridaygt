@@ -179,7 +179,8 @@ export async function POST(
       const upgradeRecords = originalBuild.upgrades.map((upgrade: DbCarBuildUpgrade) => ({
         id: crypto.randomUUID(),
         buildId: newBuildId,
-        category: upgrade.category,
+        categoryId: upgrade.categoryId,
+        partId: upgrade.partId,
         part: upgrade.part,
         value: upgrade.value,
       }))
@@ -213,7 +214,8 @@ export async function POST(
       const settingRecords = originalBuild.settings.map((setting: DbCarBuildSetting) => ({
         id: crypto.randomUUID(),
         buildId: newBuildId,
-        category: setting.category,
+        sectionId: setting.sectionId,
+        settingId: setting.settingId,
         setting: setting.setting,
         value: setting.value,
       }))

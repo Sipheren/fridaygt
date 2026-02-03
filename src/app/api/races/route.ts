@@ -78,13 +78,13 @@ export async function GET(req: NextRequest) {
 }
 
 // Helper function to generate display name for races without custom names
-function getDisplayName(race: DbRaceWithRelations): string {
+function getDisplayName(race: DbRaceWithRelations & { RaceCar?: Array<{ car?: { manufacturer?: string; name?: string } }> }): string {
   if (race.name) {
     return race.name
   }
 
   const trackName = race.track?.name || 'Unknown Track'
-  const firstCar = race.RaceCar?.[0]?.car as { manufacturer?: string; name?: string } | undefined
+  const firstCar = race.RaceCar?.[0]?.car
   const carName = firstCar ? `${firstCar.manufacturer} ${firstCar.name}` : 'Unknown Car'
 
   return `${trackName} + ${carName}`

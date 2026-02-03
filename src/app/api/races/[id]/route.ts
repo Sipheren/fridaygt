@@ -78,6 +78,7 @@ export async function GET(
       .from('RaceCar')
       .select(`
         id,
+        raceId,
         carId,
         buildId,
         car:Car(id, name, slug, manufacturer, year, category, imageUrl),
@@ -144,12 +145,12 @@ export async function GET(
     }>()
 
     for (const lapTime of lapTimes || []) {
-      const user = (lapTime as DbLapTimeWithRelations).user
-      const car = (lapTime as DbLapTimeWithRelations).car
+      const user = (lapTime as { user: { id: string; name: string | null; email: string }[] }).user?.[0]
+      const car = (lapTime as { car: { id: string; name: string; slug: string; manufacturer: string; year: number }[] }).car?.[0]
       const userId = user?.id
       const carId = car?.id
-      const buildId = (lapTime as DbLapTimeWithRelations).buildId || null
-      const buildName = (lapTime as DbLapTimeWithRelations).buildName || null
+      const buildId = (lapTime as { buildId: string | null }).buildId || null
+      const buildName = (lapTime as { buildName: string | null }).buildName || null
 
       if (!userId || !carId) continue
 
@@ -195,7 +196,10 @@ export async function GET(
       const userData = await getCurrentUser(session)
 
       if (userData) {
-        const userLapTimes = (lapTimes || []).filter((lt: DbLapTimeWithRelations) => lt.user?.id === userData.id)
+        const userLapTimes = (lapTimes || []).filter((lt) => {
+          const user = (lt as { user: { id: string }[] }).user?.[0]
+          return user?.id === userData.id
+        })
 
         if (userLapTimes.length > 0) {
           const times = userLapTimes.map(lt => lt.timeMs)
@@ -220,7 +224,7 @@ export async function GET(
     const allTimes = lapTimes?.map(lt => lt.timeMs) || []
     const statistics = {
       totalLaps: lapTimes?.length || 0,
-      uniqueDrivers: new Set((lapTimes || []).map((lt: DbLapTimeWithRelations) => lt.user?.id).filter(Boolean)).size,
+      uniqueDrivers: new Set((lapTimes || []).map((lt) => (lt as { user: { id: string }[] }).user?.[0]?.id).filter(Boolean)).size,
       fastestTime: allTimes.length > 0 ? Math.min(...allTimes) : null,
       averageTime: allTimes.length > 0
         ? Math.round(allTimes.reduce((a, b) => a + b, 0) / allTimes.length)

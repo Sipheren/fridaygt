@@ -28,7 +28,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { StickyNote } from 'lucide-react'
 import { NotesBoard } from '@/components/notes/notes-board'
 import { NoteToolbar } from '@/components/notes/note-toolbar'
@@ -41,6 +41,13 @@ export default function NotesPage() {
   const { notes, loading, createNoteOptimistically, deleteNoteOptimistically, updateNoteOptimistically, removeNoteOptimistically } = useNotesRealtime()
   const { data: session } = useSession()
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
+  const [useStickyStyle, setUseStickyStyle] = useState(true)
+
+  // Read sticky note style preference from localStorage on mount
+  useEffect(() => {
+    const storedStyle = localStorage.getItem('useStickyNoteStyle')
+    setUseStickyStyle(storedStyle !== 'false') // Default to true
+  }, [])
   const [newNoteId, setNewNoteId] = useState<string | null>(null)
   const [pendingNoteId, setPendingNoteId] = useState<string | null>(null)
 
@@ -205,6 +212,7 @@ export default function NotesPage() {
         selectedColorFilter={selectedColor}
         newNoteId={newNoteId}
         pendingNoteId={pendingNoteId}
+        useStickyStyle={useStickyStyle}
       />
     </div>
   )

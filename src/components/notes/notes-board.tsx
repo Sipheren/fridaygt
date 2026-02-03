@@ -17,9 +17,6 @@ import { useSession } from 'next-auth/react'
 import { useState, useCallback, useEffect } from 'react'
 import type { DbNoteWithUser } from '@/types/database'
 
-// DEV ONLY: Toggle between classic and sticky note styles
-const USE_STICKY_STYLE = true  // ← Change this to false for classic style
-
 interface NotesBoardProps {
   notes: DbNoteWithUser[]
   loading?: boolean
@@ -28,6 +25,7 @@ interface NotesBoardProps {
   selectedColorFilter?: string | null
   newNoteId?: string | null
   pendingNoteId?: string | null
+  useStickyStyle?: boolean
 }
 
 export function NotesBoard({
@@ -38,6 +36,7 @@ export function NotesBoard({
   selectedColorFilter = null,
   newNoteId,
   pendingNoteId,
+  useStickyStyle = true,
 }: NotesBoardProps) {
   const { data: session } = useSession()
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
@@ -133,7 +132,7 @@ export function NotesBoard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" onClick={handleDeselectNote}>
         {filteredNotes.map((note) => (
           <div key={note.id} onClick={(e) => e.stopPropagation()}>
-            {USE_STICKY_STYLE ? (
+            {useStickyStyle !== false ? (
               <StickyNoteCard
                 note={note}
                 currentUserId={session?.user?.id}

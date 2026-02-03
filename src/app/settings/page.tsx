@@ -98,13 +98,21 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Settings as SettingsIcon, Database, Image, Palette, Loader2 } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { ArrowLeft, Settings as SettingsIcon, Database, Image, Palette, Loader2, StickyNote } from 'lucide-react'
 import { LoadingSection } from '@/components/ui/loading'
 import { PageWrapper, PageHeader } from '@/components/layout'
 
 export default function SettingsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
+  const [useStickyStyle, setUseStickyStyle] = useState(true)
+
+  // Read sticky note style preference from localStorage on mount
+  useEffect(() => {
+    const storedStyle = localStorage.getItem('useStickyNoteStyle')
+    setUseStickyStyle(storedStyle !== 'false') // Default to true
+  }, [])
   const [stats, setStats] = useState({
     tracks: 0,
     cars: 0,
@@ -154,6 +162,12 @@ export default function SettingsPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Handle sticky note style toggle
+  const toggleStickyStyle = (checked: boolean) => {
+    localStorage.setItem('useStickyNoteStyle', String(checked))
+    setUseStickyStyle(checked)
   }
 
   // ===========================================================================
@@ -269,6 +283,33 @@ export default function SettingsPage() {
                 Fetch Car Images
               </Button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================
+          NOTES SECTION
+          ======================================================================== */}
+      <div className="border border-border rounded-lg p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <StickyNote className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-bold">NOTES</h2>
+        </div>
+        <div className="border border-border rounded-lg p-4 bg-muted/30">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <label htmlFor="sticky-style-toggle" className="font-semibold cursor-pointer">
+                Sticky Note Style
+              </label>
+              <p className="text-sm text-muted-foreground">
+                Use realistic sticky note design with shadows and rotation effects
+              </p>
+            </div>
+            <Switch
+              id="sticky-style-toggle"
+              checked={useStickyStyle}
+              onCheckedChange={toggleStickyStyle}
+            />
           </div>
         </div>
       </div>
