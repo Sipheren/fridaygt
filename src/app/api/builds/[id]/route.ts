@@ -61,7 +61,7 @@ export async function GET(
     // Fetch settings separately to avoid JOIN issues with NULL settingId
     const { data: settings, error: settingsError } = await supabase
       .from('CarBuildSetting')
-      .select('id, buildId, settingId, sectionId, category, setting, value')
+      .select('id, buildId, settingId, category, setting, value')
       .eq('buildId', id)
 
     if (error || settingsError) {
@@ -164,7 +164,6 @@ export async function GET(
       id: string
       buildId: string
       settingId: string | null
-      sectionId: string | null
       category: string
       setting: string
       value: string
@@ -575,7 +574,7 @@ export async function PATCH(
     // Fetch settings separately to avoid JOIN issues with NULL settingId
     const { data: updatedSettings } = await supabase
       .from('CarBuildSetting')
-      .select('id, buildId, settingId, sectionId, category, setting, value')
+      .select('id, buildId, settingId, category, setting, value')
       .eq('buildId', id)
 
     // Transform settings to use 'section' instead of 'category' for frontend compatibility
@@ -583,7 +582,6 @@ export async function PATCH(
       id: string
       buildId: string
       settingId: string | null
-      sectionId: string | null
       category: string
       setting: string
       value: string

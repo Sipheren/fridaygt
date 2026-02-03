@@ -150,7 +150,7 @@ export interface DbCarBuildUpgrade {
 export interface DbCarBuildSetting {
   id: string
   buildId: string
-  sectionId: string
+  category: string
   settingId: string | null
   setting: string | null
   value: string
@@ -183,13 +183,13 @@ export interface DbRaceCar {
 
 export interface DbRaceMember {
   id: string
-  raceId: string
-  userId: string
-  partId: string
+  raceid: string
+  userid: string
+  partid: string
   order: number
-  createdAt: string
-  updatedAt: string
-  updatedById: string | null
+  createdat: string
+  updatedat: string
+  updatedbyid: string | null
 }
 
 // ============================================================================

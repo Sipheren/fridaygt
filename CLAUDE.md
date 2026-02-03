@@ -18,15 +18,33 @@
 
 ## 2. Read Project Docs
 
-Before making changes, read from `docs/`:
-- `PLAN.md` - Current roadmap
-- `DESIGN-SYSTEM.md` - UI/UX guidelines
-- `DATABASE-SCHEMA.md` - Data structure
-- `SECURITY.md` - Security rules
+Before making changes, **YOU MUST** read from project folders:
+- `docs/PLAN.md` - Current roadmap
+- `docs/DESIGN-SYSTEM.md` - UI/UX guidelines
+- **`supabase/migrations/` - ALWAYS check the LATEST file for current database structure**
+- `docs/SECURITY.md` - Security rules
 
 ---
 
 # Project Rules
+
+## Database Schema
+
+**CRITICAL DATABASE RULES:**
+- Database schema is in `supabase/migrations/` folder
+- **YOU MUST read the LATEST migration file** (highest timestamp/version number) for current structure
+- NEVER assume schema - always verify by reading the latest migration
+- All SQL queries must be run by user manually
+
+### Creating New Migrations/SQL Files
+**STRICTLY FOLLOW THIS LOCATION:**
+- ✅ **ALL new migrations MUST be created in `supabase/local/` ONLY**
+- ✅ **ALL new SQL files MUST be saved to `supabase/local/` ONLY**
+- ❌ NEVER create migration files directly in `supabase/migrations/`
+- ❌ NEVER create SQL files outside `supabase/local/`
+- User will move files to migrations folder after manual testing
+
+---
 
 ## Git Workflow
 
@@ -50,7 +68,7 @@ Branch naming: `feature/description`, `fix/description`, `docs/description`
 **DO NOT push multiple times** - this triggers multiple Vercel deployments and can hit usage limits
 - ✅ Commit all changes locally first
 - ✅ Build locally to verify it works (`npm run build`)
-- �️ **ONLY push once when all work is complete and user asks**
+- ✅ **ONLY push once when all work is complete and user asks**
 - ❌ NEVER push after each commit
 - ❌ NEVER push intermediate work
 
@@ -60,11 +78,6 @@ Branch naming: `feature/description`, `fix/description`, `docs/description`
 3. Run tests (if available)
 4. Check for sensitive data
 5. Update `session-log.md`
-
----
-
-## Databse SQL
-- All SQL quries must be run by user manually
 
 ---
 
@@ -107,7 +120,7 @@ Keep docs current:
 | Roadmap changes | `PLAN.md` |
 | Development progress | `LOG.md` |
 | UI/styling | `DESIGN-SYSTEM.md` |
-| Database | `DATABASE-SCHEMA.md` |
+| Database changes | Latest migration file in `supabase/migrations/` |
 | Security | `SECURITY.md`, `API_SECURITY.md` |
 
 New plans → `docs/FEATURE-NAME-PLAN.md`

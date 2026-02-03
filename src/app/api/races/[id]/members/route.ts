@@ -32,13 +32,13 @@ export async function GET(
       .from('RaceMember')
       .select(`
         id,
-        raceid as "raceId",
-        userid as "userId",
+        raceid,
+        userid,
         "order",
-        partid as "partId",
-        createdat as "createdAt",
-        updatedat as "updatedAt",
-        updatedbyid as "updatedById",
+        partid,
+        createdat,
+        updatedat,
+        updatedbyid,
         user:User!RaceMember_userid_fkey(id, gamertag),
         updatedByUser:User!RaceMember_updatedbyid_fkey(id, gamertag),
         part:Part(id, name, category:PartCategory(id, name))
@@ -203,13 +203,13 @@ export async function POST(
       })
       .select(`
         id,
-        raceid as "raceId",
-        userid as "userId",
+        raceid,
+        userid,
         "order",
-        partid as "partId",
-        createdat as "createdAt",
-        updatedat as "updatedAt",
-        updatedbyid as "updatedById",
+        partid,
+        createdat,
+        updatedat,
+        updatedbyid,
         user:User!RaceMember_userid_fkey(id, gamertag),
         updatedByUser:User!RaceMember_updatedbyid_fkey(id, gamertag),
         part:Part(id, name, category:PartCategory(id, name))

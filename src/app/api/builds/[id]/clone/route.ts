@@ -212,7 +212,7 @@ export async function POST(
       const settingRecords = originalBuild.settings.map((setting: DbCarBuildSetting) => ({
         id: crypto.randomUUID(),
         buildId: newBuildId,
-        sectionId: setting.sectionId,
+        category: setting.category,
         settingId: setting.settingId,
         setting: setting.setting,
         value: setting.value,
