@@ -56,22 +56,18 @@
 'use client'
 
 import { useRef, useState, useCallback, useEffect } from 'react'
+import type { DbTuningSetting } from '@/types/database'
 
 // ============================================================
 // TYPE DEFINITIONS
 // ============================================================
 
-interface TuningSetting {
-  minValue?: number | null
-  maxValue?: number | null
-  step?: number | null
-  unit?: string | null
-}
+type SliderSetting = Pick<DbTuningSetting, 'minValue' | 'maxValue' | 'step' | 'unit'>
 
 interface GradientSliderInputProps {
   value: string | null
   onChange: (value: string) => void
-  setting: TuningSetting
+  setting: SliderSetting
   disabled?: boolean
 }
 

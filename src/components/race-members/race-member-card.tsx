@@ -169,13 +169,13 @@ export interface User {
 
 export interface RaceMember {
   id: string
-  raceid: string
-  userid: string
+  raceId: string
+  userId: string
   order: number
-  partid: string
-  createdat: string
-  updatedat: string
-  updatedbyid: string | null
+  partId: string
+  createdAt: string
+  updatedAt: string
+  updatedById: string | null
   user: User
   updatedByUser: User | null
   part: Part
@@ -367,7 +367,7 @@ export function RaceMemberCard({
           {/* Grouped by category with category headers */}
           {/* Disabled during API call, shows spinner */}
           <Select
-            value={member.partid}
+            value={member.partId}
             onValueChange={handleTyreChange}
             disabled={isUpdatingTyre}
           >

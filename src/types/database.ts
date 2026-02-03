@@ -56,7 +56,7 @@ export interface DbPartCategory {
   id: string
   name: string
   slug: string
-  order: number
+  displayOrder: number
 }
 
 export interface DbPart {
@@ -183,13 +183,13 @@ export interface DbRaceCar {
 
 export interface DbRaceMember {
   id: string
-  raceid: string
-  userid: string
-  partid: string
+  raceId: string
+  userId: string
+  partId: string
   order: number
-  createdat: string
-  updatedat: string
-  updatedbyid: string | null
+  createdAt: string
+  updatedAt: string
+  updatedById: string | null
 }
 
 // ============================================================================

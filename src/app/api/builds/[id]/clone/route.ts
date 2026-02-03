@@ -166,8 +166,7 @@ export async function POST(
     // ============================================================
     // Copy all CarBuildUpgrade records with new IDs
     // Each upgrade gets a new UUID but references newBuildId
-    // Preserves: category, part name, value
-    // Note: partId FK is NOT preserved in this version (uses legacy columns)
+    // Preserves: categoryId, partId, part name, value
     //
     // Debugging Tips:
     // - Check console logs for upgrade clone errors
@@ -201,8 +200,7 @@ export async function POST(
     // ============================================================
     // Copy all CarBuildSetting records with new IDs
     // Each setting gets a new UUID but references newBuildId
-    // Preserves: category, setting name, value
-    // Note: settingId FK is NOT preserved in this version (uses legacy columns)
+    // Preserves: sectionId, settingId, setting name, value
     //
     // Debugging Tips:
     // - Check console logs for setting clone errors

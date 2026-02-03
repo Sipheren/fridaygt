@@ -423,7 +423,7 @@ export async function PATCH(
 
       // Insert new upgrades with validation
       if (upgrades.length > 0) {
-        // Fetch part details to populate legacy columns
+        // Fetch part details to populate category/part display columns
         const partIds = upgrades.map(u => u.partId).filter(Boolean)
 
         let partDetails: Array<{ id: string; name: string; categoryName: string }> = []
@@ -507,7 +507,7 @@ export async function PATCH(
 
       // Insert new settings with validation
       if (settings.length > 0) {
-        // Fetch setting details to populate legacy columns
+        // Fetch setting details to populate category/setting display columns
         const settingIds = settings
           .map((s) => s.settingId)
           .filter((id): id is string => id !== undefined && id !== null)

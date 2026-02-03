@@ -70,36 +70,25 @@
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
+import type { DbTuningSetting } from '@/types/database'
 
 // ============================================================
 // TYPE DEFINITIONS
 // ============================================================
 
-/**
- * TuningSetting interface (subset of full interface)
- * - minValue: Minimum value for slider/input validation
- * - maxValue: Maximum value for slider/input validation
- * - step: Slider step increment (0.01 for decimals, 1 for integers)
- * - unit: Optional unit to display next to value (°, Hz, %, Lv, etc.)
- */
-interface TuningSetting {
-  minValue?: number | null
-  maxValue?: number | null
-  step?: number | null
-  unit?: string | null
-}
+type SliderSetting = Pick<DbTuningSetting, 'minValue' | 'maxValue' | 'step' | 'unit'>
 
 /**
  * Props for SliderDualInput component
  * - value: "front:rear" string format (e.g., "1.500:2.000")
  * - onChange: Callback when value changes
- * - setting: TuningSetting with slider configuration
+ * - setting: SliderSetting with slider configuration
  * - disabled: Optional, disables all interactions
  */
 interface SliderDualInputProps {
   value: string | null
   onChange: (value: string) => void
-  setting: TuningSetting
+  setting: SliderSetting
   disabled?: boolean
 }
 

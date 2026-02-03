@@ -219,13 +219,13 @@ export async function PATCH(
       .from('RaceMember')
       .select(`
         id,
-        raceid,
-        userid,
+        raceid as "raceId",
+        userid as "userId",
         "order",
-        partid,
-        createdat,
-        updatedat,
-        updatedbyid,
+        partid as "partId",
+        createdat as "createdAt",
+        updatedat as "updatedAt",
+        updatedbyid as "updatedById",
         user:User!RaceMember_userid_fkey(id, gamertag),
         updatedByUser:User!RaceMember_updatedbyid_fkey(id, gamertag),
         part:Part(id, name, category:PartCategory(id, name))

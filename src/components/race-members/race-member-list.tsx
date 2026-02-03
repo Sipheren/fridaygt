@@ -202,13 +202,13 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
     const member = members.find((m) => m.id === memberId)
     if (!member) return
 
-    const previousPartId = member.partid
+    const previousPartId = member.partId
 
     // Optimistic: Update UI immediately
     setMembers((prev) =>
       prev.map((m) =>
         m.id === memberId
-          ? { ...m, partid: partId, part: { ...m.part, id: partId } }
+          ? { ...m, partId: partId, part: { ...m.part, id: partId } }
           : m
       )
     )
@@ -227,7 +227,7 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
         // Rollback on error
         setMembers((prev) =>
           prev.map((m) =>
-            m.id === memberId ? { ...m, partid: previousPartId } : m
+            m.id === memberId ? { ...m, partId: previousPartId } : m
           )
         )
         throw new Error('Failed to update tyre')
@@ -292,7 +292,7 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
   // DERIVE CURRENT MEMBER IDs
   // ============================================================
 
-  const currentMemberIds = members.map((m) => m.userid)
+  const currentMemberIds = members.map((m) => m.userId)
 
   // ============================================================
   // DERIVE LAST UPDATED INFO
@@ -301,14 +301,14 @@ export function RaceMemberList({ raceId, isAdmin }: RaceMemberListProps) {
   // Find the most recent update across all members
   const lastUpdatedMember = members.length > 0
     ? members.reduce((latest, member) => {
-      const latestDate = new Date(latest.updatedat)
-      const memberDate = new Date(member.updatedat)
+      const latestDate = new Date(latest.updatedAt)
+      const memberDate = new Date(member.updatedAt)
       return memberDate > latestDate ? member : latest
     })
     : null
 
   const lastUpdatedBy = lastUpdatedMember?.updatedByUser?.gamertag || null
-  const lastUpdatedAt = lastUpdatedMember?.updatedat || null
+  const lastUpdatedAt = lastUpdatedMember?.updatedAt || null
 
   // Format date as "Jan 26, 2026, 3:45 PM" in user's local timezone
   const formatLastUpdated = (dateString: string | null) => {

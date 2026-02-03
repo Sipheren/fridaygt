@@ -64,35 +64,24 @@
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
+import type { DbTuningSetting } from '@/types/database'
 
 // ============================================================
 // TYPE DEFINITIONS
 // ============================================================
 
-/**
- * TuningSetting interface (subset of full interface)
- * - minValue: Minimum value for slider/input validation (-50)
- * - maxValue: Maximum value for slider/input validation (50)
- * - step: Slider step increment (1 for integers)
- * - unit: Not used for Ballast Positioning (labels are dynamic)
- */
-interface TuningSetting {
-  minValue?: number | null
-  maxValue?: number | null
-  step?: number | null
-  unit?: string | null
-}
+type SliderSetting = Pick<DbTuningSetting, 'minValue' | 'maxValue' | 'step' | 'unit'>
 
 /**
  * Props for BallastSliderInput component
  * - value: Numeric string format (e.g., "-25", "0", "25")
  * - onChange: Callback when value changes
- * - setting: TuningSetting with slider configuration
+ * - setting: SliderSetting with slider configuration
  */
 interface BallastSliderInputProps {
   value: string | null
   onChange: (value: string) => void
-  setting: TuningSetting
+  setting: SliderSetting
 }
 
 // ============================================================

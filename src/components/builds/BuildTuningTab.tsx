@@ -93,36 +93,19 @@ import { ToeAngleDualInput } from '@/components/builds/ToeAngleDualInput'
 import { SliderDualInput } from '@/components/builds/SliderDualInput'
 import { GradientSliderInput } from '@/components/builds/GradientSliderInput'
 import { BallastSliderInput } from '@/components/builds/BallastSliderInput'
+import type { DbTuningSettingWithSection, DbTuningSection } from '@/types/database'
 
 // ============================================================
 // TYPE DEFINITIONS
 // ============================================================
-// Local types for tuning data structures
-// These match database schema but are locally defined for component usage
+// Extended tuning setting with computed display value field and parsed options array
+// Note: options is stored as JSON string in DB but parsed to array for component use
 
-interface TuningSection {
-  id: string
-  name: string
-  displayOrder: number
-}
+type TuningSection = DbTuningSection
 
-interface TuningSetting {
-  id: string
-  sectionId: string
-  name: string
-  description?: string
-  defaultValue?: string
+interface TuningSetting extends Omit<DbTuningSettingWithSection, 'options'> {
   displayValue?: string
-  displayOrder?: number | null
-  isActive: boolean
-  inputType?: string
-  decimalPlaces?: number | null
-  minValue?: number | null
-  maxValue?: number | null
-  step?: number | null
-  unit?: string | null
-  options?: string[] | null
-  section: TuningSection
+  options: string[] | null
 }
 
 interface CustomGear {
