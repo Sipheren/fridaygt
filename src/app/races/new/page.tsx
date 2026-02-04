@@ -223,7 +223,7 @@ export default function NewRacePage() {
     name: '',
     description: '',
     laps: '',
-    weather: '' as 'dry' | 'wet' | '',
+    weather: 'dry' as 'dry' | 'wet',
   })
 
   // Fetch tracks and builds on mount
@@ -619,7 +619,7 @@ export default function NewRacePage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="weather">Weather (Optional)</Label>
+                      <Label htmlFor="weather">Weather</Label>
                       <Select
                         value={formData.weather}
                         onValueChange={(value: 'dry' | 'wet') =>
