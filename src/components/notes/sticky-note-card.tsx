@@ -19,6 +19,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { Trash2, Pin, Palette, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ThumbsRating } from './thumbs-rating'
 import type { DbNote } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import {
@@ -46,6 +47,7 @@ interface StickyNoteCardProps {
   onDelete?: (noteId: string) => void
   onUpdate?: (noteId: string, data: { title?: string; content?: string; color?: string }) => void
   onColorPick?: (noteId: string, button: HTMLButtonElement) => void
+  onVote?: (noteId: string, type: 'up' | 'down') => void
   isPending?: boolean
 }
 
@@ -69,6 +71,7 @@ export function StickyNoteCard({
   onDelete,
   onUpdate,
   onColorPick,
+  onVote,
   isPending = false,
 }: StickyNoteCardProps) {
   const [isEditing, setIsEditing] = useState(false)
@@ -211,7 +214,7 @@ export function StickyNoteCard({
       }}
       className={cn(
         // Base styles
-        'sticky-note-texture relative group min-h-[180px] p-5 rounded-md transition-all duration-200 origin-top-left',
+        'sticky-note-texture relative group min-h-[180px] p-5 pb-[57px] rounded-md transition-all duration-200 origin-top-left',
         // Strong directional shadow (like real Post-its)
         'shadow-[5px_5px_7px_rgba(33,33,33,0.7)]',
         // Hover effect - stronger shadow + lifted
@@ -348,6 +351,23 @@ export function StickyNoteCard({
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Thumbs rating — absolute bottom-right corner */}
+      {!isEditing && (
+        <div
+          className="absolute bottom-0 right-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ThumbsRating
+            noteColor={currentColor || '#fef08a'}
+            upCount={note.thumbsUp ?? 0}
+            downCount={note.thumbsDown ?? 0}
+            userVote={note.userVote ?? null}
+            onVote={(type) => onVote?.(note.id, type)}
+            disabled={isPending}
+          />
         </div>
       )}
 

@@ -211,6 +211,18 @@ export interface DbNote {
   createdBy: string
   createdAt: string
   updatedAt: string
+  // Vote data — populated by GET /api/notes
+  thumbsUp?: number
+  thumbsDown?: number
+  userVote?: 'up' | 'down' | null
+}
+
+export interface DbNoteVote {
+  id: string
+  noteId: string
+  userId: string
+  voteType: 'up' | 'down'
+  createdAt: string
 }
 
 export interface DbNoteWithUser extends DbNote {

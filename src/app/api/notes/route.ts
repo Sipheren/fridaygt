@@ -17,7 +17,7 @@ import { auth } from '@/lib/auth'
 import { CreateNoteSchema, validateBody } from '@/lib/validation'
 import { checkRateLimit, rateLimitHeaders, RateLimit } from '@/lib/rate-limit'
 
-// GET /api/notes - List all notes
+// GET /api/notes - List all notes with vote counts and current user's vote
 export async function GET(req: NextRequest) {
   try {
     // Apply rate limiting (Query tier - 100 requests/min)
@@ -29,6 +29,10 @@ export async function GET(req: NextRequest) {
         { status: 429, headers: rateLimitHeaders(rateLimit) }
       )
     }
+
+    // Get current user session (optional - unauthenticated users can still read notes)
+    const session = await auth()
+    const currentUserId = session?.user?.id ?? null
 
     const supabase = createServiceRoleClient()
 
@@ -47,7 +51,33 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch notes' }, { status: 500 })
     }
 
-    return NextResponse.json({ notes: notes || [] })
+    // Fetch all votes to compute counts and current user's vote
+    const { data: votes } = await supabase
+      .from('NoteVote')
+      .select('noteId, userId, voteType')
+
+    // Build a lookup: noteId -> { thumbsUp, thumbsDown, userVote }
+    const voteMap = new Map<string, { thumbsUp: number; thumbsDown: number; userVote: 'up' | 'down' | null }>()
+
+    for (const vote of votes ?? []) {
+      if (!voteMap.has(vote.noteId)) {
+        voteMap.set(vote.noteId, { thumbsUp: 0, thumbsDown: 0, userVote: null })
+      }
+      const entry = voteMap.get(vote.noteId)!
+      if (vote.voteType === 'up') entry.thumbsUp++
+      if (vote.voteType === 'down') entry.thumbsDown++
+      if (currentUserId && vote.userId === currentUserId) {
+        entry.userVote = vote.voteType as 'up' | 'down'
+      }
+    }
+
+    // Enrich notes with vote data
+    const enrichedNotes = (notes ?? []).map((note) => {
+      const voteData = voteMap.get(note.id) ?? { thumbsUp: 0, thumbsDown: 0, userVote: null }
+      return { ...note, ...voteData }
+    })
+
+    return NextResponse.json({ notes: enrichedNotes })
   } catch (error) {
     console.error('Error in GET /api/notes:', error)
     return NextResponse.json(

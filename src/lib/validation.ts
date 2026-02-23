@@ -214,6 +214,10 @@ export const UpdateNoteSchema = z.object({
   tags: z.array(z.string().max(50, 'Tag must be less than 50 characters')).max(10, 'Maximum 10 tags allowed').optional(),
 }).strict()
 
+export const VoteNoteSchema = z.object({
+  voteType: z.enum(['up', 'down']),
+})
+
 // ============================================
 // Admin User Schemas
 // ============================================

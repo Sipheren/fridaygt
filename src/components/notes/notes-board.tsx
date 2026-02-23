@@ -22,6 +22,7 @@ interface NotesBoardProps {
   loading?: boolean
   onDeleteNote?: (noteId: string) => void
   onUpdateNote?: (noteId: string, data: { title?: string; content?: string; color?: string }) => void
+  onVoteNote?: (noteId: string, type: 'up' | 'down') => void
   selectedColorFilter?: string | null
   newNoteId?: string | null
   pendingNoteId?: string | null
@@ -33,6 +34,7 @@ export function NotesBoard({
   loading = false,
   onDeleteNote,
   onUpdateNote,
+  onVoteNote,
   selectedColorFilter = null,
   newNoteId,
   pendingNoteId,
@@ -143,6 +145,7 @@ export function NotesBoard({
                 onUpdate={handleUpdateNote}
                 onDelete={handleDelete}
                 onColorPick={handleColorPick}
+                onVote={onVoteNote}
                 isPending={note.id === pendingNoteId}
               />
             ) : (

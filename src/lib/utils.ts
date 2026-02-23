@@ -160,3 +160,22 @@ export function getFullUrl(path: string): string {
   const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
   return `${cleanBase}${cleanPath}`
 }
+
+/**
+ * Blend a hex colour toward white by a given amount.
+ * amount = 0 → original colour, amount = 1 → pure white (#ffffff)
+ *
+ * @example lightenHex('#fef08a', 0.3) // 30% lighter
+ */
+export function lightenHex(hex: string, amount: number): string {
+  const clean = hex.replace('#', '')
+  const r = parseInt(clean.substring(0, 2), 16)
+  const g = parseInt(clean.substring(2, 4), 16)
+  const b = parseInt(clean.substring(4, 6), 16)
+
+  const lr = Math.round(r + (255 - r) * amount)
+  const lg = Math.round(g + (255 - g) * amount)
+  const lb = Math.round(b + (255 - b) * amount)
+
+  return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`
+}
