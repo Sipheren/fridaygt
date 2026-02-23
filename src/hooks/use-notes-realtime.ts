@@ -24,42 +24,40 @@ export function useNotesRealtime() {
   const supabase = createClient()
   const isMounted = useRef(true)
 
-  // Refetch function
+  // Refetch via API (includes vote enrichment)
   const refetch = useCallback(async () => {
     if (!isMounted.current) return
 
-    const { data, error } = await supabase
-      .from('Note')
-      .select(`
-        *,
-        user:User(id, name, gamertag)
-      `)
-      .order('pinned', { ascending: false })
-      .order('createdAt', { ascending: false })
-
-    if (!error && data) {
-      setNotes(data as DbNoteWithUser[])
+    try {
+      const response = await fetch('/api/notes')
+      if (!response.ok) return
+      const data = await response.json()
+      if (isMounted.current && data.notes) {
+        setNotes(data.notes as DbNoteWithUser[])
+      }
+    } catch {
+      // Silently ignore refetch errors
     }
   }, [])
 
   useEffect(() => {
     isMounted.current = true
 
-    // Initial fetch
+    // Initial fetch via API (includes vote counts + userVote)
     const fetchNotes = async () => {
-      const { data, error } = await supabase
-        .from('Note')
-        .select(`
-          *,
-          user:User(id, name, gamertag)
-        `)
-        .order('pinned', { ascending: false })
-        .order('createdAt', { ascending: false })
-
-      if (!error && data && isMounted.current) {
-        setNotes(data as DbNoteWithUser[])
+      try {
+        const response = await fetch('/api/notes')
+        if (response.ok) {
+          const data = await response.json()
+          if (isMounted.current && data.notes) {
+            setNotes(data.notes as DbNoteWithUser[])
+          }
+        }
+      } catch {
+        // Silently ignore fetch errors
+      } finally {
+        if (isMounted.current) setLoading(false)
       }
-      setLoading(false)
     }
 
     fetchNotes()
@@ -72,7 +70,8 @@ export function useNotesRealtime() {
         { event: 'INSERT', schema: 'public', table: 'Note' },
         (payload) => {
           if (isMounted.current) {
-            setNotes((prev) => [payload.new as DbNoteWithUser, ...prev])
+            const newNote = { ...(payload.new as DbNoteWithUser), thumbsUp: 0, thumbsDown: 0, userVote: null }
+            setNotes((prev) => [newNote, ...prev])
           }
         }
       )
@@ -83,7 +82,16 @@ export function useNotesRealtime() {
           if (isMounted.current) {
             setNotes((prev) =>
               prev.map((note) =>
-                note.id === payload.new.id ? (payload.new as DbNoteWithUser) : note
+                note.id === payload.new.id
+                  ? {
+                      // Merge realtime data with existing vote fields (not stored in Note table)
+                      ...(payload.new as DbNoteWithUser),
+                      user: note.user,
+                      thumbsUp: note.thumbsUp,
+                      thumbsDown: note.thumbsDown,
+                      userVote: note.userVote,
+                    }
+                  : note
               )
             )
           }

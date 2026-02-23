@@ -147,6 +147,51 @@ export default function NotesPage() {
     }
   }
 
+  // Handle thumbs up/down vote
+  const handleVoteNote = async (noteId: string, type: 'up' | 'down') => {
+    const note = notes.find((n) => n.id === noteId)
+    if (!note) return
+
+    const prevVote = note.userVote ?? null
+    if (prevVote === type) return // Already voted this type — no-op
+
+    // Compute optimistic counts
+    const up = note.thumbsUp ?? 0
+    const down = note.thumbsDown ?? 0
+    const optimisticUp = type === 'up' ? up + 1 : prevVote === 'up' ? up - 1 : up
+    const optimisticDown = type === 'down' ? down + 1 : prevVote === 'down' ? down - 1 : down
+
+    updateNoteOptimistically(noteId, {
+      thumbsUp: optimisticUp,
+      thumbsDown: optimisticDown,
+      userVote: type,
+    })
+
+    try {
+      const response = await fetch(`/api/notes/${noteId}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ voteType: type }),
+      })
+
+      if (!response.ok) {
+        // Roll back on failure
+        updateNoteOptimistically(noteId, {
+          thumbsUp: up,
+          thumbsDown: down,
+          userVote: prevVote,
+        })
+      }
+    } catch {
+      // Roll back on failure
+      updateNoteOptimistically(noteId, {
+        thumbsUp: up,
+        thumbsDown: down,
+        userVote: prevVote,
+      })
+    }
+  }
+
   // Handle inline update note
   const handleUpdateNote = async (noteId: string, data: { title?: string; content?: string; color?: string }) => {
     // Optimistic update - show changes immediately
@@ -209,6 +254,7 @@ export default function NotesPage() {
         loading={loading}
         onDeleteNote={handleDeleteNote}
         onUpdateNote={handleUpdateNote}
+        onVoteNote={handleVoteNote}
         selectedColorFilter={selectedColor}
         newNoteId={newNoteId}
         pendingNoteId={pendingNoteId}
