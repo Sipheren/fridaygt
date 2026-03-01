@@ -130,12 +130,12 @@ interface BuildUpgradesTabProps {
 // Defines available options for each dropdown-based part
 // Used for GT Auto and Custom Parts categories
 
-// GT Auto part options
+// GT Auto part options (order here controls display order)
 const GT_AUTO_OPTIONS: Record<string, string[]> = {
   'Wide Body Installed': ['Yes', 'No'],
   'Wheel Size': ['10"', '11"', '12"', '13"', '14"', '15"', '16"', '17"', '18"', '19"', '20"', '21"', '22"', '23"', '24"', '25"', '26"', '27"', '28"', '29"', '30"'],
-  'Wheel Offset': ['Standard', 'Wide'],
   'Wheel Width': ['Standard', 'Wide'],
+  'Wheel Offset': ['Standard', 'Wide'],
 }
 
 // Custom Parts base options (shown by default)
@@ -349,15 +349,28 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeChange, originalUp
   const wingPartValue = wingPart ? selectedUpgrades[wingPart.id] : undefined
   const showConditionalWingParts = typeof wingPartValue === 'string' && wingPartValue === 'Custom'
 
+  // All dropdown option keys in desired display order (GT Auto first, then Custom Parts, then Wing)
+  const DROPDOWN_PART_ORDER = [
+    ...Object.keys(GT_AUTO_OPTIONS),
+    ...Object.keys(CUSTOM_PARTS_OPTIONS),
+    ...Object.keys(WING_OPTIONS),
+  ]
+
   // Filter parts for active category, excluding conditional parts if Wing != "Custom"
-  const visibleParts = activeCategoryParts.filter((part) => {
-    // If not a conditional Wing part, always show
-    if (!isConditionalWingPart(part.name)) {
-      return true
-    }
-    // Conditional parts only shown when Wing = "Custom"
-    return showConditionalWingParts
-  })
+  // Dropdown categories sort by DROPDOWN_PART_ORDER; checkbox categories keep API order
+  const visibleParts = activeCategoryParts
+    .filter((part) => {
+      if (!isConditionalWingPart(part.name)) return true
+      return showConditionalWingParts
+    })
+    .sort((a, b) => {
+      const aIdx = DROPDOWN_PART_ORDER.indexOf(a.name)
+      const bIdx = DROPDOWN_PART_ORDER.indexOf(b.name)
+      if (aIdx === -1 && bIdx === -1) return 0
+      if (aIdx === -1) return 1
+      if (bIdx === -1) return -1
+      return aIdx - bIdx
+    })
 
   // ============================================================
   // RESET/CLEAR HANDLERS
