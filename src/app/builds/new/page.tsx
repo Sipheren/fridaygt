@@ -388,6 +388,10 @@ export default function NewBuildPage() {
           defaults[part.id] = 'Medium'
         } else if (part.name === 'Wing Endplate') {
           defaults[part.id] = '0'
+        } else if (part.name === 'Wheel Offset') {
+          defaults[part.id] = 'Standard'
+        } else if (part.name === 'Wheel Width') {
+          defaults[part.id] = 'Standard'
         }
       }
 

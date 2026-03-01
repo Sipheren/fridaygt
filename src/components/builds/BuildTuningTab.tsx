@@ -93,6 +93,7 @@ import { ToeAngleDualInput } from '@/components/builds/ToeAngleDualInput'
 import { SliderDualInput } from '@/components/builds/SliderDualInput'
 import { GradientSliderInput } from '@/components/builds/GradientSliderInput'
 import { BallastSliderInput } from '@/components/builds/BallastSliderInput'
+import { SingleSliderInput } from '@/components/builds/SingleSliderInput'
 import type { DbTuningSettingWithSection, DbTuningSection } from '@/types/database'
 
 // ============================================================
@@ -345,14 +346,28 @@ function renderSettingInput(
   }
 
   // GRADIENT SLIDER input (single value with gradient fill slider)
-  // Used for: Power Restrictor, Ballast
-  // Format: Single numeric value (e.g., "75", "150")
-  // Display: Text input + Unit (outside input) + gradient fill slider underneath
-  // Range: minValue to maxValue from setting prop, center calculated as (min+max)/2
-  // Gradient: Light primary (60%) → Full primary (100%) - uniform across all instances
+  // Used for: Power Restrictor
+  // Format: Single numeric value (e.g., "75")
+  // Display: Interactive gradient bar (drag to change value)
+  // Range: minValue to maxValue from setting prop
   if (inputType === 'gradientSlider') {
     return (
       <GradientSliderInput
+        value={currentValue || ''}
+        onChange={onChange}
+        setting={setting}
+      />
+    )
+  }
+
+  // SINGLE SLIDER input (single value with text input + slider + +/− buttons)
+  // Used for: Ballast (0–500kg)
+  // Format: Single numeric value (e.g., "150")
+  // Display: Text input + Unit (outside input) + [− Slider +] underneath
+  // Range: minValue to maxValue from setting prop
+  if (inputType === 'singleSlider') {
+    return (
+      <SingleSliderInput
         value={currentValue || ''}
         onChange={onChange}
         setting={setting}
@@ -573,12 +588,11 @@ export function BuildTuningTab({
   const activeSectionSettings = useMemo(() => {
     let filtered = settings.filter((s) => s.sectionId === activeSectionObj?.id)
 
-    // For Transmission: only show Final Drive (gears are handled separately via props)
+    // For Transmission: only show Final Drive and Top Speed (gears are handled separately via props)
     // Gears 1-6 (or more) are rendered from props.gears object
-    // Final Drive is the only Transmission setting shown from API
     const isTransmission = activeSection === 'Transmission'
     if (isTransmission) {
-      filtered = filtered.filter(s => s.name === 'Final Drive')
+      filtered = filtered.filter(s => s.name === 'Final Drive' || s.name === 'Top Speed')
     }
 
     return filtered
@@ -903,6 +917,61 @@ export function BuildTuningTab({
                     className="min-h-[44px]"
                   />
                 </div>
+
+                {/* Top Speed — rendered from activeSectionSettings */}
+                {activeSectionSettings.filter(s => s.name === 'Top Speed').map((setting) => {
+                  const currentValue = tuningSettings[setting.id] || ''
+                  const originalValue = originalTuningSettings[setting.id] || ''
+                  const hasChanged = originalValue !== currentValue
+                  const hasValue = currentValue !== ''
+
+                  return (
+                    <div key={setting.id} className="space-y-2 pt-4 border-t border-border">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor={setting.id} className="text-sm font-medium">
+                          Top Speed
+                          <span className="text-muted-foreground font-normal ml-1">(km/h)</span>
+                        </Label>
+                        <div className="flex gap-1 shrink-0">
+                          {hasChanged && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary transition-all duration-150"
+                              aria-label="Reset Top Speed to original value"
+                              onClick={() => handleResetSetting(setting.id)}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {hasValue && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive transition-all duration-150"
+                              aria-label="Clear Top Speed"
+                              onClick={() => handleClearSetting(setting.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <Input
+                        id={setting.id}
+                        type="text"
+                        inputMode="numeric"
+                        value={currentValue}
+                        onChange={(e) => onSettingChange(setting.id, e.target.value)}
+                        placeholder="e.g. 280"
+                        className="min-h-[44px]"
+                        maxLength={3}
+                      />
+                    </div>
+                  )
+                })}
               </>
             ) : (
               /* ============================================================

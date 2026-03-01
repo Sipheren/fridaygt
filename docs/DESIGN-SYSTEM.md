@@ -362,11 +362,11 @@ All colors use the **OKLCH** color space format: `oklch(lightness chroma hue)`
 
 ### Specialized Tuning Inputs
 
-The application includes three specialized input components for GT7 tuning settings. These components provide enhanced UX beyond standard HTML inputs.
+The application includes five specialized input components for GT7 tuning settings. These components provide enhanced UX beyond standard HTML inputs.
 
 #### 1. GradientSliderInput
 
-**Purpose:** Single-value interactive gradient bar for settings like Power Restrictor and Ballast.
+**Purpose:** Single-value interactive gradient bar. Used for Power Restrictor only.
 
 **Visual Metaphor:** Loading bar that fills from left to right.
 
@@ -415,9 +415,9 @@ className={`
 ```
 
 **Data Model:**
-- Storage: String value (e.g., "75", "150")
-- Display: Zero-padded based on maxValue (100 → "00", 500 → "000")
-- Range: 0-100% for Power Restrictor, 0-500kg for Ballast
+- Storage: String value (e.g., "75")
+- Display: Zero-padded based on maxValue (100 → "00%")
+- Range: 0-100% for Power Restrictor
 
 **Accessibility:**
 - `role="slider"` with ARIA attributes
@@ -453,6 +453,7 @@ interface SliderDualInputProps {
 - Center point calculated as `(minValue + maxValue) / 2`
 - Responsive: stacked on mobile, side-by-side on desktop
 - Optional unit display (°, Hz, %, Lv)
+- +/− buttons with hold-to-repeat (fires immediately, 400ms delay, 100ms repeat)
 
 **Styling:**
 ```tsx
@@ -573,6 +574,93 @@ const ToeStraightIcon = ({ className }: IconProps) => (
 
 ---
 
+#### 4. SingleSliderInput
+
+**Purpose:** Single-value text input + slider + +/− buttons for simple range settings.
+
+**Location:** `src/components/builds/SingleSliderInput.tsx`
+
+**Props:**
+```tsx
+interface SingleSliderInputProps {
+  value: string | null           // Numeric string (e.g., "150")
+  onChange: (value: string) => void
+  setting: TuningSetting         // Contains minValue, maxValue, step, unit
+  disabled?: boolean
+}
+```
+
+**Features:**
+- Text input with unit label displayed outside (right side)
+- Slider underneath for visual adjustment
+- +/− buttons with hold-to-repeat (fires immediately, 400ms delay, 100ms repeat)
+- − disabled at minValue, + disabled at maxValue
+- Integer-space math prevents floating point drift
+- Three range labels: min → center → max
+
+**Usage Example:**
+```tsx
+<SingleSliderInput
+  value="150"
+  onChange={(newValue) => setSetting('ballast', newValue)}
+  setting={{
+    minValue: 0,
+    maxValue: 500,
+    step: 1,
+    unit: 'kg'
+  }}
+/>
+```
+
+**Data Model:**
+- Storage: String value (e.g., "150")
+- Range: 0–500kg for Ballast
+- `inputType`: `'singleSlider'`
+
+---
+
+#### 5. BallastSliderInput
+
+**Purpose:** Single-value bidirectional slider for Ballast Positioning (front/rear weight bias).
+
+**Location:** `src/components/builds/BallastSliderInput.tsx`
+
+**Props:**
+```tsx
+interface BallastSliderInputProps {
+  value: string | null           // Numeric string (e.g., "-25", "0", "25")
+  onChange: (value: string) => void
+  setting: TuningSetting         // Contains minValue, maxValue, step
+}
+```
+
+**Features:**
+- Text input showing value with dynamic position label (Front / Center / Rear)
+- [− Slider +] with hold-to-repeat buttons
+- − disabled at −50 (full front), + disabled at +50 (full rear)
+- Three slider labels: "−50 Front", "0 Center", "+50 Rear"
+- Integer-only storage; positive values prefixed with "+"
+
+**Usage Example:**
+```tsx
+<BallastSliderInput
+  value="-25"
+  onChange={(newValue) => setSetting('ballast-positioning', newValue)}
+  setting={{
+    minValue: -50,
+    maxValue: 50,
+    step: 1
+  }}
+/>
+```
+
+**Data Model:**
+- Storage: Integer string (e.g., "−25", "0", "25")
+- Display: "−25 Front", "0 Center", "+25 Rear"
+- `inputType`: `'ballastSlider'`
+
+---
+
 #### Input Type Pattern
 
 All specialized inputs follow the same integration pattern in `BuildTuningTab.tsx`:
@@ -580,36 +668,23 @@ All specialized inputs follow the same integration pattern in `BuildTuningTab.ts
 ```tsx
 // In renderSettingInput() function
 if (inputType === 'gradientSlider') {
-  return (
-    <GradientSliderInput
-      value={currentValue || ''}
-      onChange={onChange}
-      setting={setting}
-      disabled={disabled}
-    />
-  )
+  return <GradientSliderInput value={currentValue || ''} onChange={onChange} setting={setting} />
+}
+
+if (inputType === 'singleSlider') {
+  return <SingleSliderInput value={currentValue || ''} onChange={onChange} setting={setting} />
+}
+
+if (inputType === 'ballastSlider') {
+  return <BallastSliderInput value={currentValue || ''} onChange={onChange} setting={setting} />
 }
 
 if (inputType === 'sliderDual') {
-  return (
-    <SliderDualInput
-      value={currentValue || ''}
-      onChange={onChange}
-      setting={setting}
-      disabled={disabled}
-    />
-  )
+  return <SliderDualInput value={currentValue || ''} onChange={onChange} setting={setting} />
 }
 
 if (inputType === 'toeAngle') {
-  return (
-    <ToeAngleDualInput
-      value={currentValue || ''}
-      onChange={onChange}
-      setting={setting}
-      disabled={disabled}
-    />
-  )
+  return <ToeAngleDualInput value={currentValue || ''} onChange={onChange} setting={setting} />
 }
 ```
 
@@ -617,23 +692,29 @@ if (inputType === 'toeAngle') {
 ```sql
 -- Set input type in TuningSetting table
 UPDATE "TuningSetting"
-SET "inputType" = 'gradientSlider',
-    "minValue" = 0,
-    "maxValue" = 100,
-    "step" = 1,
-    "unit" = '%'
+SET "inputType" = 'gradientSlider', "minValue" = 0, "maxValue" = 100, "step" = 1, "unit" = '%'
 WHERE "name" = 'Power Restrictor';
+
+UPDATE "TuningSetting"
+SET "inputType" = 'singleSlider', "minValue" = 0, "maxValue" = 500, "step" = 1, "unit" = 'kg'
+WHERE "name" = 'Ballast';
+
+UPDATE "TuningSetting"
+SET "inputType" = 'ballastSlider', "minValue" = -50, "maxValue" = 50, "step" = 1
+WHERE "name" = 'Ballast Positioning';
 ```
 
 ---
 
 #### Component Comparison
 
-| Component | Inputs | Visual | Use Case |
-|-----------|--------|--------|----------|
-| GradientSliderInput | Single value | Gradient fill bar | Power Restrictor, Ballast |
-| SliderDualInput | Front/rear | Two sliders | Suspension settings (5 total) |
-| ToeAngleDualInput | Front/rear | Bidirectional with icons | Toe Angle only |
+| Component | inputType | Inputs | Visual | Use Case |
+|-----------|-----------|--------|--------|----------|
+| GradientSliderInput | `gradientSlider` | Single value | Gradient fill bar (drag) | Power Restrictor |
+| SingleSliderInput | `singleSlider` | Single value | Text input + slider + +/− | Ballast (0–500kg) |
+| BallastSliderInput | `ballastSlider` | Single value (bidirectional) | Text + label + slider + +/− | Ballast Positioning (−50 to +50) |
+| SliderDualInput | `sliderDual` | Front/rear | Two sliders + +/− | Suspension settings (5 total) |
+| ToeAngleDualInput | `toeAngle` | Front/rear (bidirectional) | Two sliders with toe icons | Toe Angle only |
 
 ---
 
