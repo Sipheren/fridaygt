@@ -283,8 +283,8 @@ export function BuildUpgradesTab({ selectedUpgrades, onUpgradeChange, originalUp
 
         // Parallel API calls: Fetch categories and parts simultaneously
         const [categoriesRes, partsRes] = await Promise.all([
-          fetch('/api/parts/categories'),
-          fetch('/api/parts')
+          fetch('/api/parts/categories?nocache=true'),
+          fetch('/api/parts?nocache=true')
         ])
 
         if (!categoriesRes.ok) throw new Error('Failed to fetch categories')
