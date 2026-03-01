@@ -149,13 +149,6 @@ const WING_OPTIONS: Record<string, string[]> = {
   'Wing Endplate': Array.from({ length: 26 }, (_, i) => i.toString()), // 0-25
 }
 
-// Wheels part options
-const WHEELS_OPTIONS: Record<string, string[]> = {
-  'Wheel Size': ['10"', '11"', '12"', '13"', '14"', '15"', '16"', '17"', '18"', '19"', '20"', '21"', '22"', '23"', '24"', '25"', '26"', '27"', '28"', '29"', '30"'],
-  'Wheel Offset': ['Standard', 'Wide'],
-  'Wheel Width': ['Standard', 'Wide'],
-}
-
 // ============================================================
 // HELPER FUNCTIONS - Category Type Detection
 // ============================================================
@@ -166,7 +159,7 @@ const WHEELS_OPTIONS: Record<string, string[]> = {
  * @returns true if category uses dropdowns, false if uses checkboxes
  */
 function isDropdownCategory(categoryName: string): boolean {
-  return categoryName === 'GT Auto' || categoryName === 'Custom Parts' || categoryName === 'Wheels'
+  return categoryName === 'GT Auto' || categoryName === 'Custom Parts'
 }
 
 /**
@@ -186,10 +179,6 @@ function getDropdownOptions(partName: string): string[] {
   // Check Wing options
   if (WING_OPTIONS[partName]) {
     return WING_OPTIONS[partName]
-  }
-  // Check Wheels options
-  if (WHEELS_OPTIONS[partName]) {
-    return WHEELS_OPTIONS[partName]
   }
   return []
 }
