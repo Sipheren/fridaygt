@@ -362,8 +362,9 @@ Tonight Page → Shows all races where isActive = true
   4. Natural Frequency: Range 0-5, step 0.01, unit Hz
   5. Negative Camber Angle: Range 0-6, step 0.01, unit °
   6. Power Restrictor: Range 0-100, step 1, unit % (gradientSlider)
-  7. Ballast: Range 0-500, step 1, unit kg (gradientSlider)
-  8. Ballast Positioning: Range -50 to +50, step 1 (ballastSlider)
+  7. Power Restrictor: Range 0-100, step 1, unit % (gradientSlider)
+  8. Ballast: Range 0-500, step 1, unit kg (singleSlider — text input + slider + +/− buttons)
+  9. Ballast Positioning: Range -50 to +50, step 1 (ballastSlider — bidirectional slider + +/− buttons)
   - Displays optional unit symbols next to values (°, Hz, %, Lv)
   - Responsive layout: stacked on mobile, side-by-side on desktop
   - Automatic decimal precision from step value (0.01 → 2 decimals, 1 → integer)
@@ -645,6 +646,7 @@ For detailed session-by-session progress, see:
 
 | Date | Session | Accomplishment |
 |------|---------|----------------|
+| 2026-03-01 | #59 | Performance Adjustments UX - Wheel Size/Width/Offset dropdowns inside GT Auto, Top Speed number input in Transmission, +/- hold-to-repeat buttons on all slider inputs (SliderDualInput, ToeAngleInput, BallastSliderInput), new SingleSliderInput component for Ballast (replaces gradient drag bar). v2.25.0 |
 | 2026-03-01 | #58 | Slider Scaling Fix - Toe angle range ±0.50°, Damping Ratio max 50%, Natural Frequency max 6.00Hz, dynamic sliderStep for smoother dragging on all sliderDual inputs. v2.24.1 |
 | 2026-02-23 | #57 | Notes Thumbs Voting - Thumbs up/down voting on sticky notes, NoteVote DB table, per-user vote tracking, dynamic SVG icons coloured to match each note, optimistic updates with rollback, updated to version 2.24.0 |
 | 2026-02-04 | #56 | Bug Fix - Fixed race creation weather field to default to 'dry', removed "(Optional)" label, updated to version 2.23.2 |
