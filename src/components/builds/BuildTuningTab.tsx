@@ -573,12 +573,11 @@ export function BuildTuningTab({
   const activeSectionSettings = useMemo(() => {
     let filtered = settings.filter((s) => s.sectionId === activeSectionObj?.id)
 
-    // For Transmission: only show Final Drive (gears are handled separately via props)
+    // For Transmission: only show Final Drive and Top Speed (gears are handled separately via props)
     // Gears 1-6 (or more) are rendered from props.gears object
-    // Final Drive is the only Transmission setting shown from API
     const isTransmission = activeSection === 'Transmission'
     if (isTransmission) {
-      filtered = filtered.filter(s => s.name === 'Final Drive')
+      filtered = filtered.filter(s => s.name === 'Final Drive' || s.name === 'Top Speed')
     }
 
     return filtered
@@ -903,6 +902,61 @@ export function BuildTuningTab({
                     className="min-h-[44px]"
                   />
                 </div>
+
+                {/* Top Speed — rendered from activeSectionSettings */}
+                {activeSectionSettings.filter(s => s.name === 'Top Speed').map((setting) => {
+                  const currentValue = tuningSettings[setting.id] || ''
+                  const originalValue = originalTuningSettings[setting.id] || ''
+                  const hasChanged = originalValue !== currentValue
+                  const hasValue = currentValue !== ''
+
+                  return (
+                    <div key={setting.id} className="space-y-2 pt-4 border-t border-border">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor={setting.id} className="text-sm font-medium">
+                          Top Speed
+                          <span className="text-muted-foreground font-normal ml-1">(km/h)</span>
+                        </Label>
+                        <div className="flex gap-1 shrink-0">
+                          {hasChanged && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary transition-all duration-150"
+                              aria-label="Reset Top Speed to original value"
+                              onClick={() => handleResetSetting(setting.id)}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {hasValue && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive transition-all duration-150"
+                              aria-label="Clear Top Speed"
+                              onClick={() => handleClearSetting(setting.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <Input
+                        id={setting.id}
+                        type="text"
+                        inputMode="numeric"
+                        value={currentValue}
+                        onChange={(e) => onSettingChange(setting.id, e.target.value)}
+                        placeholder="e.g. 280"
+                        className="min-h-[44px]"
+                        maxLength={3}
+                      />
+                    </div>
+                  )
+                })}
               </>
             ) : (
               /* ============================================================
