@@ -181,6 +181,11 @@ export function SliderDualInput({
   // Calculate decimal places from step
   const decimalPlaces = getDecimalPlaces(step)
 
+  // Compute a coarser step specifically for the slider thumb (~100 stops max)
+  // Prevents the slider feeling too fast on wide ranges (e.g. 0-5Hz at step 0.01 = 500 stops)
+  // Text input still formats to the full 'step' precision via decimalPlaces
+  const sliderStep = Math.max(step, (maxValue - minValue) / 100)
+
   // Calculate center point for slider labels (mathematical middle of range)
   const centerPoint = (minValue + maxValue) / 2
 
@@ -297,7 +302,7 @@ export function SliderDualInput({
             value={[frontNumeric]}
             min={minValue}
             max={maxValue}
-            step={step}
+            step={sliderStep}
             onValueChange={handleFrontSliderChange}
             disabled={disabled}
             className="w-full min-h-[44px]"
@@ -349,7 +354,7 @@ export function SliderDualInput({
             value={[rearNumeric]}
             min={minValue}
             max={maxValue}
-            step={step}
+            step={sliderStep}
             onValueChange={handleRearSliderChange}
             disabled={disabled}
             className="w-full min-h-[44px]"

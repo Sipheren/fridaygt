@@ -152,7 +152,7 @@ function parseDirectInput(input: string): string {
   else if (isIn) value = Math.abs(parsed)
 
   // Clamp to valid range
-  const clamped = Math.max(-5, Math.min(5, value))
+  const clamped = Math.max(-0.5, Math.min(0.5, value))
 
   // Format to 3 decimal places
   return clamped.toFixed(3)
@@ -259,8 +259,8 @@ export function ToeAngleInput({ value, onChange, label, disabled = false }: ToeA
         {/* Slider - min-h-[44px] for touch targets */}
         <Slider
           value={[numericValue]}
-          min={-5}
-          max={5}
+          min={-0.5}
+          max={0.5}
           step={0.01}
           onValueChange={handleSliderChange}
           disabled={disabled}
@@ -270,9 +270,9 @@ export function ToeAngleInput({ value, onChange, label, disabled = false }: ToeA
 
         {/* Slider Labels - text-xs is acceptable for helper text per design system */}
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>Out 5.000</span>
+          <span>Out 0.500</span>
           <span>0.000</span>
-          <span>In 5.000</span>
+          <span>In 0.500</span>
         </div>
       </div>
     </div>

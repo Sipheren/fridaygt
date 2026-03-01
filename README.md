@@ -8,7 +8,7 @@ A build-centric Gran Turismo 7 lap time tracker and race management application 
 ## Live Application
 
 **Production URL**: https://fridaygt.vercel.app
-**Current Version**: 2.24.0
+**Current Version**: 2.24.1
 
 ## Versioning
 
@@ -16,6 +16,7 @@ FridayGT follows semantic versioning with a comprehensive session-based developm
 
 | Version | Sessions | Key Changes |
 |---------|----------|-------------|
+| **2.24.1** | #58 | Slider Scaling Fix - Toe angle range reduced to ±0.50°, Damping Ratio max reduced to 50%, Natural Frequency max increased to 6.00Hz, dynamic slider step for smoother dragging |
 | **2.24.0** | #57 | Notes Thumbs Voting - Thumbs up/down voting on sticky notes with per-user vote tracking, dynamic SVG icons coloured to match note, optimistic updates, NoteVote DB table |
 | **2.23.2** | #56 | Bug Fix - Fixed race creation weather field (default to dry, removed optional label) |
 | **2.23.1** | #55 | Bug Fixes - Fixed race members not showing (reverted DbRaceMember to snake_case to match DB schema), fixed build detail pages (reverted CarBuildSetting category column) |
