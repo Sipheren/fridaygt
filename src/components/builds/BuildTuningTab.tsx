@@ -93,6 +93,7 @@ import { ToeAngleDualInput } from '@/components/builds/ToeAngleDualInput'
 import { SliderDualInput } from '@/components/builds/SliderDualInput'
 import { GradientSliderInput } from '@/components/builds/GradientSliderInput'
 import { BallastSliderInput } from '@/components/builds/BallastSliderInput'
+import { SingleSliderInput } from '@/components/builds/SingleSliderInput'
 import type { DbTuningSettingWithSection, DbTuningSection } from '@/types/database'
 
 // ============================================================
@@ -345,14 +346,28 @@ function renderSettingInput(
   }
 
   // GRADIENT SLIDER input (single value with gradient fill slider)
-  // Used for: Power Restrictor, Ballast
-  // Format: Single numeric value (e.g., "75", "150")
-  // Display: Text input + Unit (outside input) + gradient fill slider underneath
-  // Range: minValue to maxValue from setting prop, center calculated as (min+max)/2
-  // Gradient: Light primary (60%) → Full primary (100%) - uniform across all instances
+  // Used for: Power Restrictor
+  // Format: Single numeric value (e.g., "75")
+  // Display: Interactive gradient bar (drag to change value)
+  // Range: minValue to maxValue from setting prop
   if (inputType === 'gradientSlider') {
     return (
       <GradientSliderInput
+        value={currentValue || ''}
+        onChange={onChange}
+        setting={setting}
+      />
+    )
+  }
+
+  // SINGLE SLIDER input (single value with text input + slider + +/− buttons)
+  // Used for: Ballast (0–500kg)
+  // Format: Single numeric value (e.g., "150")
+  // Display: Text input + Unit (outside input) + [− Slider +] underneath
+  // Range: minValue to maxValue from setting prop
+  if (inputType === 'singleSlider') {
+    return (
+      <SingleSliderInput
         value={currentValue || ''}
         onChange={onChange}
         setting={setting}

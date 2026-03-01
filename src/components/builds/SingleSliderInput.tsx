@@ -1,63 +1,48 @@
 /**
- * Ballast Slider Input Component
+ * Single Slider Input Component
  *
- * Purpose: Single-value bidirectional slider for Ballast Positioning
- * - Text input shows value with dynamic position label (Front/Center/Rear)
- * - Slider ranges from -50 (Full Front) to +50 (Full Rear) with 0 at Center
+ * Purpose: Single-value slider input with text input and +/− buttons
+ * - Always-visible layout: Text input + Unit (outside) + [− Slider +]
  * - +/− buttons for precise single-step adjustment with hold-to-repeat
- * - Click/drag slider to adjust value in real-time
- * - Input validation and clamping to range
+ * - Used for: Ballast (0–500kg) and similar single-value range settings
  *
  * **Data Model:**
- * - Storage format: Clean numeric string (e.g., "-25", "0", "25")
- * - Value: Numeric value clamped to -50 to +50 range
- * - Default: Empty string (interpreted as 0/Center)
+ * - Storage format: String value (e.g., "150", "0", "500")
+ * - Value: Numeric value clamped to minValue–maxValue range
+ * - Default: Empty string (interpreted as minValue)
  *
- * **Value Mapping:**
- * - -50: Full Front
- * - -1 to -49: Front bias
- * - 0: Center
- * - +1 to +49: Rear bias
- * - +50: Full Rear
- *
- * **Display Labels:**
- * - Negative values: "{value} Front" (e.g., "-25 Front")
- * - Zero: "0 Center"
- * - Positive values: "+{value} Rear" (e.g., "+25 Rear")
- *
- * **Slider Labels:**
- * - Three labels underneath: "-50 Front", "0 Center", "+50 Rear"
+ * **Slider Behavior:**
+ * - Range: minValue to maxValue (from setting prop)
+ * - Step: From setting.step for button increments
+ * - sliderStep: Coarser step (~100 stops max) for slider draggability
+ * - Values clamped to min/max range
  *
  * **+/− Button Behavior:**
  * - Tap: Single step increment/decrement immediately
  * - Hold: 400ms delay then repeats every 100ms
- * - − disabled at minValue (-50), + disabled at maxValue (+50)
+ * - − disabled at minValue, + disabled at maxValue
  * - Integer-space math prevents floating point drift
  *
- * **Layout:**
- * - Single column layout (not dual)
- * - Text input with position label
- * - [− Slider +] with hold-to-repeat buttons
- * - Three-point labels below slider
+ * **Unit Display:**
+ * - Unit label displays OUTSIDE the text input (right side)
+ * - e.g., input shows "150" with "kg" label beside it
  *
  * **Design System Compliance:**
- * - Uses shadcn Input, Button, and Slider components
  * - min-h-[44px] for all interactive elements (WCAG touch targets)
  * - transition-colors on interactive elements
  * - aria-label for screen readers with full context
- * - text-sm for labels, text-xs for slider labels
  * - space-y-2 for form field spacing
- * - Responsive full-width layout
  *
  * **Props:**
- * - value: Numeric string (e.g., "-25", "0", "25")
+ * - value: Numeric string (e.g., "150")
  * - onChange: Callback when value changes (signature: (value: string) => void)
- * - setting: TuningSetting object with minValue, maxValue, step
+ * - setting: TuningSetting object with minValue, maxValue, step, unit
+ * - disabled: Optional, disables all interactions
  *
  * **Related Files:**
  * - src/components/builds/BuildTuningTab.tsx: Parent component using this
+ * - src/components/builds/BallastSliderInput.tsx: Similar single-slider pattern
  * - src/components/builds/SliderDualInput.tsx: +/− button pattern reference
- * - src/components/builds/ToeAngleDualInput.tsx: Bidirectional value handling
  */
 
 'use client'
@@ -74,16 +59,11 @@ import type { DbTuningSetting } from '@/types/database'
 
 type SliderSetting = Pick<DbTuningSetting, 'minValue' | 'maxValue' | 'step' | 'unit'>
 
-/**
- * Props for BallastSliderInput component
- * - value: Numeric string format (e.g., "-25", "0", "25")
- * - onChange: Callback when value changes
- * - setting: SliderSetting with slider configuration
- */
-interface BallastSliderInputProps {
+interface SingleSliderInputProps {
   value: string | null
   onChange: (value: string) => void
   setting: SliderSetting
+  disabled?: boolean
 }
 
 // ============================================================
@@ -91,79 +71,41 @@ interface BallastSliderInputProps {
 // ============================================================
 
 /**
- * Parse and validate numeric value
- * - Clamps to min/max range if provided
- * - Returns formatted string for storage
+ * Calculate number of decimal places from step value
  */
-function parseAndClampValue(
-  input: string,
-  minValue: number,
-  maxValue: number
-): string {
-  const parsed = parseFloat(input)
-
-  if (isNaN(parsed)) return ''
-
-  let clamped = parsed
-
-  if (clamped < minValue) clamped = minValue
-  if (clamped > maxValue) clamped = maxValue
-
-  return clamped.toString()
-}
-
-/**
- * Get position label based on value
- * - Negative values: "Front"
- * - Zero: "Center"
- * - Positive values: "Rear"
- */
-function getPositionLabel(value: number): string {
-  if (value < 0) return 'Front'
-  if (value > 0) return 'Rear'
-  return 'Center'
-}
-
-/**
- * Format display value with position label
- * - Negative: "-25 Front"
- * - Zero: "0 Center"
- * - Positive: "+25 Rear" (adds + prefix)
- */
-function formatDisplayValue(value: number): string {
-  const positionLabel = getPositionLabel(value)
-
-  if (value < 0) return `${value} ${positionLabel}`
-  if (value > 0) return `+${value} ${positionLabel}`
-  return `0 ${positionLabel}`
+function getDecimalPlaces(step: number | null | undefined): number {
+  if (!step || step >= 1) return 0
+  const decimalStr = step.toString().split('.')[1]
+  return decimalStr ? decimalStr.length : 0
 }
 
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
 
-/**
- * Ballast Slider Input Component
- *
- * Single-value bidirectional slider for Ballast Positioning
- * - Text input shows value with position label (Front/Center/Rear)
- * - [− Slider +] with hold-to-repeat buttons
- * - Range: -50 (Front) to +50 (Rear) with 0 at Center
- */
-export function BallastSliderInput({
+export function SingleSliderInput({
   value,
   onChange,
-  setting
-}: BallastSliderInputProps) {
+  setting,
+  disabled = false,
+}: SingleSliderInputProps) {
   // ============================================================
   // CONFIGURATION FROM SETTING
   // ============================================================
-  const minValue = setting.minValue ?? -50
-  const maxValue = setting.maxValue ?? 50
+  const minValue = setting.minValue ?? 0
+  const maxValue = setting.maxValue ?? 100
   const step = setting.step ?? 1
+  const unit = setting.unit
 
-  // Parse numeric value for slider (default to 0 if empty/invalid)
-  const numericValue = Math.round(parseFloat(value || '') || 0)
+  const decimalPlaces = getDecimalPlaces(step)
+
+  // Coarser step for slider thumb (~100 stops max) — text input uses full precision
+  const sliderStep = Math.max(step, (maxValue - minValue) / 100)
+
+  const centerPoint = (minValue + maxValue) / 2
+
+  // Parse numeric value (default to minValue if empty/invalid)
+  const numericValue = parseFloat(value || '') || minValue
 
   // ============================================================
   // HOLD-TO-REPEAT REFS
@@ -185,11 +127,12 @@ export function BallastSliderInput({
    * - Clamps to minValue/maxValue
    */
   const executeStep = useCallback((direction: 1 | -1) => {
-    const current = Math.round(parseFloat(valueRef.current || '') || 0)
-    const raw = current + direction * step
+    const current = parseFloat(valueRef.current || '') || minValue
+    const factor = Math.pow(10, decimalPlaces)
+    const raw = Math.round(current * factor + direction * step * factor) / factor
     const clamped = Math.max(minValue, Math.min(maxValue, raw))
-    onChange(clamped.toString())
-  }, [minValue, maxValue, step, onChange])
+    onChange(decimalPlaces > 0 ? clamped.toFixed(decimalPlaces) : clamped.toString())
+  }, [minValue, maxValue, step, decimalPlaces, onChange])
 
   /**
    * Stop any active hold-to-repeat
@@ -222,41 +165,51 @@ export function BallastSliderInput({
   useEffect(() => () => stopStep(), [stopStep])
 
   // ============================================================
-  // EVENT HANDLERS
+  // SLIDER / INPUT HANDLERS
   // ============================================================
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const parsed = parseAndClampValue(e.target.value, minValue, maxValue)
-    onChange(parsed)
+    const parsed = parseFloat(e.target.value)
+    if (isNaN(parsed)) {
+      onChange('')
+      return
+    }
+    const clamped = Math.max(minValue, Math.min(maxValue, parsed))
+    onChange(decimalPlaces > 0 ? clamped.toFixed(decimalPlaces) : clamped.toString())
   }
 
   const handleSliderChange = (values: number[]) => {
-    onChange(values[0].toString())
+    onChange(decimalPlaces > 0 ? values[0].toFixed(decimalPlaces) : values[0].toString())
   }
 
   // ============================================================
   // RENDER
   // ============================================================
 
-  const displayValue = formatDisplayValue(numericValue)
-
-  const minLabel = `${minValue} Front`
-  const centerLabel = '0 Center'
-  const maxLabel = `+${maxValue} Rear`
+  const centerLabel = decimalPlaces > 0 ? centerPoint.toFixed(decimalPlaces) : centerPoint.toString()
+  const minLabel = decimalPlaces > 0 ? minValue.toFixed(decimalPlaces) : minValue.toString()
+  const maxLabel = decimalPlaces > 0 ? maxValue.toFixed(decimalPlaces) : maxValue.toString()
 
   return (
     <div className="space-y-2">
-      {/* Text Input with position label */}
-      <Input
-        id="ballast-slider-input"
-        type="text"
-        inputMode="decimal"
-        value={displayValue}
-        onChange={handleInputChange}
-        placeholder="0 Center"
-        className="min-h-[44px] w-full text-center transition-colors"
-        aria-label="Ballast positioning value"
-      />
+      {/* Text Input with Unit */}
+      <div className="flex items-center gap-2">
+        <Input
+          type="text"
+          inputMode="decimal"
+          value={value ?? ''}
+          onChange={handleInputChange}
+          placeholder={`${minValue}${unit ? ` ${unit}` : ''}`}
+          disabled={disabled}
+          className="min-h-[44px] w-full text-center transition-colors"
+          aria-label={`Value${unit ? ` in ${unit}` : ''}`}
+        />
+        {unit && (
+          <span className="text-sm text-muted-foreground whitespace-nowrap min-w-fit">
+            {unit}
+          </span>
+        )}
+      </div>
 
       {/* Slider row with +/− buttons */}
       <div className="space-y-1">
@@ -265,13 +218,13 @@ export function BallastSliderInput({
             type="button"
             variant="ghost"
             size="sm"
-            disabled={numericValue <= minValue}
+            disabled={disabled || numericValue <= minValue}
             onMouseDown={() => startStep(-1)}
             onMouseUp={stopStep}
             onMouseLeave={stopStep}
             onTouchStart={() => startStep(-1)}
             onTouchEnd={stopStep}
-            aria-label="Move ballast toward Front"
+            aria-label="Decrease value"
             className="min-h-[44px] px-2 shrink-0"
           >
             −
@@ -280,22 +233,23 @@ export function BallastSliderInput({
             value={[numericValue]}
             min={minValue}
             max={maxValue}
-            step={step}
+            step={sliderStep}
             onValueChange={handleSliderChange}
+            disabled={disabled}
             className="flex-1 min-h-[44px]"
-            aria-label="Ballast positioning slider"
+            aria-label={`Value slider${unit ? ` in ${unit}` : ''}`}
           />
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            disabled={numericValue >= maxValue}
+            disabled={disabled || numericValue >= maxValue}
             onMouseDown={() => startStep(1)}
             onMouseUp={stopStep}
             onMouseLeave={stopStep}
             onTouchStart={() => startStep(1)}
             onTouchEnd={stopStep}
-            aria-label="Move ballast toward Rear"
+            aria-label="Increase value"
             className="min-h-[44px] px-2 shrink-0"
           >
             +
@@ -303,9 +257,9 @@ export function BallastSliderInput({
         </div>
         {/* Slider Labels */}
         <div className="flex justify-between text-xs text-muted-foreground px-7">
-          <span>{minLabel}</span>
-          <span>{centerLabel}</span>
-          <span>{maxLabel}</span>
+          <span>{minLabel}{unit}</span>
+          <span>{centerLabel}{unit}</span>
+          <span>{maxLabel}{unit}</span>
         </div>
       </div>
     </div>
