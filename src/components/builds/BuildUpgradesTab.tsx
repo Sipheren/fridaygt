@@ -133,6 +133,9 @@ interface BuildUpgradesTabProps {
 // GT Auto part options
 const GT_AUTO_OPTIONS: Record<string, string[]> = {
   'Wide Body Installed': ['Yes', 'No'],
+  'Wheel Size': ['10"', '11"', '12"', '13"', '14"', '15"', '16"', '17"', '18"', '19"', '20"', '21"', '22"', '23"', '24"', '25"', '26"', '27"', '28"', '29"', '30"'],
+  'Wheel Offset': ['Standard', 'Wide'],
+  'Wheel Width': ['Standard', 'Wide'],
 }
 
 // Custom Parts base options (shown by default)
